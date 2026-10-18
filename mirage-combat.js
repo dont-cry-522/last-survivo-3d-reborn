@@ -1,4 +1,4 @@
-import{MIRAGE as C}from'./mirage-config.js?v=211';
+import{MIRAGE as C}from'./mirage-config.js?v=212';
 const EPS=1e-8,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 // Owns only the new hero's decoy, concealment and poison. All damage/rewards still use the game callback.
@@ -17,7 +17,7 @@ export class MirageCombat{
  }
  residue(mark,t){const rank=this.rank('mirage_residue');if(!rank)return;if(!(mark.residueUntil>t))mark.residueBorn=t;mark.residueDamage=C.residueDps[rank];mark.residueUntil=t+C.residueDuration[rank];}
  attackHit(e,w,{silent=false}={}){
-  if(!this.active()||!e?.alive||w.id!=='miasmalantern')return false;
+  if(!this.active()||!e?.alive||!['miasmalantern','venomfan'].includes(w.id))return false;
   // Finish the old value before a refresh replaces it between regular poison ticks.
   if(this.marks.has(e)&&this.now>this.lastTick+EPS){this.tick(this.now);if(!this.active()||!e.alive)return false;}
   const mark=this.marks.get(e)||{};if(!(mark.needleUntil>this.now))mark.needleBorn=this.now;

@@ -5,6 +5,10 @@ const look=(weapon,name,summary,phases)=>Object.freeze({weapon,name,summary,phas
 const groundRoutes=new Set(['briarpot_burst','briarpot_snare','miasmalantern_lure','miasmalantern_venom','sporelantern_still','sporelantern_roam','fire_blast','dark_gravity','grimoire_wide','grimoire_echo','boomerang_snare']);
 const contactHeights={shotgun_fan:.65,shotgun_slug:.86,fire_burn:.48,shade_blight:.5,harpoon_reef:.84,harpoon_tow:.20,boomerang_pincer:.4};
 export const WEAPON_ROUTE_LOOKS=Object.freeze({
+ mycelialwhip_tip:look('mycelialwhip','鞭梢凝毒','短而凝实的菌丝沿鞭梢方向穿出，留下单点孢汁',['hit']),
+ mycelialwhip_sweep:look('mycelialwhip','菌幕横扫','接触处的两缕菌丝横向展开，孢屑随抽鞭方向散落',['hit']),
+ venomfan_return:look('venomfan','回岚蚀梦','只有返程命中时，淡紫蚀雾与短羽纹向施法者回流',['hit']),
+ venomfan_fold:look('venomfan','合扇穿瘴','合扇凝出的窄紫风锋在接触处裂成细薄羽纹',['hit']),
  arcstaff_chain:look('arcstaff','连枝电网','主电弧确认命中处，短紫金电痕分成两枝',['hit']),
  arcstaff_focus:look('arcstaff','聚流雷芯','主命中点留下紧凑金紫针芯，实际聚流越强越凝实',['hit']),
  briarpot_burst:look('briarpot','裂壳荆爆','落点荆壳向两侧裂开，短刺随碎壳弹出',['hit']),
@@ -75,6 +79,28 @@ export function weaponRouteEffect(vfx,w,phase,x,z,angle=0,detail={}){
  const chip=(shape,color,forward,side,y,size,speed,up=.7,priority=0)=>particle(shape,color,forward,side,y,{life:.25,size,velocity:velocity(speed,side*2,up),gravity:4,spin:6,priority});
 
  switch(id){
+ case'mycelialwhip_tip':
+  line([-.10,0,1],[.24*level,0,1],0xc6d29a,.027,.17,1,.76);
+  particle('droplet',0x879d5c,.04,0,1,{life:.25,size:[.045,.065,.04],velocity:velocity(.35,0,-.12),gravity:1.8,opacity:.65});
+  chip('crystal',0x9c9c68,.06,.04,1,[.018,.09,.018],.55,.10);
+  break;
+ case'mycelialwhip_sweep':{
+  const sign=detail.combo%2?-1:1;
+  for(const side of[-1,1])line([-.04,side*.04,1],[.06,side*.25*level,1+side*sign*.045],side<0?0x718251:0xc6d198,.018,.20,side<0?0:1,.67);
+  for(const side of[-1,1])particle('droplet',side<0?0x8b9e60:0xc2c98a,.03,side*.07,1,{life:.24,size:[.023,.04,.022],velocity:velocity(.08,sign*.45,-.05),gravity:1.5,opacity:.62});
+  break;
+ }
+ case'venomfan_return':
+  if(!detail.returning)return false;
+  for(const side of[-1,1]){
+   line([.12,side*.13,1],[-.10,side*.04,1],side<0?0xa38aba:0xd0c0dd,.016,.18,side<0?0:1,.61);
+   particle('smoke',0x7e668f,0,side*.055,1,{life:.29,size:[.06,.045,.11*level],velocity:velocity(-.45,side*.10,.04),opacity:.26});
+  }
+  break;
+ case'venomfan_fold':
+  line([-.14,0,1],[.21*level,0,1],0xbca4d1,.024,.16,1,.74);
+  for(const side of[-1,1])line([.02,0,1],[.14,side*.09,1+side*.035],side<0?0x7a5f8c:0xd2bddf,.012,.21,0,.57);
+  break;
  case'arcstaff_chain':
   line([-.12,0,1],[.05,0,1],0xe8d7ad,.026,.13,1,.74);
   for(const side of[-1,1])line([.05,0,1],[.20,side*.18*level,1+side*.09],side<0?0xa28bbb:0xd2c0ec,.018,.16,0,.60);

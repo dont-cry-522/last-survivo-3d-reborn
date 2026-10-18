@@ -1,13 +1,15 @@
 import * as T from './vendor/three.module.js';
-import {waterDepth} from './water.js?v=211';
-import {onBridge} from './coast.js?v=211';
-import {onIce} from './map-tactics.js?v=211';
-import {bodyContact} from './adventure-combat.js?v=211';
+import {waterDepth} from './water.js?v=212';
+import {onBridge} from './coast.js?v=212';
+import {onIce} from './map-tactics.js?v=212';
+import {bodyContact} from './adventure-combat.js?v=212';
 
 // Visual units are metres/seconds; these profiles never apply damage or status.
 export const ENVIRONMENT_IMPACTS={
  arcstaff:{mark:'rune',color:0x776a91,size:.26,life:2,ripple:.42,splash:.18},
  briarpot:{mark:'stain',color:0x8a7950,size:.48,life:3,ripple:.82,splash:.78},
+ mycelialwhip:{mark:'slash',color:0x8c9b59,size:.46,life:3,ripple:.55,splash:.32,poison:true},
+ venomfan:{mark:'stain',color:0x82718e,size:.57,life:3,ripple:.66,splash:.12,poison:true},
  rifle:{mark:'puncture',color:0x382d21,size:.18,life:5,ripple:.38,splash:.48},
  shotgun:{mark:'puncture',color:0x443629,size:.23,life:5,ripple:.48,splash:.63},
  crossbow:{mark:'pierce',color:0x544432,size:.27,life:6,ripple:.34,splash:.82},

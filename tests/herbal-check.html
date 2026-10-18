@@ -1,0 +1,123 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>菌丝长鞭与蚀梦折扇实战检查</title>
+<style>body{margin:12px;background:#24212c;color:#efe9ed;font:14px system-ui}button,select{padding:10px;margin:0 6px 6px 0;background:#484153;color:inherit;border:1px solid #9d94ad;border-radius:6px}iframe{border:0;display:block;margin-top:12px}#view{overflow:auto}pre{white-space:pre-wrap}</style>
+<button id="desktop" disabled>检查电脑双视角</button><button id="landscape" disabled>检查手机横屏双视角</button><button id="portrait" disabled>检查手机竖屏双视角</button>
+<button id="balance" disabled>数值对照 · 16 组 × 12 秒</button>
+<div><select id="preview-size" aria-label="预览尺寸"><option value="desktop">电脑预览</option><option value="landscape">手机横屏预览</option><option value="portrait">手机竖屏预览</option></select><button id="preview-whip-first" disabled>长鞭第一人称</button><button id="preview-whip-third" disabled>长鞭第三人称</button><button id="preview-fan-first" disabled>折扇第一人称</button><button id="preview-fan-third" disabled>折扇第三人称</button></div>
+<p id="status">加载真实游戏；隔离存档、固定游戏帧。手机仅为尺寸与触控分支模拟。</p><details open><summary>失败诊断</summary><pre id="diagnostic">尚无失败。</pre></details><details open><summary>检查结果</summary><pre id="report"></pre></details><details open><summary>数值对照（独立报告）</summary><pre id="balance-report">尚未运行。</pre></details><div id="view"></div>
+<script type="module">
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),assert=(ok,message)=>{if(!ok)throw Error(message);};
+const html=await(await fetch('../index.html')).text(),css=await(await fetch('../style.css')).text(),version=html.match(/main\.js\?v=([^"']+)/)?.[1]||'',suffix=version?'?v='+version:'';
+const {HERO_LOADOUTS,weaponStats,takeUpgrade}=await import('../rules.js'+suffix);
+const dimensions={desktop:{width:1440,height:900,mobile:false},landscape:{width:844,height:390,mobile:true},portrait:{width:390,height:844,mobile:true}},results=[],errors=[];
+let frame,win,g,now=0,targets=[],mode='third',sizeId='desktop';
+const buttons=disabled=>document.querySelectorAll('button').forEach(b=>b.disabled=disabled);
+const publish=()=>$('#report').textContent=JSON.stringify(window.herbalReport={version,size:sizeId,results,errors},null,2);
+const snapshot=()=>({state:g.state,time:g.time,weapon:g.player.weaponId,route:g.player.weaponPath,serial:g.hero.userData.shotSerial||0,held:g.controls.held,melee:!!g.player.melee,waves:g.herbalWaves.waves.map(q=>({distance:q.distance,returning:q.returning,hits:q.hits.size})),clouds:g.poison.clouds.map(q=>({x:q.x,z:q.z,r:q.r,expires:q.expires})),targets:targets.map(e=>({x:e.x,y:e.y,z:e.z,hp:e.hp,alive:e.alive})),poisonMarks:g.mirage.marks.size});
+function step(){const dt=g.state==='playing'?1/60:0;g.step(dt);g.firstPerson.update(g.time,dt,{moving:0,strafe:0,yaw:g.adventureCamera.yaw,pitch:g.adventureCamera.pitch,attack:g.hero.userData.shoot,visible:g.state!=='menu'&&mode==='first'});g.vfx.update(dt);}
+function advance(seconds){for(let i=0;i<Math.ceil(seconds*60);i++)step();}
+function render(){win.qaFrame(now+=1000/60);}
+async function load(id){
+ if(g&&frame?.isConnected&&sizeId===id&&win.game3d===g&&!win.qaErrors.length){if(g.state!=='menu')g.menu();now=win.performance.now();render();return;}
+ sizeId=id;const size=dimensions[id];
+ if(g){errors.push(...win.qaErrors);g.audio.stopMusic();g.audio.stopWeapons();g.audio.stopCreatures();g.cinema?.dispose();g.renderer.dispose();g.renderer.forceContextLoss();}g=null;frame?.remove();
+ frame=document.createElement('iframe');frame.title='毒英雄新武器真实游戏验证';frame.style.width=size.width+'px';frame.style.height=size.height+'px';$('#view').append(frame);
+ const boot=`<base href="../"><script>
+ window.qaErrors=[];window.qaFetchPending=new Set();window.qaFetchDone=0;
+ const qaError=window.qaError=message=>{qaErrors.push(message);parent.document.querySelector('#diagnostic').textContent=qaErrors.join(' | ');};
+ addEventListener('error',e=>qaError(e.message||('资源加载失败: '+(e.target?.src||e.target?.href||'unknown'))),true);addEventListener('unhandledrejection',e=>qaError(String(e.reason?.stack||e.reason)));
+ const qaConsoleError=console.error.bind(console);console.error=(...args)=>{qaError(args.map(v=>v?.stack||String(v)).join(' '));qaConsoleError(...args);};
+ const qaFetch=fetch.bind(window);window.fetch=async(...args)=>{const url=String(args[0]?.url||args[0]);qaFetchPending.add(url);try{return await qaFetch(...args);}finally{qaFetchPending.delete(url);qaFetchDone++;}};
+ let seed=212;window.qaSeed=()=>seed=212;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ window.requestAnimationFrame=cb=>{window.qaFrame=cb;return 0};
+ const data=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k)}});
+ const media=matchMedia.bind(window);window.matchMedia=q=>q.includes('pointer:coarse')||q.includes('pointer: coarse')?{matches:${size.mobile},media:q,addEventListener(){},removeEventListener(){}}:media(q);
+ <\/script>`;
+ const mainScript=/<script type="module" src="(main\.js[^"]*)"><\/script>/;
+ assert(mainScript.test(html),'检查页未找到实际 main.js 入口');
+ const instrumented=html.replace(/<script type="module" src="offline\.js[^"]*"><\/script>/,'').replace(mainScript,(_,src)=>`<script type="module">
+ window.qaMainImport={url:new URL(${JSON.stringify(src)},document.baseURI).href,status:'loading'};
+ import(window.qaMainImport.url).then(()=>window.qaMainImport.status='ready').catch(error=>{
+  window.qaMainImport.status='failed';window.qaMainImport.error=String(error?.stack||error);window.qaMainImport.message=String(error?.message||error);window.qaError('main.js 导入失败: '+window.qaMainImport.error);
+ });
+ <\/script>`);
+ frame.srcdoc=instrumented.replace('<head>','<head>'+boot);win=frame.contentWindow;
+ for(let i=0;i<1200&&!win.game3d;i++){
+  if(i%20===0){const doc=win.document,stage=doc.querySelector('#asset-loading-stage')?.textContent||doc.querySelector('#asset-loading-text')?.textContent||doc.querySelector('#asset-loading')?.textContent?.trim()||doc.readyState,percent=doc.querySelector('#asset-loading-percent')?.textContent||'',pending=[...(win.qaFetchPending||[])];$('#status').textContent='加载 '+id+' · '+stage+' '+percent+' · 已等待 '+Math.round(i/20)+' 秒';$('#diagnostic').textContent=JSON.stringify({errors:win.qaErrors||[],base:doc.baseURI,ready:doc.readyState,stage,percent,main:win.qaMainImport||null,fetchDone:win.qaFetchDone||0,pending},null,2);}
+  if(win.qaMainImport?.status==='failed')throw Error(win.qaMainImport.error);
+  await sleep(50);
+ }
+ assert(win.game3d,'游戏加载超时: '+win.qaErrors?.join(' | '));g=win.game3d;await g.surfaceReady;
+ if(size.mobile){const style=win.document.createElement('style');style.textContent=css.replaceAll(/\(pointer:\s*coarse\)/g,'(min-width:0px)');win.document.head.append(style);}
+ for(let i=0;i<1200&&win.document.querySelector('#start').disabled;i++)await sleep(50);assert(!win.document.querySelector('#start').disabled,'模型预热超时');
+ now=win.performance.now();render();assert(win.document.body.classList.contains('touch')===size.mobile,'操作分支与尺寸不符');
+}
+function setup(id='mycelialwhip',route=null){
+ if(g.state!=='menu')g.menu();win.qaSeed();if(g.player.weaponId!==id){const [hero,ids]=Object.entries(HERO_LOADOUTS).find(([,ids])=>ids.includes(id));g.select(hero,'forest',ids.indexOf(id));}win.document.querySelector('[data-attack-mode=manual]').click();g.start();win.document.querySelector('#dialog').close();assert(g.player.weaponId===id,'选角装备未接入');
+ Object.assign(g.world,{patches:[],ponds:[],ice:[],fords:[],bridges:[],sites:[],roaming:[],discoveries:[],breakables:[],groundHeightAt:()=>0});g.world.overhead.firstHit=()=>null;
+ g.world.obstacles=Array.from({length:32},(_,i)=>({x:Math.sin(i*Math.PI/16)*23,z:Math.cos(i*Math.PI/16)*23,r:8,height:8}));
+ Object.assign(g.player,{x:0,y:0,z:0,groundHeight:0,attack:999,inv:999,pending:0,level:1});g.hero.position.set(0,0,0);g.hero.rotation.y=0;
+ g.adventureCamera.yaw=0;g.adventureCamera.pitch=-.08;g.adventureCamera._ready=false;g.setView(mode);Object.assign(g.controls,{angle:0,held:false,hasAim:true});
+ if(route)for(const level of [3,5,8]){g.player.level=level;assert(takeUpgrade(g.player,'path:'+route),'路线进阶失败 '+route);}
+ targets=[];render();return weaponStats(g.player);
+}
+function spawn(x=0,z=3){const e=g.spawn('golem',x,z);assert(e,'目标生成失败');Object.assign(e,{x,y:0,z,hp:100000,maxHp:100000,speed:0,cool:999,damage:0,xp:0,height:1.5,size:.5,radius:.45});e.mesh.position.set(x,0,z);targets.push(e);return e;}
+function aim(e){const distance=Math.hypot(e.x-g.player.x,e.z-g.player.z),angle=Math.atan2(e.x-g.player.x,e.z-g.player.z);g.hero.rotation.y=angle;g.controls.angle=angle;g.controls.hasAim=true;g.adventureCamera.yaw=angle+(mode==='third'?Math.asin(g.adventureCamera.shoulderOffset/distance):0);g.adventureCamera._ready=false;g.setView(mode);g.controls.hasAim=true;render();}
+function fire(){const before=g.hero.userData.shotSerial||0;g.player.attack=0;g.controls.held=true;step();g.controls.held=false;g.player.attack=999;assert(g.hero.userData.shotSerial===before+1,'按住输入没有只产生一次攻击');}
+function cleanup(){g.menu();g.audio.stopMusic();g.audio.stopWeapons();g.audio.stopCreatures();assert(!g.player.melee&&!g.herbalWaves.waves.length&&!g.poison.clouds.length&&!g.mirage.marks.size,'退出后有战斗状态残留');assert(!win.qaErrors.length,win.qaErrors.join('\n'));}
+function checkMeshes(){g.hero.traverse(o=>{for(const v of [o.position.x,o.position.y,o.position.z,o.quaternion.x,o.quaternion.y,o.quaternion.z,o.quaternion.w])assert(Number.isFinite(v),'角色部件出现无效姿态 '+o.name);});}
+function hit(id,route=null){setup(id,route);const e=spawn();aim(e);fire();assert(e.hp===100000,'前摇期间提前命中');advance(.8);assert(e.hp<100000,'真实出手未命中');assert(g.hero.userData.herbalCombo===0,'独立连段未开始');assert(!g.bullets.length,'新攻击错误走了普通弹丸');
+ if(id==='mycelialwhip')assert(g.poison.clouds.length===1,'鞭梢未留下唯一主毒区');else assert(g.mirage.marks.has(e),'扇风未施加附毒');
+ fire();advance(.8);assert(g.hero.userData.herbalCombo===1,'第二次攻击未切换左右动作');const serial=g.hero.userData.shotSerial;advance(.8);assert(g.hero.userData.shotSerial===serial,'松手后仍自动攻击');checkMeshes();render();const detail=snapshot();cleanup();return detail;
+}
+function blocked(id){setup(id);const e=spawn(0,4);aim(e);g.world.obstacles.push({x:0,y:0,z:1.8,r:1,height:8});fire();advance(1.5);assert(e.hp===100000,'新武器穿过树石');const detail=snapshot();cleanup();return detail;}
+function lifecycle(id,kind){setup(id);const e=spawn();aim(e);fire();assert(g.player.melee,'新攻击没有前摇记录');
+ if(kind==='dash'){g.dash();assert(!g.player.melee,'闪避没有取消未出手攻击');advance(1);assert(e.hp===100000,'闪避取消后仍命中');}
+ else if(kind==='pause'){g.pause();const time=g.time,hp=e.hp;advance(2);assert(g.time===time&&e.hp===hp,'暂停推进了攻击');g.resume();advance(.8);assert(e.hp<hp,'恢复后前摇未继续');}
+ else if(kind==='death'){g.player.inv=0;assert(g.damage(10000,0,-2),'致命伤害无效');assert(g.state==='lost','未进入失败状态');advance(1);assert(e.hp===100000&&!g.player.melee&&!g.herbalWaves.waves.length,'死亡后攻击仍结算');}
+ else{advance(.8);g.menu();g.start();assert(g.player.weaponId===id,'重开丢失新装备');assert(!g.player.melee&&!g.herbalWaves.waves.length&&!g.poison.clouds.length&&!g.mirage.marks.size,'重开继承战斗记录');}
+ const detail=snapshot();cleanup();return detail;
+}
+function carry(){setup();g.player.upgrades.poison_guard=3;fire();advance(.5);assert(g.poison.clouds.length===1,'未产生可搬运主毒区');const q=g.poison.clouds[0],x=q.x,z=q.z,expires=q.expires;Object.assign(g.player,{x,z});g.hero.position.set(x,0,z);g.controls.angle=0;g.dash();advance(.6);assert(Math.hypot(q.x-x,q.z-z)>1,'实际闪避没有搬运毒区');assert(q.expires===expires&&g.poison.clouds.length===1,'搬运复制或续期');assert(g.poison.shield.amount>0,'搬运未兼容苔衣护身');const detail=snapshot();cleanup();return detail;}
+function legacy(id){setup(id);const e=spawn();aim(e);fire();advance(2);assert(e.hp<100000,'旧毒灯无法攻击');const detail=snapshot();cleanup();return detail;}
+function mobileHeld(id){setup(id);const e=spawn();aim(e);win.document.querySelector('[data-attack-mode=auto]').click();g.player.attack=0;advance(.5);assert(!(g.hero.userData.shotSerial||0),'手机自动瞄准却无输入发射');g.controls.held=true;advance(1);g.controls.held=false;assert((g.hero.userData.shotSerial||0)>0,'手机按住不能出手');const detail=snapshot();cleanup();return detail;}
+async function check(name,fn){$('#status').textContent='检查 '+name;await sleep(0);try{results.push({name,pass:true,detail:await fn()});}catch(error){const detail=g?snapshot():null;results.push({name,pass:false,error:error.message,detail});$('#diagnostic').textContent=JSON.stringify({name,error:error.message,detail},null,2);try{cleanup();}catch(e){errors.push(e.message);}}publish();}
+async function run(id){buttons(true);results.length=0;errors.length=0;$('#diagnostic').textContent='尚无失败。';publish();try{await load(id);for(mode of ['third','first']){
+ const label=id+' / '+mode;for(const weapon of ['mycelialwhip','venomfan']){await check(label+' / '+weapon+' 真实命中与左右动作',()=>hit(weapon));await check(label+' / '+weapon+' 实体遮挡',()=>blocked(weapon));for(const kind of ['pause','dash','death','restart'])await check(label+' / '+weapon+' '+kind,()=>lifecycle(weapon,kind));if(dimensions[id].mobile)await check(label+' / '+weapon+' 手机必须按住',()=>mobileHeld(weapon));}
+ for(const route of ['mycelialwhip_tip','mycelialwhip_sweep','venomfan_return','venomfan_fold'])await check(label+' / '+route+' 三阶实战',()=>hit(route.startsWith('mycelial')?'mycelialwhip':'venomfan',route));
+ await check(label+' / 实际闪避牵引主毒区',carry);for(const old of ['sporelantern','miasmalantern'])await check(label+' / 旧武器 '+old,()=>legacy(old));
+ }}catch(error){results.push({name:'初始化',pass:false,error:error.message});}errors.push(...(win?.qaErrors||[]));publish();buttons(false);$('#status').textContent=results.every(r=>r.pass)&&!errors.length?'全部 '+results.length+' 项通过；手机仅为模拟尺寸和触控分支。':'检查完成，有失败项目。';}
+async function preview(id,view){buttons(true);try{await load($('#preview-size').value);mode=view;setup(id,id==='venomfan'?'venomfan_return':'mycelialwhip_sweep');const e=spawn(0,4);aim(e);fire();advance(id==='venomfan'?.43:.30);render();$('#status').textContent='真实游戏预览：'+id+' / '+view+'；固定在攻击过程供查看。';}catch(error){$('#status').textContent=error.message;}finally{buttons(false);}}
+const round=n=>Math.round(n*10000)/10000;
+async function balanceCase(id,route,scenario){
+ setup(id,route);g.audio.muted=true;g.audio.stopWeapons();g.audio.stopCreatures();Object.assign(g.player,{upgrades:{},relic:null,huntBoon:null,huntRush:0,fieldSupply:null});
+ const layout=scenario==='three'?[[0,5.7],[-.65,5.8],[.65,5.8]]:[[0,5.7]],firstHits=layout.map(()=>null),damageEvents=layout.map(()=>0),peak={clouds:0,marks:0,waves:0},stats=weaponStats(g.player);
+ for(const[x,z]of layout)spawn(x,z);const start=g.time;win.document.querySelector('[data-attack-mode=auto]').click();g.player.attack=0;
+ const updateAim=()=>{const target=targets[0],dx=target.x-g.player.x,dz=target.z-g.player.z;g.adventureCamera.yaw=Math.atan2(dx,dz);g.adventureCamera.pitch=Math.atan2(target.y+target.height*.55-g.camera.position.y,Math.hypot(dx,dz));g.adventureCamera._ready=false;g.controls.held=true;};updateAim();
+ try{
+  for(let frame=0;frame<720;frame++){
+   targets.forEach((e,i)=>{e.x=layout[i][0];e.z=layout[i][1];e.y=0;e.cool=999;e.mesh.position.set(e.x,0,e.z);});const hp=targets.map(e=>e.hp);updateAim();step();
+   targets.forEach((e,i)=>{if(e.hp<hp[i]){firstHits[i]??=round(g.time-start);damageEvents[i]++;}});
+   peak.clouds=Math.max(peak.clouds,g.poison.clouds.length+g.mirage.clouds.length);peak.marks=Math.max(peak.marks,g.poison.marks.size+g.mirage.marks.size);peak.waves=Math.max(peak.waves,g.herbalWaves.waves.length);
+   assert(g.state==='playing','数值对照意外结束');assert(g.enemies.filter(e=>e.alive).every(e=>targets.includes(e)),'环境增援混入固定数值目标');assert(g.player.xp===0&&g.player.pending===0,'经验或升级混入数值测试');
+   if(frame%120===119)await sleep(0);
+  }
+  const elapsed=g.time-start,total=targets.reduce((n,e)=>n+100000-e.hp,0);return{weapon:id,build:route||'base',rank:route?3:0,scenario,duration:round(elapsed),stats,attacks:g.hero.userData.shotSerial||0,totalDamage:round(total),dps:round(total/elapsed),peak,
+   targets:targets.map((e,i)=>({index:i,position:{x:layout[i][0],y:0,z:layout[i][1]},height:e.height,size:e.size,damage:round(100000-e.hp),firstHit:firstHits[i],damageFrames:damageEvents[i]})),
+   pendingAtCutoff:{melee:!!g.player.melee,waves:g.herbalWaves.waves.length,bullets:g.bullets.length,pods:g.poison.pods.length,clouds:g.poison.clouds.length+g.mirage.clouds.length,marks:g.poison.marks.size+g.mirage.marks.size},warnings:total?[]:['12秒未命中，不是有效输出结果，请检查出手与目标。']};
+ }finally{g.controls.held=false;g.player.attack=999;cleanup();}
+}
+async function runBalance(){
+ buttons(true);const report={version,status:'running',method:{simulation:'真实game3d.step，60Hz，持续按住12秒，第一人称自动瞄准；零技能、零强化、零遗物、零经验、不开闪避替身；只给四条新路线各三阶',positions:'所有武器共同中心5.7米；三只目标位于(0,5.7)、(-0.65,5.8)、(0.65,5.8)，原地不攻击。每只高度1.5米、size0.5、生命100000。目标坐标每步保持固定，不改变实际伤害逻辑。',cutoff:'12秒截止，不额外补算未完成前摇、飞行、回流和残留毒；输出记录待完成状态',limits:'固定位置与聚集目标基准，包含实际波前和毒区覆盖，不代表移动实战、聚怪成本、闪避技能收益或完整平衡结论'},rows:[],errors:[]},publishBalance=()=>$('#balance-report').textContent=JSON.stringify(window.herbalBalanceReport=report,null,2);publishBalance();
+ try{
+  if(!g||sizeId!=='desktop')await load('desktop');mode='first';
+  for(const[id,route]of [['sporelantern',null],['miasmalantern',null],['mycelialwhip',null],['venomfan',null],['mycelialwhip','mycelialwhip_tip'],['mycelialwhip','mycelialwhip_sweep'],['venomfan','venomfan_return'],['venomfan','venomfan_fold']])for(const scenario of ['single','three']){
+   $('#status').textContent='数值对照 '+(report.rows.length+report.errors.length+1)+'/16 · '+id+' / '+(route||'基础')+' / '+scenario;await sleep(0);try{report.rows.push(await balanceCase(id,route,scenario));}catch(error){report.errors.push({weapon:id,route,scenario,message:error.message});}publishBalance();
+  }
+  report.errors.push(...win.qaErrors);report.status=report.errors.length?'failed':'complete';
+ }catch(error){report.errors.push(error.message);report.status='failed';}finally{publishBalance();buttons(false);$('#status').textContent='数值对照完成：'+report.rows.length+'/16组，'+report.errors.length+'项错误；原检查报告保留。';}
+}
+$('#balance').onclick=runBalance;
+for(const id of Object.keys(dimensions))$('#'+id).onclick=()=>run(id);for(const[prefix,id]of [['whip','mycelialwhip'],['fan','venomfan']])for(const view of ['first','third'])$('#preview-'+prefix+'-'+view).onclick=()=>preview(id,view);
+try{await load('desktop');buttons(false);$('#status').textContent='准备完成。检查新武器、路线、真实碰撞、毒状态与退出清理。';}catch(error){$('#status').textContent='加载失败：'+error.message;$('#diagnostic').textContent=JSON.stringify(win?.qaErrors||[],null,2);}
+</script></html>

@@ -1,8 +1,9 @@
-import {shadowFocus} from './shadow-gear.js?v=211';
-import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=211';
-import{miasmaLantern}from'./mirage-appearance.js?v=211';
-import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=211';
+import {shadowFocus} from './shadow-gear.js?v=212';
+import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=212';
+import{miasmaLantern}from'./mirage-appearance.js?v=212';
+import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=212';
 import * as T from './vendor/three.module.js';
+import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=212';
 // Shared smooth geometry: detail is concentrated on the two heroes, not multiplied across the forest.
 const geometries=new Map(),materials=new Map();
 let woodGrain;
@@ -90,7 +91,7 @@ export function makeHero(kind,weapon){
     g.traverse(o=>{if(!o.isMesh)return;const c=o.material.color,hsl={};c.getHSL(hsl);const pale=hsl.l>.65,color=pale?0xc4b7db:hsl.l>.25?0x59436d:0x24142e;o.material=material(color,o.material.metalness);});
     const mask=ell(d.head,0xb7abc9,[0,.012,.169],[.176,.216,.074],.14);mask.name='mirage-fallback-full-mask';
     for(const side of[-1,1]){const eye=ell(d.head,0x21162c,[side*.077,.063,.232],[.043,.009,.008]);eye.rotation.z=side*-.12;}
-    d.weapon.clear();d.weapon.add(miasmaLantern());d.weapon.scale.setScalar(.95);d.weaponId=weapon;d.kind=kind;g.scale.setScalar(.81);return g;
+    d.weapon.clear();const held=isHerbalWeapon(weapon)?makeHerbalWeapon(weapon):miasmaLantern();d.weapon.add(held);d.herbalModel=isHerbalWeapon(weapon)?held:null;d.weapon.scale.setScalar(.95);d.weaponId=weapon;d.kind=kind;nameWeapon(d.weapon,kind,weapon);g.scale.setScalar(.81);return g;
   }
   const silver=kind==='silver',g=new T.Group(),rig=joint(g,[0,0,0]),torso=joint(rig,[0,1.12,0]);
   const coat=silver?0x202c40:0x344f3e,light=silver?0x3e566c:0x6c7651,dark=0x15212c,trim=silver?0xa4b9d2:0xba9358,hair=silver?0xd6e0ee:0x503326,skin=silver?0xe2bea6:0xcb9c7d,gem=silver?0x7dbfbf:0xc9a867;
@@ -135,7 +136,9 @@ export function makeHero(kind,weapon){
     ell(elbow,dark,[0,-.287,.012],[.075,.087,.065]);block(elbow,trim,[0,-.28,.069],[.071,.036,.012],.6);
   }
   const gun=joint(d.rightElbow,[0,-.287,.025]);d.weapon=gun;
-  if(weapon==='briarpot'){
+  if(isHerbalWeapon(weapon)){
+    const held=makeHerbalWeapon(weapon);gun.add(held);d.herbalModel=held;
+  }else if(weapon==='briarpot'){
     gun.name='SM_Weapon_Briarpot';
     const bowl=part(gun,'LatheGeometry',[[[0,-.15],[.075,-.15],[.105,-.12],[.145,-.045],[.14,.045],[.112,.12],[.112,.14],[.087,.14],[.087,.12],[.112,.04],[.115,-.035],[.075,-.10],[0,-.10]].map(p=>new T.Vector2(...p)),20],0xb2784d);bowl.name='SM_Briarpot_CeramicBowl';bowl.userData.identityDetail=true;
     woodFinish(weaponLine(gun,'SM_Briarpot_BranchHandle',[[-.10,.09,0],[-.185,.18,0],[-.235,.105,0],[-.19,-.01,0],[-.135,-.025,0]],.017,0x5a5638));
@@ -250,6 +253,7 @@ export function animateHero(g,t,speed,attack){
   d.rightArm.rotation.y=d.weaponId==='shuriken'?-.7*s:d.weaponId==='dark'?.5*s:0;d.rightArm.rotation.x-=k*(staff?.45:.15);d.rightElbow.rotation.x-=k*(d.weaponId==='shuriken'?.4:.15);d.leftArm.rotation.x-=staff?.4*s:motion.draw*.3;
   if(d.weaponId==='arcstaff'){d.rig.position.z=-k*.006;d.torso.rotation.y-=.36*aim;d.head.rotation.y=.27*aim;d.rightArm.rotation.x=-.12-aim*.3-.025*k;d.rightElbow.rotation.x=-.35-.018*k;d.weapon.rotation.x=-.15-.025*k;d.weapon.rotation.z=-.52;d.leftArm.rotation.x=-.68-.12*aim-.018*k;d.leftElbow.rotation.x=-.55;}
   if(d.weaponId==='briarpot'){const bend=.58*motion.gather+.10*s;d.rig.position.y-=.035*motion.gather+.006*s;d.torso.rotation.x+=.10*motion.gather+.13*k;for(const side of['left','right']){d[side+'Leg'].rotation.x-=bend*.48;d[side+'Knee'].rotation.x+=bend;}d.rightArm.rotation.x=-.24+.18*motion.gather-.32*k;d.rightElbow.rotation.x=-.55-.22*k;d.weapon.rotation.x=.08+.28*k-.16*motion.gather;d.leftArm.rotation.x=-.30-.26*k;d.leftElbow.rotation.x=-.75;d.weapon.userData.briarSeed.visible=motion.seedHeld;}
+  if(d.herbalModel){const h=poseHerbalWeapon(d.herbalModel,d.weaponId,d.attackAge,d.reloadDuration||1,d.herbalCombo||0,d.herbalPath||'',t);d.torso.rotation.y+=h.torso;d.head.rotation.y=-h.torso*.55;d.rightArm.rotation.x=-.40+.25*h.gather-.32*h.kick;d.rightArm.rotation.y=h.yaw*.65;d.rightElbow.rotation.x=-.72-.25*h.gather+.20*h.sweep;d.weapon.rotation.set(h.pitch,h.yaw*.35,h.roll);d.leftArm.rotation.x=-.27-.18*h.gather;d.leftElbow.rotation.x=-.65+.16*h.sweep;}
   if(d.weapon.userData.pump)d.weapon.userData.pump.position.z=-.23*motion.draw;
   if(d.weaponId==='crossbow')poseCrossbow(d.weapon,d.reloadPhase??1);
   d.cape.rotation.x=.07+run*.34+Math.sin(t*5)*.045;d.cape.rotation.z=step*.045*run;

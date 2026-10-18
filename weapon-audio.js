@@ -1,9 +1,9 @@
-import{newWeaponSample,NEW_WEAPON_SOUNDS}from'./new-weapon-audio.js?v=211';
-import{poisonSample}from'./poison-audio.js?v=211';
-import{mirageSample}from'./mirage-audio.js?v=211';
-import{surfaceSample}from'./enemy-surfaces.js?v=211';
+import{newWeaponSample,NEW_WEAPON_SOUNDS}from'./new-weapon-audio.js?v=212';
+import{poisonSample}from'./poison-audio.js?v=212';
+import{mirageSample}from'./mirage-audio.js?v=212';
+import{surfaceSample}from'./enemy-surfaces.js?v=212';
 // Short original material textures synthesized locally; no remote asset load.
-const DURATIONS={hammer:[.3,.4,.2],rifle:[.18,.16,.12],shotgun:[.42,.27,.23],crossbow:[.32,.18,.2],shuriken:[.3,.18,.14],fire:[.55,.65,.3],dark:[.58,.52,.35],shade:[.24,.32,.15],shadowblade:[.4,.28,.33],grimoire:[.4,.68,.3],shield:[.21,.3,.15],harpoon:[.24,.32,.18],boomerang:[.32,.19,.18],badger:[.20,.23,.14],arcstaff:[.18,.12,.08],briarpot:[.20,.22,.10]};
+const DURATIONS={hammer:[.3,.4,.2],rifle:[.18,.16,.12],shotgun:[.42,.27,.23],crossbow:[.32,.18,.2],shuriken:[.3,.18,.14],fire:[.55,.65,.3],dark:[.58,.52,.35],shade:[.24,.32,.15],shadowblade:[.4,.28,.33],grimoire:[.4,.68,.3],shield:[.21,.3,.15],harpoon:[.24,.32,.18],boomerang:[.32,.19,.18],badger:[.20,.23,.14],arcstaff:[.18,.12,.08],briarpot:[.20,.22,.10],mycelialwhip:[.27,.24,.12],venomfan:[.31,.29,.14]};
 const pulse=(t,start,decay)=>t<start?0:(1-Math.exp(-(t-start)*900))*Math.exp(-(t-start)*decay);
 export const weaponTakeCount=id=>DURATIONS[id]&&!NEW_WEAPON_SOUNDS[id]?3:1;
 export function weaponSample(id,event,rate,variant=0,take=0){
@@ -36,6 +36,8 @@ export function weaponSample(id,event,rate,variant=0,take=0){
       else if(id==='shuriken')v=(low-body)*.38*Math.sin(Math.PI*u)**2;
       else if(id==='arcstaff')v=low*.12*Math.sin(Math.PI*u)**2+high*.035*pulse(t,.002,65);
       else if(id==='briarpot')v=(low*.4+high*.12)*(pulse(t,.003,90)+.55*pulse(t,.042,90));
+      else if(id==='mycelialwhip')v=(low-body)*.30*Math.sin(Math.PI*u)**2*(.7+.3*Math.sin(t*63))+body*.3*pulse(t,.018,50);
+      else if(id==='venomfan')v=(low-body)*.24*(pulse(t,.004,70)+.6*pulse(t,.035,75)+.3*pulse(t,.064,80));
       else v=high*.32*click+body*.6*pulse(t,.01,65);
     }else if(id==='shield')v=hit?(body*3.4+low*.75+Math.sin(t*2*Math.PI*180)*.6)*tail+high*.28*snap:low*Math.sin(Math.PI*u)*.65+high*.13*Math.exp(-t*55);
     else if(id==='boomerang')v=hit?(low*.65+body*2)*tail+Math.sin(t*2*Math.PI*620)*.12*Math.exp(-t*70):(low*.8+high*.10)*Math.sin(Math.PI*u)**2*(.45+.55*Math.sin(t*2*Math.PI*22)**2);
@@ -46,6 +48,12 @@ export function weaponSample(id,event,rate,variant=0,take=0){
     else if(id==='arcstaff')v=hit?(body*.9+low*.18)*pulse(t,.002,32)+high*.04*pulse(t,.006,65):(high*.28+low*.20)*pulse(t,.002,32)*(.48+.52*Math.sin(t*Math.PI*(90+take*5))**8)+Math.sin(phase)*.18*pulse(t,.003,27)+low*.15*pulse(t,.027,70);
     // Dry seeds rattle inside the pot; impact splits husk and thorns without a blast tail.
     else if(id==='briarpot')v=hit?(low-body)*.75*pulse(t,.002,35)+high*.20*(pulse(t,.006,85)+.55*pulse(t,.039,75)+.25*pulse(t,.079,85))+body*1.6*pulse(t,.003,24):(low*.45+high*.10)*(pulse(t,.002,85)+.65*pulse(t,.035,95)+.42*pulse(t,.075,80))+Math.sin(t*2*Math.PI*(540+take*11))*.065*pulse(t,.006,100);
+    // Fibres accelerate through the air into one soft crack; wet pulp follows a
+    // confirmed contact. No metallic oscillator or repeated poison-tick voice.
+    else if(id==='mycelialwhip')v=hit?(low*.63+body*1.15)*pulse(t,.003,28)+high*.12*(pulse(t,.008,85)+.40*pulse(t,.047,70)):(low-body)*.85*Math.exp(-(((u-.46)/.23)**2))+high*.29*pulse(t,.012+take*.002,140)+body*.26*pulse(t,.016,45);
+    // A fan opens with three close silk/rib clicks, then exhales a broad gauzy
+    // sweep. Contact is low, broken breath; it is not another electric snap.
+    else if(id==='venomfan')v=hit?(low-body)*.57*Math.sin(Math.PI*u)**1.7*(.6+.4*Math.sin(t*23)**2)+body*.72*pulse(t,.019,13):(low-body)*.65*Math.sin(Math.PI*u)**1.6*(.64+.36*Math.sin(t*(31+take))**2)+(low*.26+high*.07)*(pulse(t,.003,85)+.65*pulse(t,.027,85)+.38*pulse(t,.052,90));
     // Rifle: a brief dry crack and barrel pressure; the target contact is a separate dull knock.
     else if(id==='rifle')v=hit?(body*2.6+low*.65)*pulse(t,.001,38)+high*.10*pulse(t,.003,140):high*.75*pulse(t,0,230)+low*1.4*pulse(t,0,67)+Math.sin(t*2*Math.PI*(132-50*u))*.38*pulse(t,0,55)+low*.18*pulse(t,.045,95);
     // Shotgun: wider low-end blast and several close pellet contacts, without a tonal bell.

@@ -1,14 +1,14 @@
-import{SCYTHE}from'./scythe-combat.js?v=211';
-import{POISON}from'./poison-config.js?v=211';
-import{MIRAGE}from'./mirage-config.js?v=211';
+import{SCYTHE}from'./scythe-combat.js?v=212';
+import{POISON}from'./poison-config.js?v=212';
+import{MIRAGE}from'./mirage-config.js?v=212';
 const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=(a,b,t)=>{const x=clamp((t-a)/(b-a));return x*x*(3-2*x);};
 const pulse=(t,a,b,c)=>smooth(a,b,t)*(1-smooth(b,c,t));
-export const WEAPON_RECOVERY={miasmalantern:.72,sporelantern:POISON.castRecovery,boomerang:.55,briarpot:.65,harpoon:.48,hammer:.7,rifle:.22,shotgun:.48,crossbow:.26,shuriken:.46,fire:.62,dark:.68,arcstaff:.18,shade:.36,shadowblade:SCYTHE.recovery,grimoire:.72};
+export const WEAPON_RECOVERY={mycelialwhip:.70,venomfan:.72,miasmalantern:.72,sporelantern:POISON.castRecovery,boomerang:.55,briarpot:.65,harpoon:.48,hammer:.7,rifle:.22,shotgun:.48,crossbow:.26,shuriken:.46,fire:.62,dark:.68,arcstaff:.18,shade:.36,shadowblade:SCYTHE.recovery,grimoire:.72};
 // Combat compresses release with attack speed without a 120 ms animation floor.
 export const weaponDuration=(id,period=1)=>Math.min(WEAPON_RECOVERY[id]||.3,Math.max(.001,period*.9));
 // Cycle fractions also drive the audible mechanism cues, so haste preserves sync.
-export const WEAPON_CUES={miasmalantern:[],sporelantern:[.73],boomerang:[],briarpot:[],harpoon:[],hammer:[],rifle:[],shotgun:[.25,.6],crossbow:[.22,.68],shuriken:[.68],fire:[.68],dark:[.68],arcstaff:[],shade:[],shadowblade:[],grimoire:[.58]};
+export const WEAPON_CUES={mycelialwhip:[.74],venomfan:[.70],miasmalantern:[],sporelantern:[.73],boomerang:[],briarpot:[],harpoon:[],hammer:[],rifle:[],shotgun:[.25,.6],crossbow:[.22,.68],shuriken:[.68],fire:[.68],dark:[.68],arcstaff:[],shade:[],shadowblade:[],grimoire:[.58]};
 export function mirageShotDelay(rate){return Math.min(MIRAGE.releaseDelay,.3/Math.max(.01,rate));}
 // One clock drives both held poses and their blade trails; damage timings stay unchanged.
 export function meleeSwing(id,age,period=1){
@@ -22,6 +22,7 @@ export function meleeSwing(id,age,period=1){
 }
 export function weaponGesture(id,age,cycle=1,period=1){
   const t=age/weaponDuration(id,period);
+  if(id==='mycelialwhip'||id==='venomfan')return herbalPose(id,age,period);
   // Rapid conduction has a small wrist pulse, with no overhead windup or sweep.
   if(id==='arcstaff')return{kick:pulse(t,0,.18,1),sweep:0,draw:0,gather:0};
   if(id==='briarpot')return{kick:pulse(t,.08,.24,.90),sweep:pulse(t,.16,.42,1),draw:0,gather:pulse(t,0,.10,.24),seedHeld:t<.24||t>.78};
@@ -36,6 +37,22 @@ export function weaponGesture(id,age,cycle=1,period=1){
   return {kick:pulse(t,0,peak,1),sweep:pulse(t,.04,peak+.12,1),
     draw:age<period&&cycle<1?pulse(cycle,.12,id==='crossbow'?.53:.42,id==='crossbow'?.82:.78):0,
     gather:pulse(t,.38,.68,1)};
+}
+// Authored phase curves for the two herbal tools. The torso leads, the wrist
+// crosses the target once, then the free end settles. No full-circle rotation.
+export function herbalPose(id,age,period=1,combo=0,path=''){
+ const phase=clamp(age/weaponDuration(id,period)),whip=id==='mycelialwhip',hit=whip?.42:.32,side=combo%2?-1:1,fold=path==='venomfan_fold';
+ const gather=pulse(phase,0,hit*.43,hit),kick=pulse(phase,hit*.42,hit,.88),sweep=smooth(hit*.48,hit+.17,phase)*(1-smooth(.70,1,phase)),weight=smooth(0,.07,phase)*(1-smooth(.78,1,phase));
+ const cut=-.66*gather+sweep;
+ return{phase,gather,kick,sweep,weight,body:weight,draw:0,side,fold,
+  snap:pulse(phase,.17,hit,.82),open:fold?.12+.24*gather:.48+.52*pulse(phase,0,.18,.94),
+  x:whip?-.27+side*(-.10*gather+.30*sweep):fold?-.23+.015*kick:-.23+side*(-.10*gather+.18*sweep),
+  y:whip?-.22+.15*gather+.05*kick-.06*sweep:fold?-.18+.025*kick:-.19+.075*gather-.025*sweep,
+  z:whip?.16-.12*gather+.18*kick:fold?.16-.08*gather+.33*kick:.19-.045*gather+.12*kick,
+  yaw:whip?side*(-.62*gather+.61*sweep):fold?.04*gather:side*(-.36*gather+.52*sweep),
+  pitch:whip?.10+.28*gather-.15*kick:fold?-.75*kick+.08*gather:.10+.18*gather-.16*kick,
+  roll:whip?-.12+side*(-.27*gather+.36*sweep):fold?-.06:side*(.10+.30*cut),
+  torso:whip?side*(-.32*gather+.30*sweep):fold?-.08*gather+.10*kick:side*(-.19*gather+.22*sweep)};
 }
 // Old weapon id is retained for saves. The sling remains held: draw, release the
 // pouch at the existing .24 release fraction, then bring the empty fingers back.

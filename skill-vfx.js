@@ -1,8 +1,8 @@
-import{meleeSwing}from'./weapon-performance.js?v=211';
+import{meleeSwing}from'./weapon-performance.js?v=212';
 import * as T from './vendor/three.module.js';
-import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=211';
-import{shadowCrescentGeometry}from'./shadow-weapons.js?v=211';
-import{spellShapes,streakTexture,crestTexture}from'./spell-shapes.js?v=211';
+import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=212';
+import{shadowCrescentGeometry}from'./shadow-weapons.js?v=212';
+import{spellShapes,streakTexture,crestTexture}from'./spell-shapes.js?v=212';
 
 // Three bowed tongues share one draw and one texture. A ground-level viewer
 // never sees the whole flame disappear edge-on, as with a single flat card.
@@ -180,6 +180,42 @@ export class SkillVFX{
   }
  }
  segment(a,b,color,width,life=.15,additive=width<.04,priority=0,opacity=.9,animation={}){const delta=new T.Vector3().subVectors(b,a),mid=new T.Vector3().addVectors(a,b).multiplyScalar(.5),m=this.particle('ray',color,mid.x,mid.y,mid.z,{life,size:[width,delta.length(),width],additive,priority,opacity,...animation});if(m)m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());}
+ // The combat caller can supply its collision-clipped samples. Null samples are
+ // deliberate occlusion gaps: never join a strand or a fan across them.
+ herbalWhip(origin,end,{angle=0,arc=.45,combo=0,pathId='',pathRank=0,points=null}={}){
+  const valid=p=>p&&[p.x,p.y,p.z].every(Number.isFinite);if(!valid(origin)||!valid(end))return;
+  let path=points;
+  if(!path){const a=new T.Vector3(origin.x,origin.y,origin.z),b=new T.Vector3(end.x,end.y,end.z),length=a.distanceTo(b),side=new T.Vector3(Math.cos(angle),0,-Math.sin(angle));
+   path=Array.from({length:13},(_,i)=>{const t=i/12;return a.clone().lerp(b,t).addScaledVector(side,Math.sin(Math.PI*t)*Math.min(.18,length*.045,Math.abs(arc)*.3)*(combo%2?-1:1));});}
+  const count=Math.min(16,path.length-1);if(count<1)return;const tip=pathId==='mycelialwhip_tip'&&pathRank>0;
+  for(let i=1;i<=count;i++){const from=Math.floor((i-1)*(path.length-1)/count),to=Math.floor(i*(path.length-1)/count),a=path[from],b=path[to];if(!path.slice(from,to+1).every(valid))continue;
+   this.segment(a,b,tip&&i>count-3?0xd2d59c:i%3?0xb7c982:0x6f8449,.022*(1-i/count*.55)*(tip&&i>count-3?1.3:1),.17,false,i>count-3?1:0,.77,{endColor:0x6a704c});
+   if(i%4===0){const p=this.particle('droplet',0xd2da9b,b.x,b.y,b.z,{life:.24,size:[.025,.038,.025],opacity:.65,velocity:[0,-.10,0],gravity:1.2,additive:false,endColor:0x777d50});if(p)p.rotation.z=i;}
+  }
+ }
+ herbalGust(origin,dir,{distance=0,previousDistance=0,arc=.5,returning=false,pathId='',pathRank=0,points=null,previousPoints=null}={}){
+  const valid=p=>p&&[p.x,p.y,p.z].every(Number.isFinite);if(!valid(origin)||!valid(dir)||!Number.isFinite(distance)||distance<0)return;
+  const direction=new T.Vector3(dir.x,dir.y,dir.z);if(direction.lengthSq()<1e-8)return;direction.normalize();
+  const side=new T.Vector3().crossVectors(new T.Vector3(0,1,0),direction);if(side.lengthSq()<1e-8)side.set(1,0,0);side.normalize();
+  const ray=offset=>direction.clone().multiplyScalar(Math.cos(offset)).addScaledVector(side,Math.sin(offset));
+  const folded=pathId==='venomfan_fold'&&pathRank>0,samples=points||Array.from({length:7},(_,i)=>new T.Vector3(origin.x,origin.y,origin.z).addScaledVector(ray((i/6*2-1)*arc),distance));
+  // Sparse feathered threads follow only the just-travelled wavefront. No solid
+  // sheet or range ring obscures creatures behind the fan.
+  for(const i of [...new Set([0,Math.floor((samples.length-1)/2),samples.length-1])]){
+   const p=samples[i];if(!valid(p))continue;const r=new T.Vector3(p.x-origin.x,p.y-origin.y,p.z-origin.z),length=r.length();if(length<.01)continue;r.normalize();
+   const older=previousPoints?.[i],tail=valid(older)?new T.Vector3(older.x,older.y,older.z):previousPoints?null:new T.Vector3(p.x,p.y,p.z).addScaledVector(r,-Math.sign(distance-previousDistance||1)*Math.min(.28,Math.abs(distance-previousDistance)));
+   if(tail&&tail.distanceToSquared(p)>.0001&&tail.distanceToSquared(p)<2)this.segment(tail,p,returning?0xb8a1ce:0xd6cae3,folded?.023:.017,.13,false,1,.58,{endColor:0x6c587c});
+   const width=Math.min(folded?.14:.27,Math.max(.06,length*Math.abs(arc)*.17)),mist=this.particle('vapor',returning?0x705884:folded?0x78598d:0x987cae,p.x,p.y,p.z,{life:.23,size:[width,folded?.17:.12,1],opacity:folded?.27:.20,additive:false,grow:true,endColor:0x62536d});
+   if(mist){mist.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),r);mist.rotateZ(i*.27);}
+  }
+ }
+ herbalHit(id,contact,{angle=0,combo=0}={}){
+  if(!contact||![contact.x,contact.y,contact.z].every(Number.isFinite))return;
+  const whip=id==='mycelialwhip',f=contactFrame(contact.x,contact.z,angle,contact,contact.y),sign=combo%2?-1:1,p=f.at();
+  if(whip)this.contactStroke(f,-.12,sign*.07,.13,-sign*.08,0xd6d9a0,.022,.13,.79);
+  else for(const s of[-1,1])this.contactStroke(f,-.06,s*.06,.09,s*.11,0xc1acd3,.016,.15,.61);
+  for(let i=0;i<3;i++)this.particle(whip?'droplet':'smoke',whip?(i?0x8eab5f:0xc9cf8b):(i?0x806491:0xb4a0c5),p.x,p.y,p.z,{life:whip?.23:.28,size:whip?[.027,.046,.027]:[.045,.033,.05],velocity:f.velocity((i-1)*.20,.12+i*.03,.13),gravity:whip?1.7:0,opacity:whip?.67:.33,grow:!whip,additive:false,endColor:whip?0x637544:0x584560});
+ }
  arcLink(a,b,{hit=false,focus=0,secondary=false}={}){
   const start=new T.Vector3(a.x,a.y,a.z),end=new T.Vector3(b.x,b.y,b.z),length=start.distanceTo(end);
   if(length<.001)return;

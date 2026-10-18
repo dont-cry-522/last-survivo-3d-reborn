@@ -1,4 +1,4 @@
-import{POISON as C}from'./poison-config.js?v=211';
+import{POISON as C}from'./poison-config.js?v=212';
 const EPS=1e-8,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function nearestPoint(p,a,b){const dx=b.x-a.x,dz=b.z-a.z,l=dx*dx+dz*dz,t=l?clamp(((p.x-a.x)*dx+(p.z-a.z)*dz)/l,0,1):0;return{x:a.x+dx*t,z:a.z+dz*t};}
 function local(q,p){const c=Math.cos(q.angle||0),s=Math.sin(q.angle||0),x=p.x-q.x,z=p.z-q.z;return{x:x*c-z*s,z:x*s+z*c};}
@@ -25,7 +25,7 @@ export class PoisonCombat{
   this.pods.push({id:++this.serial,startX:start.x,startZ:start.z,x:target.x,z:target.z,angle,releaseAt:this.now+delay,landAt:this.now+delay+flight,w:{...w}});return true;
  }
  addCloud(x,z,w,born=this.now){
-  const q={id:++this.serial,x,z,r:w.cloudRadius??C.radius,damage:w.cloudDamage??C.dps,born,expires:born+(w.cloudDuration??C.duration),settledAt:born,stillRank:w.stillRank||0,roamRank:w.roamRank||0,carried:false,angle:0,curtainUntil:0};
+  const q={weaponId:w.id||'sporelantern',pathId:w.pathId,pathRank:w.pathRank,id:++this.serial,x,z,r:w.cloudRadius??C.radius,damage:w.cloudDamage??C.dps,born,expires:born+(w.cloudDuration??C.duration),settledAt:born,stillRank:w.stillRank||0,roamRank:w.roamRank||0,carried:false,angle:0,curtainUntil:0};
   this.clouds=this.clouds.filter(q=>q.expires>this.now);if(this.clouds.length>=C.maxClouds)this.clouds.shift();this.clouds.push(q);return q;
  }
  land(pod){
@@ -53,7 +53,7 @@ export class PoisonCombat{
   q.x=x;q.z=z;q.carried=false;q.settledAt=this.now;const first=d.points[0];q.angle=Math.atan2(x-first.x,z-first.z);
   if(q.roamRank>=2&&d.points.length>1){if(this.bands.length>=C.maxBands)this.bands.shift();this.bands.push({id:++this.serial,points:d.points.map(p=>({...p})),r:C.bandRadius,damage:q.damage*C.bandMultiplier,born:this.now,expires:Math.min(q.expires,this.now+C.bandDuration)});}
   q.curtainUntil=q.roamRank>=3?Math.min(q.expires,this.now+C.curtainDuration):0;
-  this.fx('poisonMove',x,z,{fromX:d.origin.x,fromZ:d.origin.z,angle:q.angle,w:{id:'sporelantern',pathId:q.roamRank?'sporelantern_roam':'sporelantern_still',pathRank:q.roamRank||q.stillRank}});
+  this.fx('poisonMove',x,z,{fromX:d.origin.x,fromZ:d.origin.z,angle:q.angle,w:{id:q.weaponId||'sporelantern',pathId:q.pathId||(q.roamRank?'sporelantern_roam':'sporelantern_still'),pathRank:q.pathRank||q.roamRank||q.stillRank}});
   const rank=this.rank('poison_guard');if(rank&&this.now+EPS>=this.guardReady){this.guardReady=this.now+C.shieldCooldown;this.shield.amount=Math.max(this.shield.amount,C.shield[rank]);this.shield.until=this.now+C.shieldDuration;this.fx('poisonGuard',x,z);}
   return true;
  }

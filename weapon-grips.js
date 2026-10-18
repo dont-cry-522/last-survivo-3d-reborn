@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
-import {crossbowMechanism} from './weapon-performance.js?v=211';
+import {crossbowMechanism} from './weapon-performance.js?v=212';
 
 // Weapon-space contact points: the wrapped handle, not the model's origin.
-export const GRIP_POINTS={shade:[0,0,0],shadowblade:[0,-.035,.02],grimoire:[0,0,0],miasmalantern:[0,.015,0],sporelantern:[0,.015,0],briarpot:[-.235,.105,0],rifle:[0,-.065,.075],shotgun:[0,-.065,.075],crossbow:[0,-.08,.01],fire:[0,0,.045],dark:[0,0,.045],arcstaff:[0,0,.045],shuriken:[-.07,0,.06],boomerang:[0,-.13,0],harpoon:[0,0,-.08],hammer:[0,.015,0]};
+export const GRIP_POINTS={mycelialwhip:[0,0,0],venomfan:[0,.035,0],shade:[0,0,0],shadowblade:[0,-.035,.02],grimoire:[0,0,0],miasmalantern:[0,.015,0],sporelantern:[0,.015,0],briarpot:[-.235,.105,0],rifle:[0,-.065,.075],shotgun:[0,-.065,.075],crossbow:[0,-.08,.01],fire:[0,0,.045],dark:[0,0,.045],arcstaff:[0,0,.045],shuriken:[-.07,0,.06],boomerang:[0,-.13,0],harpoon:[0,0,-.08],hammer:[0,.015,0]};
 export const BRIARPOT_SUPPORT=[0,-.15,.035];
 export const SCYTHE_SUPPORT=[.008,.345,.02];
 const palm=side=>new T.Vector3(side==='r'?-.036:.036,.097,0);
@@ -32,7 +32,7 @@ const shadowGuide={index:[.09,.12,.055],middle:[.14,.17,.07],ring:[.20,.22,.09],
 const bookSupport={index:[.20,.26,.16],middle:[.27,.31,.19],ring:[.34,.34,.22],pinky:[.40,.38,.24]};
 const bookRead={index:[.12,.16,.09],middle:[.44,.46,.28],ring:[.52,.48,.30],pinky:[.60,.52,.32]};
 const fingerOrder={index:0,middle:1,ring:2,pinky:3};
-const fingerSpread={fire:[-.10,-.025,.055,.14],dark:[-.06,-.02,.04,.10],arcstaff:[-.17,-.04,.07,.18],shade:[-.15,-.035,.06,.17],grimoire:[-.06,-.01,.045,.095]};
+const fingerSpread={mycelialwhip:[-.04,-.01,.025,.06],venomfan:[-.09,-.02,.05,.12],fire:[-.10,-.025,.055,.14],dark:[-.06,-.02,.04,.10],arcstaff:[-.17,-.04,.07,.18],shade:[-.15,-.035,.06,.17],grimoire:[-.06,-.01,.045,.095]};
 export function primaryGripFrame(id){return(id==='harpoon'?underhand:id==='shuriken'?sideways:upright).clone();}
 
 export function fitWeaponToPalm(weapon,point,side='r'){
@@ -82,7 +82,7 @@ export function aimShadeGuide(d,blend){
 
 export function poseGripFingers(d,motion={}){
   const id=d.weaponId,h=d.handGrips,hasSupport=['rifle','shotgun','crossbow','harpoon','hammer','shadowblade','boomerang','briarpot'].includes(id);
-  const lantern=id==='sporelantern'||id==='miasmalantern'||id==='briarpot',caster=['fire','dark','arcstaff','shade','grimoire'].includes(id),gun=['rifle','shotgun','crossbow'].includes(id),pole=id==='harpoon'||id==='shadowblade';
+  const herbal=id==='mycelialwhip'||id==='venomfan',lantern=id==='sporelantern'||id==='miasmalantern'||id==='briarpot',caster=herbal||['fire','dark','arcstaff','shade','grimoire'].includes(id),gun=['rifle','shotgun','crossbow'].includes(id),pole=id==='harpoon'||id==='shadowblade';
   const kick=motion.kick||0,gather=motion.gather||0,latch=id==='crossbow'?crossbowMechanism(d.reloadPhase??1).hand:0;
   const released=id==='shuriken'?(motion.kick||0):0;
   for(const {bone,side,name,i}of h.fingers){
@@ -92,7 +92,7 @@ export function poseGripFingers(d,motion={}){
     const profile=side==='r'&&lantern?lanternHook[name]:side==='l'&&id==='boomerang'?pouchPinch[name]:side==='l'&&(id==='sporelantern'||id==='briarpot')?podCup[name]:
       gun?(side==='r'?handleWrap: id==='shotgun'?pumpWrap:stockCradle)[name]:pole?(side==='r'?shaftBrace:shaftGuide)[name]:
       id==='shade'?shadowGuide[name]:id==='grimoire'?(side==='r'?bookSupport:bookRead)[name]:
-      ['fire','dark','arcstaff'].includes(id)?(side==='r'?staffWrap:id==='fire'?fireGuide:id==='arcstaff'?arcGuide:darkGuide)[name]:side==='r'&&id==='shuriken'?dartPinch[name]:null;
+      herbal?(side==='r'?(id==='venomfan'?dartPinch:handleWrap):id==='venomfan'?fireGuide:darkGuide)[name]:['fire','dark','arcstaff'].includes(id)?(side==='r'?staffWrap:id==='fire'?fireGuide:id==='arcstaff'?arcGuide:darkGuide)[name]:side==='r'&&id==='shuriken'?dartPinch[name]:null;
     let curl=(trigger?([.28,.54,.32][i-1]+[.10,.16,.12][i-1]*kick):profile?profile[i-1]:[1.22,1.18,.76][i-1])*(1-release*.84);
     // The left index hooks the cocking slide; it returns to supporting the stock.
     // Pump and pole fingers brace a little at load, without sliding either palm.
