@@ -1,7 +1,7 @@
 {
-  "version": "212",
-  "build": "212-f925803315a0",
-  "bytes": 34626535,
+  "version": "216",
+  "build": "216-05b939951edf",
+  "bytes": 48661820,
   "files": [
     {
       "path": "OFFLINE_README.txt",
@@ -15,8 +15,8 @@
     },
     {
       "path": "THIRD_PARTY_ASSETS.md",
-      "bytes": 15248,
-      "sha256": "8b6ac349fac28383dd58709d1b1924bc1d4f824368ff2327d568ab1274e98e74"
+      "bytes": 22098,
+      "sha256": "a5f4719af2319ed8a81c0ebe1a2db33f40282440655aace40583aaba6260d008"
     },
     {
       "path": "actor-collision.js",
@@ -26,12 +26,12 @@
     {
       "path": "adventure-atmosphere.js",
       "bytes": 6376,
-      "sha256": "50d90721ec49619152e866d27ec31d042aef2c826cf6a55cbb933e838014446e"
+      "sha256": "27537e38d11d2da537bc02b5521d5c5ba4019413367d02557d6b49b7df38bf6b"
     },
     {
       "path": "adventure-camera.js",
       "bytes": 6110,
-      "sha256": "afc92bf4b5ac577d9207c0e483df1aff42e0d9aa3aac181ec45880d3fe129d25"
+      "sha256": "75e124cb795547acbe3f3cf438deb6172137b4f30c61966ba7247d7ab34a2402"
     },
     {
       "path": "adventure-campfire.js",
@@ -46,12 +46,12 @@
     {
       "path": "adventure-dodge.js",
       "bytes": 1609,
-      "sha256": "5ac51100c9d819520f9e5c6597c250c1751ffaef9e3ddb0d6bf0c6b2bef49569"
+      "sha256": "1beb285d056f7e2cfbae3fd9c7c272416adcd75b3af58182e0b432508f9a840e"
     },
     {
       "path": "adventure-ground-detail.js",
       "bytes": 59303,
-      "sha256": "a3d03641a1994766dee0e9f5bf50764337550a2f58a716ac4fefe46b17d54478"
+      "sha256": "98c089d6708eefd3f94e458a923fe49f7ff27843c527df3dcfc929146dbeb622"
     },
     {
       "path": "adventure-mobility.js",
@@ -61,12 +61,12 @@
     {
       "path": "adventure-overheads.js",
       "bytes": 4174,
-      "sha256": "70e683659cfd5b99abd161178e7c5ac85c740e0e492f2c087a2d300d4d0c718c"
+      "sha256": "92185480b724aaaad1ffa5889373ccd5b1ba9ff42937d44806396a6115c1bac9"
     },
     {
       "path": "airborne-enemies.js",
       "bytes": 20448,
-      "sha256": "29f165a0434a21ad6a6b9bee57f2fffbc0c107862b0009e863f37ff071a8a9d4"
+      "sha256": "c23a9cd14af36f865618f4a5ddd96a19c9cc9d3d4568c798adf838e0ee05d0a8"
     },
     {
       "path": "assets/audio/ash.mp3",
@@ -349,6 +349,106 @@
       "sha256": "e8555e74da534f0c90d309851f3cfb42bc35fe2cb49b0e1834a324f87a9f2fd4"
     },
     {
+      "path": "assets/characters/rebuilt-v215/LICENSE.txt",
+      "bytes": 852,
+      "sha256": "ae01669b23206aa57a1993ee679d87598fc70375d0e24f2851f22ff48b5f8f0d"
+    },
+    {
+      "path": "assets/characters/rebuilt-v215/scout-attire-f0ec80c8d457.glb",
+      "bytes": 1210332,
+      "sha256": "f0ec80c8d457afff09f0486ccad9ade9fbf919a03a5e46ccd9a113c4c5c860cd"
+    },
+    {
+      "path": "assets/characters/rebuilt-v215/silver-attire-8b9117e09dae.glb",
+      "bytes": 891904,
+      "sha256": "8b9117e09dae321e78355262e6610a2ef66539dcda32a93c6b1c8fe941196643"
+    },
+    {
+      "path": "assets/characters/rebuilt-v215/sources.json",
+      "bytes": 4302,
+      "sha256": "e84033a89859841ff570eb6ea84bd8d121bcdb12dea5c3081850b070e79d53e6"
+    },
+    {
+      "path": "assets/characters/rebuilt-v215/tide-attire-ddd0b5187de6.glb",
+      "bytes": 801148,
+      "sha256": "ddd0b5187de68eec101a6e03529867e8ddc7eca03365d7848d28e5ea70253051"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/LICENSE.txt",
+      "bytes": 1101,
+      "sha256": "55fb3d53bcc13b96f9a3a376b4f1eac55cb17f68fadbb2c0d539e88e4ffaac10"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/lingya-head-3befdfcdf749.glb",
+      "bytes": 830064,
+      "sha256": "3befdfcdf7496a925af47e7a42f656b244400ed830289baa729b835bd8ffcca4"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/mirage-attire-220bc184b2f6.glb",
+      "bytes": 385096,
+      "sha256": "220bc184b2f6a303a48e337114397289167dbadc12cf398015e2c9be01e1c775"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/mirage-head-9e9f39d98310.glb",
+      "bytes": 551392,
+      "sha256": "9e9f39d983106824ce02618c097b1726bba5060cdeec478de511163d01d6b7e8"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/scout-head-931e0a29c543.glb",
+      "bytes": 774560,
+      "sha256": "931e0a29c5438325fbd1d5266153a66f4424638fde5e790c2701e03e8232e22f"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/silver-head-8a2d854ea734.glb",
+      "bytes": 975176,
+      "sha256": "8a2d854ea7347bb7da4d4a3bf5ae17ae59931297ce34783bc7cedf2fb6fe24d7"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/sources.json",
+      "bytes": 5148,
+      "sha256": "d081e81dab22ab99000174178ff8386f390cb5e77deba004f6d4078d8331b315"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/tide-head-f447dd5be3dc.glb",
+      "bytes": 1067180,
+      "sha256": "f447dd5be3dcf6b0ede692674d6920a3af34e304744eca28d7d0c2b86a70031c"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/wraith-attire-8e6441d9f08c.glb",
+      "bytes": 385412,
+      "sha256": "8e6441d9f08c5b021d1d016772cbdac7b95829a7b52645b49fea3c4ba74d7c23"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/wraith-head-5abae9d1d6e2.glb",
+      "bytes": 344264,
+      "sha256": "5abae9d1d6e20407865232a3d97ebf6954e2ddaf3dd4f28892adea2125d8160e"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/wuling-attire-3ed22024413c.glb",
+      "bytes": 384456,
+      "sha256": "3ed22024413c9bab2a17dfc8c7262151518e45b0023544ab79d7b6ebe421862c"
+    },
+    {
+      "path": "assets/characters/rebuilt-v216/wuling-head-7574d0711c97.glb",
+      "bytes": 358600,
+      "sha256": "7574d0711c97b239b107161203c93876eb184120522296be0ce7c8b5391689a5"
+    },
+    {
+      "path": "assets/characters/rebuilt-v217/LICENSE.txt",
+      "bytes": 1473,
+      "sha256": "da2c48944a579e5726d5655e16b8c17bcf9ada92746f0aaf64b77b60eaba5c93"
+    },
+    {
+      "path": "assets/characters/rebuilt-v217/lingya-attire-4383fd460fb8.glb",
+      "bytes": 528956,
+      "sha256": "4383fd460fb84d70f49e5342d5f113784ef164b964011cde2627af764820f6ca"
+    },
+    {
+      "path": "assets/characters/rebuilt-v217/sources.json",
+      "bytes": 4648,
+      "sha256": "82c9279f0c3b1190bf4d33c2a6ca07b7f87c1b5e060912957d45cd7e35fdeeee"
+    },
+    {
       "path": "assets/characters/scout-base-f5733a01d0f9.glb.gz",
       "bytes": 319394,
       "sha256": "f5733a01d0f926463ff9f6c199aff248543c0262ff24fa13bea471d17dbf8e22"
@@ -624,6 +724,51 @@
       "sha256": "f56d762a1507754752abf164cc12acbc1e87ce87fa609ac44b98a1b0037c89d8"
     },
     {
+      "path": "assets/environment/lighting/forest-1k.hdr",
+      "bytes": 1900770,
+      "sha256": "6c943ddd683de2f3d9aaa62596961dfccdc9cf206adebfc198e70235ae5707cd"
+    },
+    {
+      "path": "assets/environment/lighting/sky-1k.hdr",
+      "bytes": 1637206,
+      "sha256": "5477b7dbb2aea4a6947cb36b96339c119f90bf36a03b039af3254b5e6a22896d"
+    },
+    {
+      "path": "assets/environment/lighting/sources.json",
+      "bytes": 1632,
+      "sha256": "2b75ccf71c683b94f26ddce75f0d1e144612f400a5cb5c16498a24284789f577"
+    },
+    {
+      "path": "assets/environment/models/CC0-1.0.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "path": "assets/environment/models/LICENSE.txt",
+      "bytes": 353,
+      "sha256": "bf2cd837195b9b5f6c988439758d35da10e8724755d8dc587fa0a95bcbfe7ce0"
+    },
+    {
+      "path": "assets/environment/models/old-stump.glb",
+      "bytes": 384536,
+      "sha256": "f93312d443f8c48d7833e726573eeb141a7c10fd1effe4894c536df1451186fc"
+    },
+    {
+      "path": "assets/environment/models/sources.json",
+      "bytes": 14591,
+      "sha256": "04deee1bdbd6891c87c2613287511681e3324ff53823c57f4629ff59a7d5075d"
+    },
+    {
+      "path": "assets/environment/models/weathered-rock-a.glb",
+      "bytes": 252188,
+      "sha256": "df2a12a17ae3cc902d96f8487c724fe58e3d8fa67a6b65943ca97631c5886be6"
+    },
+    {
+      "path": "assets/environment/models/weathered-rock-b.glb",
+      "bytes": 250108,
+      "sha256": "f4ef96c7221e1c964262c704004da83761ca3da9bba5c5f8707ea518f3f4c2d3"
+    },
+    {
       "path": "assets/environment/rock_01_diff_1k.jpg",
       "bytes": 688083,
       "sha256": "0b5f0418eb1e686190c5d33bb54c400b1f9ed58813b5e34aa5e573a5197302b5"
@@ -650,8 +795,8 @@
     },
     {
       "path": "audio.js",
-      "bytes": 25999,
-      "sha256": "8ecb036a72e562a16bf59bd4531c9fa5636c3c4164ec2a08aa4ecf486d64a8d5"
+      "bytes": 26003,
+      "sha256": "6369498c459ee911475bfe6ca2b4ad81e353a0f067d950e7e2046ed78687cd15"
     },
     {
       "path": "badger-motion.js",
@@ -659,19 +804,24 @@
       "sha256": "b9fb4f6cccd261f114131e280fe5081328f70bb664f86f131f780267217c8ddd"
     },
     {
+      "path": "badger-surface.js",
+      "bytes": 4560,
+      "sha256": "d3359a9af04ce7dbccaf709356c7733ec633cada4d6956cd4f70731801bb1449"
+    },
+    {
       "path": "battle-guide.js",
       "bytes": 4451,
-      "sha256": "8c68a0d450c964fda48082a147ac0c2c563db97b91e938b93762a9d4efa0ab99"
+      "sha256": "62a5b4f4f950be7ce0ff7b20acf050c13d62088c49532582ee5e879e641d1e63"
     },
     {
       "path": "beast-companion.js",
       "bytes": 11046,
-      "sha256": "cfe290259d352e8aa2baf71b0d56f281e886bf68d65e67b36d6f83edf6275188"
+      "sha256": "bc6a3237bd5873b2b5f75a64af2909f9fc5168edbb78f360c42e9901ecec86ca"
     },
     {
       "path": "beast-model.js",
-      "bytes": 11545,
-      "sha256": "7d0d9cfb1a9f95b963efcc8b0182577547e2fdffe64ce60850b04f76abd05158"
+      "bytes": 10812,
+      "sha256": "cbf026b3a3d47f4f36f82a25410e542816fb5cccfcb20cadc07959d2b830f17b"
     },
     {
       "path": "biome-music.js",
@@ -681,22 +831,22 @@
     {
       "path": "biome-places.js",
       "bytes": 10385,
-      "sha256": "3592d1e6c098b9bef2fb2b4ccb5b77a3226a0ccf9e3d788933ba9c0cb61df718"
+      "sha256": "f7c05e3458e535375b91137d3a21fee139162c6f9a22071df58dcbedd02ce5e9"
     },
     {
       "path": "biome-scenery.js",
       "bytes": 30003,
-      "sha256": "15b3c049a8f7ff8b082789f63bcaed6ed49108ea25c60a0e20ab01126abe3eef"
+      "sha256": "8f010f82a9ed52604cdf3c18e237eef83393f61abdbeabd82debe909dcde354d"
     },
     {
       "path": "boss-appearance.js",
       "bytes": 28190,
-      "sha256": "e50a20971c0df9915e8c75fd7e5f50e2c535e24c7ab84783987a5d9653e2ee09"
+      "sha256": "97bada7b9a372d060992da2853a8553b625a6946afd2e63a36ee45c0059abbde"
     },
     {
       "path": "boss-combat.js",
       "bytes": 6425,
-      "sha256": "fd59ed125575912c486e35a8b323b634d2ef7f144f7a57e89653f0f0529ac891"
+      "sha256": "bd806e2c87f572127d03ccd92ae85a1684f524c8af9eac03955582f1f35cb5e9"
     },
     {
       "path": "boss-effects.js",
@@ -706,12 +856,12 @@
     {
       "path": "boss-expedition.js",
       "bytes": 492,
-      "sha256": "2402ad2ef5f788ff1ff2686a29cf82d42328a83866a247b69b9216431de312d4"
+      "sha256": "3280930355f2ad0e5624f1b1c9922a7e43ec183454944d87c3978571626481f1"
     },
     {
       "path": "boss-patterns.js",
       "bytes": 3453,
-      "sha256": "3a58ab99abfc887cb480b0863c67467752ff88a75277032b90cfd8b70763dc49"
+      "sha256": "bd925d0d3159729c9f92223e4a902e2369d89198c99b88be92aaa8e17428680e"
     },
     {
       "path": "boss-roster.js",
@@ -721,7 +871,7 @@
     {
       "path": "boss-variants.js",
       "bytes": 21807,
-      "sha256": "cc59f976e461961cf089dc15c19847c0f4c7452e74010ddcf3a350908cea9a51"
+      "sha256": "e8e4e9a8132c602747378053b23d638693ae03eef19198cbd4ec208b8e846814"
     },
     {
       "path": "character-assets.js",
@@ -730,18 +880,18 @@
     },
     {
       "path": "character-loader.js",
-      "bytes": 2490,
-      "sha256": "97f47227dfcde67c5e0568fd83f2b949b080a94626267ec4d6a54949c225218d"
+      "bytes": 2497,
+      "sha256": "64599980b39bee1247d27ba58e6264f343dce84fe28a68ccebc85075e92ca8a4"
     },
     {
       "path": "cinematic-renderer.js",
-      "bytes": 7390,
-      "sha256": "a33a7a08afbaa8803b17c423fb912d501d8c522476224c1d996be7c48277a4ef"
+      "bytes": 7356,
+      "sha256": "b0f3e6111a3830d59bae3599a85ba3d066303dc0cd0cac77960aaa71a8c9a5b1"
     },
     {
       "path": "climate-landforms.js",
       "bytes": 13090,
-      "sha256": "6d0961f690117d28f75e4eb4de781e4650bbea958b3da12c92dba1c213bfe6e2"
+      "sha256": "57bfd2749d36411449a90d0fe2bfcec0a9e3a300ad3fdfb2d910462f04dc5a9d"
     },
     {
       "path": "coast-layout.js",
@@ -751,17 +901,17 @@
     {
       "path": "coast-models.js",
       "bytes": 26543,
-      "sha256": "0e5f72f803189e6f2922078d4fc1eba40e3f9afa7cd54b88349815efd6593bc3"
+      "sha256": "c2e76451afb7f07939e01f0aa822f1121e1ca83a3c04caa6f4029a82016b82a1"
     },
     {
       "path": "coast.js",
       "bytes": 3330,
-      "sha256": "ab90492b58192be9cff7eb500977238fc2f6a6d72f13a3918863cd3aab372c6a"
+      "sha256": "da561466e568f5b7d8f7aebf74b4eb8155ed8c8503026f9e48859f516c184f3e"
     },
     {
       "path": "combat-prewarm.js",
       "bytes": 3309,
-      "sha256": "82c1a13f627fec43e824439c418d681682c33f4cd7a7573f464254c1ccc571bf"
+      "sha256": "29e93591ee0af13babe78a20a114619643761ceb6c769e6c20f248712dc486ef"
     },
     {
       "path": "companion-audio.js",
@@ -771,17 +921,17 @@
     {
       "path": "confluence.js",
       "bytes": 12199,
-      "sha256": "c9e7a802172d1caf63abab352f1cd0714c97e51a20796475c7725832228fd2ab"
+      "sha256": "ef7114f8c8ccaf3790e110c19bd386e69ac92fd8152aa2213e7db2a9a44bf5d1"
     },
     {
       "path": "creature-anatomy.js",
-      "bytes": 10164,
-      "sha256": "6b414cbbbde15e8e302b71e5eb9847fd390d671be14111e6032f9c2c23f6b679"
+      "bytes": 11527,
+      "sha256": "1345d318436d46717cc790409942624c1042d9b7b8da18e3b4ada27315f93188"
     },
     {
       "path": "creature-forms.js",
-      "bytes": 15391,
-      "sha256": "223e2bd560a2ebc907c191fc30835b451d39835a5d0b7039a7c506a4e3c390ef"
+      "bytes": 15947,
+      "sha256": "154fcbe1b3ef27f434eda3d1ae8a94034b74213ae0a21713954b3495e6154f33"
     },
     {
       "path": "creature-gait.js",
@@ -790,13 +940,18 @@
     },
     {
       "path": "creature-surface.js",
-      "bytes": 7743,
-      "sha256": "b07410e1b8d8a52abaf0751199598f624030c19f93b3c3a3b694ec08a5ee9016"
+      "bytes": 7750,
+      "sha256": "ac592b91e5181c9b44b0f8de525bc31b86c062319e6aaca29904de048def7d3d"
     },
     {
       "path": "discovery-scenery.js",
       "bytes": 9910,
-      "sha256": "38fbb51056e86c8260a0d990dae6d1cca826911ab84c3f902053766a2b3ee811"
+      "sha256": "cb86769aec0e9c5bd4a07d7d185e1e151fa8f931b201927709ec53cca34ecc2b"
+    },
+    {
+      "path": "district-models.js",
+      "bytes": 6665,
+      "sha256": "f25fa6b887e66568258471473cd2fbdad910ee1a84aa16c54aedd2349e5982b4"
     },
     {
       "path": "dodge-motion.js",
@@ -811,7 +966,7 @@
     {
       "path": "enemy-appearance.js",
       "bytes": 33529,
-      "sha256": "5b4c46b1cc16b80b08bff4d4d6e167b0502fab05d72cac590078c3e556cc208f"
+      "sha256": "93b40ab0a9ac730737e5480ea239f8cd1d4776f988dcd0a0c38c144fae34a24d"
     },
     {
       "path": "enemy-audio.js",
@@ -826,12 +981,12 @@
     {
       "path": "enemy-feedback.js",
       "bytes": 5431,
-      "sha256": "16dc9988113b538aa510ab9ef21b4cad676dcfa7712c86014c377b96ebedb858"
+      "sha256": "0d042fc4f028445653e7cca305bc9b41dd71bcd6a6376fa602a0c3f63d5a261e"
     },
     {
       "path": "enemy-motion.js",
       "bytes": 20208,
-      "sha256": "012330201827aa078ce42ba136b9a69eef3965f933fae35680c9e8985664cbdb"
+      "sha256": "02b61f80093ada8116c14a34b2ed4a786fd59fd59ab14619ff93b5572abb74f9"
     },
     {
       "path": "enemy-surfaces.js",
@@ -839,49 +994,59 @@
       "sha256": "e55830f7ee8dbf5a2b143dabd099820d275042652c566ffb918ff388d85a147e"
     },
     {
+      "path": "environment-assets.js",
+      "bytes": 8817,
+      "sha256": "056da2e0a45e0854d75d94f49749fe288b01ba587b58e0b9be0795d266c0c636"
+    },
+    {
       "path": "environment-clusters.js",
-      "bytes": 25222,
-      "sha256": "397a31e49a13a254dfcb4176e6c613fadc291447186cff8f958d2a9b028e36cd"
+      "bytes": 25423,
+      "sha256": "30eab2ada4fd39d7ac2a41ee99ae1345c62c2b257ca9d9938501d3f81aa07aef"
     },
     {
       "path": "environment-grounding.js",
       "bytes": 20288,
-      "sha256": "12f20988cbba825491be33b89c35b8345140b3b6f9efe80b9f57168399670780"
+      "sha256": "afa8dca8ac118d65ae637d71e321326522c39248057796d46a6b532f8c725b16"
     },
     {
       "path": "environment-impact.js",
       "bytes": 11715,
-      "sha256": "c42e5285c0450d206520057b7be963ad906752427fd0ce732ac2c873768601c7"
+      "sha256": "4492145c650e8ea3877bd3810a825611d7d45d7e650402c150870a846b78927d"
     },
     {
       "path": "environment-lighting.js",
-      "bytes": 19528,
-      "sha256": "089f3c1ad382466f27f6f860fb768da7c55d3fddfac22d406007b526c771576c"
+      "bytes": 20977,
+      "sha256": "4892ff4dc98ebcd3c91a2abab718c3fbe58fc57220bb5028aa586aa0042c31c3"
     },
     {
       "path": "environment-props.js",
       "bytes": 17113,
-      "sha256": "5098e39c13fd30ca231f18c02d171774eedb114b3f172cec955cf1fb70239bcb"
+      "sha256": "dfbc2b16a5239476834c7f8d8f267c2950ed7b437f464e54bbc856ab220448c2"
+    },
+    {
+      "path": "environment-reflections.js",
+      "bytes": 3855,
+      "sha256": "b779fb0f14681b5388c34137cf01a2d26c7d2cf6336272bb12c9f2cdd1f2cea9"
     },
     {
       "path": "expansion-models.js",
       "bytes": 20106,
-      "sha256": "2df13eb4dfd372b34dd61a1ac19c034b322859403184d4b76fc7e4d2a8e6deed"
+      "sha256": "f4ae42306f8b73c06d84ca645d1901bd9071847f5490fcaed7b7b94a71a3ff48"
     },
     {
       "path": "expedition-brief.js",
       "bytes": 1011,
-      "sha256": "4662c49150c936df608596bf57f7b08c40bc06d91882f5acb9fff730670046a5"
+      "sha256": "707587bad08611fee1272a0cc0c32e94fc885fba4db275bc8f80d8c047b243c3"
     },
     {
       "path": "expedition.js",
-      "bytes": 5613,
-      "sha256": "86580031f07749d63cb9daf92e180a677eb1c311d0acdaa37121d4ee5c53f3f2"
+      "bytes": 5615,
+      "sha256": "6c5e0123c4cd7a1bb8637be0dea25a3472357fe1f2167e1d277970a341f44576"
     },
     {
       "path": "exploration-composition.js",
       "bytes": 12375,
-      "sha256": "568f43182a523949deb5125f8ff3d69b924c39231778c8b45aa317df8d5b55ad"
+      "sha256": "deef3c8ea71765ed571c1bd69f6542475d39ffa3ea3f6c46aec1b74463c71444"
     },
     {
       "path": "exploration-landmarks.js",
@@ -891,7 +1056,7 @@
     {
       "path": "exploration-routes.js",
       "bytes": 13129,
-      "sha256": "5de1bc1a36684b1fe94b86c2a8aebacdc800cd01c42f6618857c86c9c6a13148"
+      "sha256": "31a505c40fcd4367395317614567bbd498e4f5327e39032e7b414c9ec45f2d81"
     },
     {
       "path": "fern-surfaces.js",
@@ -900,8 +1065,8 @@
     },
     {
       "path": "first-person-view.js",
-      "bytes": 49625,
-      "sha256": "e40c09eaa36c74f4e57148dd29686e16c7bf3e05b8b78ec10b285b002abbb240"
+      "bytes": 50161,
+      "sha256": "504f3f4f34c4cf9e5b1556c66d7c2e78d5d3d39771680d79887e4e57f3a38b0b"
     },
     {
       "path": "forest-floor-relief.js",
@@ -910,8 +1075,8 @@
     },
     {
       "path": "forest-habitats.js",
-      "bytes": 4863,
-      "sha256": "f2a75757813d4161b25cabb5d0e27d8a2c52e4482c6e26fb81815498e6262745"
+      "bytes": 4990,
+      "sha256": "b3603f9683e95e3d1b276dba84eaece19de46af8dbc01f1b7565e74690f179d6"
     },
     {
       "path": "forest-stream-layout.js",
@@ -920,13 +1085,13 @@
     },
     {
       "path": "forest-terrain.js",
-      "bytes": 16023,
-      "sha256": "8185419db15ac7bd9bfa2677ffad6b2f2f7b74c9e4048b950f8710d299955667"
+      "bytes": 19372,
+      "sha256": "0ded192791d5334c4bffaa1288d9edc0fd47d8b4203576dac9d3d041ac2f58d9"
     },
     {
       "path": "forest-vista.js",
       "bytes": 16773,
-      "sha256": "9be4966c5b4802f5aebd12574a8bcd0266161782de06fe6ecaa890234fb2bd47"
+      "sha256": "c7403a0c810fca267adb5d1474d8d62721150042db6ae0c58c040a3da70e0dcd"
     },
     {
       "path": "ground-cues.js",
@@ -941,12 +1106,12 @@
     {
       "path": "guardian-model.js",
       "bytes": 8893,
-      "sha256": "ee3e82c748ea824fb92cd5079d29e3a45f77adee2aecd94d043f59cbf9357845"
+      "sha256": "1399207bb138971a7da419be601d54278246f950c372fd5390feda3a3e89c412"
     },
     {
       "path": "guardian-motion.js",
       "bytes": 1969,
-      "sha256": "cb3480b44c535dd9eab98cccdad448057f6d6ec8c097f8d61e966e902bc05c2d"
+      "sha256": "048da92501cb495c483ab3a00eaf162f6ee88b7e87db2cbc2b5ac16012134039"
     },
     {
       "path": "gun-handling.js",
@@ -956,22 +1121,22 @@
     {
       "path": "harbor-bank-layout.js",
       "bytes": 5055,
-      "sha256": "2ab910b7e707d895c67e4bd2a993bdbcb5997fa742ba818c25ed206a58386273"
+      "sha256": "0d1e3585874698a7fedaf97ec82fa0ad3e34ebb2f7deb5384da24a804f5ec8f8"
     },
     {
       "path": "harbor-bank.js",
       "bytes": 5069,
-      "sha256": "0611f91b4798cfdbecb04f39748fb5a4d242a9a707134d0afd9e2de0c9cf06b8"
+      "sha256": "d144917d51d37fa45354c5817e76f5f085c65e935ac715b8dd285bc3404e8b87"
     },
     {
       "path": "harbor-horizon.js",
       "bytes": 20841,
-      "sha256": "df03caee5bfe5a0bc8def0cce3cde428019ed80a84b233fab466108db0e7c940"
+      "sha256": "77aac4becf4d1a53b449dd38c58f380d1f99e02ad64064621721298a7065dd03"
     },
     {
       "path": "harbor-life.js",
       "bytes": 11082,
-      "sha256": "9ed5fd5c59699e47ac2e7f0a91b78e3862cb17e962c380c2afc4334d5d3ea7c7"
+      "sha256": "8a353317eba320fb9aed9900a17a43569ea58c8ef1e67fdefb423fc73c618072"
     },
     {
       "path": "harbor-place.js",
@@ -981,37 +1146,47 @@
     {
       "path": "herbal-weapon-models.js",
       "bytes": 7911,
-      "sha256": "5014ab7ebc77399dcd3922904651f9cde7160cdc263c9a78e9df2bfb3a63a4d4"
+      "sha256": "b722636ebd6f51d55da88df2d3cbf36c92e8aa63aa30cde92afe73b2b4efb6a7"
     },
     {
       "path": "herbal-weapons.js",
       "bytes": 3665,
-      "sha256": "a048128f5e7d16f7a3d29fcd32c52b55df17cfbf77ebe3dc2f75bc1a9e7ea28a"
+      "sha256": "5da1cb13ac1008e4ff8845bf0cbf3b2999d6fc1c2e46acc7adb10f3a53f99d55"
     },
     {
       "path": "hero-dodge.js",
       "bytes": 3215,
-      "sha256": "95f1fad9ce3a6e1600251fbcd0fe63687eacbc531641862edede13e925197223"
+      "sha256": "9c1b06964285bca2a70ff1f8a7da7d4fd49696faab48fefe7608fa7ef7b7ee65"
     },
     {
       "path": "hero-finish.js",
-      "bytes": 4605,
-      "sha256": "ea7049b248c8bcb930053b8c66e252ebc9df9854687cdc1b38c6640eec972965"
+      "bytes": 6647,
+      "sha256": "47bcc2ab95a8c817c75c361e08c344227d2b3e9432eb697d57a5d2a3bf0eb209"
     },
     {
       "path": "hero-identity.js",
       "bytes": 10388,
-      "sha256": "4d251d1723b6c7b140ab7f3791af0e4ba1834592e4b602294d1a357707829a4d"
+      "sha256": "a4e94014d382721469be8c424f2003e2eeb4bc106bb6e3819cddd60a44dc5a0c"
     },
     {
       "path": "hero-model.js",
       "bytes": 32131,
-      "sha256": "092c0a3fa820f790f4d30644edc22159030f9d4c553bba514bea2b479f9a6b5d"
+      "sha256": "6ad5b8a26de623fea556407cca4e600e373b0456ccd149deab6ac4eeb654401e"
     },
     {
       "path": "hero-preview.js",
-      "bytes": 5602,
-      "sha256": "b662c5b225562b3cc37bb5031fed9f34252d85db694b8b38e4fea46622a150ba"
+      "bytes": 5994,
+      "sha256": "58dec5ba873bf7db90dad20c1ac34dd90c5d8a389c0d18e1191c3a6bc1cd341a"
+    },
+    {
+      "path": "hero-refinement-assets.js",
+      "bytes": 3850,
+      "sha256": "66302a2c20c760c9032ad1a9da8895b0c57cf8e9e25fbd2c03fa11b0117d3b1f"
+    },
+    {
+      "path": "hero-refinements.js",
+      "bytes": 4909,
+      "sha256": "17b2d098c74ad6d9692c08f208f94b4b29db5bc5bb6831553efa626a94a40e7e"
     },
     {
       "path": "hero-rest-surface.js",
@@ -1021,7 +1196,7 @@
     {
       "path": "hero-skills.js",
       "bytes": 6834,
-      "sha256": "569363461a7542d0ad73671b24817d25c46e3c38bb790f6a03c8424f9ba7dde3"
+      "sha256": "3d23f83a104210590ff7cb739574e7a94d03f80193217d5a950085b0b5882083"
     },
     {
       "path": "identity-motifs.js",
@@ -1030,8 +1205,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11778,
-      "sha256": "2f3d0ca7b6e97308cc1f90668a299b33a190ba804e99c8faf065763f1bbeab9c"
+      "bytes": 11969,
+      "sha256": "6afece2839b59f24adabf82a069b22bc1fc36afd7bbab8e70556baa047856a0a"
     },
     {
       "path": "lingya-appearance.js",
@@ -1040,8 +1215,8 @@
     },
     {
       "path": "lingya-face.js",
-      "bytes": 3187,
-      "sha256": "7278804a9ab8655fcfe827f640179f6dcc5ab082c3885cbdb4a64c55b24ff6b3"
+      "bytes": 5225,
+      "sha256": "e052945686dec248290ead0c6874e1b6f1475755b3dfa9435760e270e9d040e0"
     },
     {
       "path": "lingya-hair-crown.js",
@@ -1050,13 +1225,13 @@
     },
     {
       "path": "lingya-hair.js",
-      "bytes": 5634,
-      "sha256": "5ef354750f49667fbe5a183de4bcf78738cc807e596bba2dd6c556217c4a8d44"
+      "bytes": 6004,
+      "sha256": "e325f917ad6d853a0a2292beedf90723c1b3e7fee2adea3a20fcedf0a782cfbd"
     },
     {
       "path": "lingya-motion.js",
       "bytes": 2731,
-      "sha256": "db341e3cf4b610b1fef23f4a8901f021f52995d3fbaf151870439755aa15f339"
+      "sha256": "33884f9c73341abcfaecab77af8bc8584534f54a349db5b075b7d8ef37a04be1"
     },
     {
       "path": "loading-screen.js",
@@ -1066,12 +1241,12 @@
     {
       "path": "lobby-landscape.js",
       "bytes": 3015,
-      "sha256": "c94397e58426584445356dadbb1315c84723ac27231651415028ee8c2cb75b3b"
+      "sha256": "7511b059d6f02897858204eeb932990ebf6cdc3a38864c37469213a43b22893c"
     },
     {
       "path": "main.js",
-      "bytes": 219498,
-      "sha256": "491dc4a91479cf4b27edb48d4f26951786006ca7f8139ea0cf87574e2e7117a1"
+      "bytes": 222409,
+      "sha256": "09bb5506f848365f4d97d5c93b4e2b7b1963c2086ee62bb741f2714e792bc693"
     },
     {
       "path": "manifest.webmanifest",
@@ -1081,17 +1256,17 @@
     {
       "path": "map-discoveries.js",
       "bytes": 11891,
-      "sha256": "58c5745a4ba2d55878748a42bc04736aa2e86a31826ff930502ea30078bf4b22"
+      "sha256": "1b638d3d75896b952985a56307d3f2b4416442c8459f6430c4a0f113bc0f6315"
     },
     {
       "path": "map-districts.js",
-      "bytes": 7144,
-      "sha256": "51e683d7652c08dac1bceaadc2ba3b235ea6beb6db5252d1abc36e116b9e01f0"
+      "bytes": 8595,
+      "sha256": "e1bd143d7f8b129481f44b9a0c0df3dda283862f37b0c9c9d5d0db891f962adb"
     },
     {
       "path": "map-enemies.js",
       "bytes": 8452,
-      "sha256": "69592e19a55e55c3ce99d23fe8de394ec9cbefc6ef55027ed4b83b9be1f50b11"
+      "sha256": "e19aea36cc4dc66f4321179795b29b310371e1f930038c4e06313d796dc6dc77"
     },
     {
       "path": "map-events.js",
@@ -1111,12 +1286,12 @@
     {
       "path": "map-navigation.js",
       "bytes": 2522,
-      "sha256": "72ce37ef36687313cc0cdc2c32df36397c38d8f90db2d06bbf9baf4b307654db"
+      "sha256": "38a255661d33fe8d0e6725bdb02b4703ec1b7c058757fb0e3a302921b35f0b71"
     },
     {
       "path": "map-tactics.js",
       "bytes": 13462,
-      "sha256": "4e6c37bc73a8ec2ebd1d3cc8662ea795d2d2a41a8c690ee2e2ff66cc6b0b52a7"
+      "sha256": "857b7335cc535e9e9bb4dda7acaa11b719c55537215be59ef3944c8affcb8afe"
     },
     {
       "path": "material-sfx.js",
@@ -1126,12 +1301,12 @@
     {
       "path": "melee.js",
       "bytes": 935,
-      "sha256": "c6335636821cda1c508c1c5c2288b3eaca6c144547c9fb7eba01c54604b7767b"
+      "sha256": "2d5a4f4e39c75cf0c7e7a26bacc117f29fedadf8681b032d2718e8b3fd168a71"
     },
     {
       "path": "mirage-appearance.js",
-      "bytes": 17980,
-      "sha256": "eea9225e1cb465496463780ce2b7489adfd41b2e20596276d269faefab0b8570"
+      "bytes": 18689,
+      "sha256": "66f16105cfc8aae231130e262dc6d4b69e47b6169c1c4bb8accd1d9b781a8708"
     },
     {
       "path": "mirage-audio.js",
@@ -1141,7 +1316,7 @@
     {
       "path": "mirage-combat.js",
       "bytes": 8736,
-      "sha256": "19876bb1cc0c9cf2cc0b16eeb6981c98c3b5b6b30f1aef5520bf5d2f5bedf35c"
+      "sha256": "27e0af53a455f96efa6efef46da18d260fa29cd6e0a3c60944f4b42d5aee1e58"
     },
     {
       "path": "mirage-config.js",
@@ -1151,7 +1326,7 @@
     {
       "path": "mirage-vfx.js",
       "bytes": 11387,
-      "sha256": "41acdac5a18bda586a76f541f5934dcd6bf861446fa1a3d81698efd97f24560e"
+      "sha256": "cbbf3b9406435b49547d2f344c54659ea6189f870f98619a474af62a8ac63c45"
     },
     {
       "path": "mobile-display.js",
@@ -1190,8 +1365,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 11778,
-      "sha256": "2f3d0ca7b6e97308cc1f90668a299b33a190ba804e99c8faf065763f1bbeab9c"
+      "bytes": 11969,
+      "sha256": "6afece2839b59f24adabf82a069b22bc1fc36afd7bbab8e70556baa047856a0a"
     },
     {
       "path": "poison-audio.js",
@@ -1201,7 +1376,7 @@
     {
       "path": "poison-combat.js",
       "bytes": 9264,
-      "sha256": "eccb8f1300b3bd097d9e4a2c2a6f8e638e9caf818e6c2ad6080c0233b26fb4fa"
+      "sha256": "92531130aacd5455936603a514425e59230fb0ebd86d0591e703843f55806691"
     },
     {
       "path": "poison-config.js",
@@ -1211,32 +1386,32 @@
     {
       "path": "poison-vfx.js",
       "bytes": 10957,
-      "sha256": "267f3fe6f39fa8d094b63917fc2e5bbf93a7fddb2bffc1bd4e1090f17fca0635"
+      "sha256": "eff237196c6a37f39315355787f17dd7fb09cdd6da3d6266e279be65e6baa5ab"
     },
     {
       "path": "ranger-rebuild.js",
       "bytes": 19910,
-      "sha256": "d44a41590bdcb0a54a573c004cfdbddf2f75bfda2d1921662c62e5f149436ac5"
+      "sha256": "2e2ee8569a671a0a654754b8c73119837fefef7bba8c1760844659a2e354791c"
     },
     {
       "path": "recorded-effects.js",
       "bytes": 1924,
-      "sha256": "decbbcb6abcc8edaa1da6c6fcbc4e33309146dec796405f138a75320aadb3f16"
+      "sha256": "0529c34f1290e809ceec1faa45d6795247819f94757675548fa989c7d20a1e32"
     },
     {
       "path": "recorded-music.js",
       "bytes": 7279,
-      "sha256": "68fb9d3e9f28ec338b7ed89dbcfc9b56b0643f2df4b0113926e3b9b4376a2f63"
+      "sha256": "55c95c3e7c585ca53a9a80d2e25ac425183be2a317a6275a0cd6fae2ecb5e716"
     },
     {
       "path": "regional-enemy-appearance.js",
       "bytes": 36721,
-      "sha256": "8b8fdbeee57433b890710ac8256b664537210583305d1a4c2ae5784e20465392"
+      "sha256": "012d3255a82434bea2a903838351656e3db540d427135606d0b35dc51b68b82d"
     },
     {
       "path": "render-budget.js",
-      "bytes": 1500,
-      "sha256": "e7a5d9a78a87ba26b1dd5cea3435f473d7f1aa8305d85e36adb347c08d9a2238"
+      "bytes": 2265,
+      "sha256": "be5d8824a772acd5fe370c64d5d950d0433430e3d49d28927764f77b49e90746"
     },
     {
       "path": "render-prewarm.js",
@@ -1244,19 +1419,24 @@
       "sha256": "baaf26dcf9d13371c5e87e71c61c6233efc41e95512adc3b7894b08e620af34d"
     },
     {
+      "path": "render-quality.js",
+      "bytes": 1969,
+      "sha256": "3db46019454bef2b6eb1aa42bd71385fca82e11ca5929810c578d8fea2a1b1ce"
+    },
+    {
       "path": "roaming-events.js",
       "bytes": 6549,
-      "sha256": "89d820e905d568098224ec55995b8f2694b1bffa1b6420d5063b36068970ff13"
+      "sha256": "ad1f80850577b33fd74fc02f68742b196a212d6977f54137a9bd517bd51c9abd"
     },
     {
       "path": "ruin-places.js",
       "bytes": 24361,
-      "sha256": "2feb61d3f80b85f04834868eb3633c66e1738f47444c63958ab6b61d2e1ce61a"
+      "sha256": "9c6a878ec6b26f799537d81861dd29cee86cdb39a6fe56cc8f8510b0d7150ad1"
     },
     {
       "path": "rules.js",
       "bytes": 34254,
-      "sha256": "8ccdf5b10f01d1f006098c1c505e1f141e3073cd26e19399f76bbe66854c41e8"
+      "sha256": "c2662c878ff2788c28e7b32c1db942f9c72edbaeecad93f358e064ee5a5b9268"
     },
     {
       "path": "sand-weather.js",
@@ -1266,12 +1446,12 @@
     {
       "path": "scythe-combat.js",
       "bytes": 2793,
-      "sha256": "080bc1f5f03810a3c1b5e8fa7d08327702cdcd14890ee794a4321ad200b29c69"
+      "sha256": "6ca81a96986dd1de97143dd7d8f53d361a2d01f720ce052c12feb9ad9fa933e3"
     },
     {
       "path": "shadow-appearance.js",
-      "bytes": 6872,
-      "sha256": "cf29a2865534ac5a9deb0c280785ed881b01ffd5eb219d98c17b7d342cd9c236"
+      "bytes": 7157,
+      "sha256": "247a38060b20acb260c8c589d361d7e661e21bf40e4a27282dfcf526a6a8b853"
     },
     {
       "path": "shadow-aura.js",
@@ -1280,13 +1460,18 @@
     },
     {
       "path": "shadow-gear.js",
-      "bytes": 13943,
-      "sha256": "29ed0d99b207a9782425a7cbd990d85cb1e6207465a934f54013aee2b2c0bdcb"
+      "bytes": 14838,
+      "sha256": "0acb4564d744792d2d66d2bd204725bde6212a0d56e493e056934fe62d9be4b1"
+    },
+    {
+      "path": "shadow-stability.js",
+      "bytes": 1087,
+      "sha256": "39f1be3a3ec74e132fba1f93c725cfb83711cb4989bb76bf031dd29cf086d3d4"
     },
     {
       "path": "shadow-tide-rebuild.js",
       "bytes": 19961,
-      "sha256": "6e26c5f0a05cb3cbde63cbf0b5a88c6b90a4467ea621a82bb9167abd03a0ae56"
+      "sha256": "c82ea0db78a25c68b60bbb4b8c5d554e16f308fa5768f462e5ab557e94f54807"
     },
     {
       "path": "shadow-weapons.js",
@@ -1301,22 +1486,22 @@
     {
       "path": "skill-catalog.js",
       "bytes": 9397,
-      "sha256": "68e70379ae88db9f10cbc69d6a9e1b00be82544973e14116232267fc108ff6a3"
+      "sha256": "88eadc3980a0191300819a8318fabe246e2668e2c6584d3be54ac6b014b32923"
     },
     {
       "path": "skill-vfx.js",
       "bytes": 59560,
-      "sha256": "7d73293e6d242b41f790812eac4dcff1430c84076a75a8c4b5a518b83944c3d9"
+      "sha256": "6d4c32daa684ad248ee0c3730d8f07deec6ec02168550be616df021f794886f3"
     },
     {
       "path": "skinned-hero.js",
-      "bytes": 82506,
-      "sha256": "ebb300e8fa04a5d609a21a7e74b298ec9fe086218bb2b8002618857f3133dcd4"
+      "bytes": 82765,
+      "sha256": "eafe255099db5cbb46b71b686c5c58f68c1da35d9735f46fa08fa03eb983ddf0"
     },
     {
       "path": "slingshot-model.js",
       "bytes": 6156,
-      "sha256": "182113064b1c35ac32c86197aa29a2317774e4644a5d538d67b7f8d7795a314f"
+      "sha256": "b9633640fc8ff1142ea967e4049dc09a556b29fa2e504fa88a4ad80321225b71"
     },
     {
       "path": "spell-shapes.js",
@@ -1335,8 +1520,8 @@
     },
     {
       "path": "style.css",
-      "bytes": 72955,
-      "sha256": "c49a2a104cbc2fc1691f78c153e77420584b256ddd49f5d11412aa1ea025da48"
+      "bytes": 73272,
+      "sha256": "add82cd4668dad26d7eb3e2a1be989a66e4d8b90f40e9c9e7b18eea28cf870fe"
     },
     {
       "path": "surface-textures.js",
@@ -1360,8 +1545,8 @@
     },
     {
       "path": "tree-scenery.js",
-      "bytes": 38036,
-      "sha256": "425c69cbcf2e37ad488e736c62abb4dd4890d501b683584ea4f33eda03d240c3"
+      "bytes": 40729,
+      "sha256": "911de5bbb471b232a9b74cdf2b50ab2b6dea754a44de141fc848f5c50080dec3"
     },
     {
       "path": "vendor/BufferGeometryUtils.js",
@@ -1372,6 +1557,11 @@
       "path": "vendor/GLTFLoader.js",
       "bytes": 114744,
       "sha256": "2904f2823e23d5bc1d64512bf4c0d777ac44d728d47c34a9e3d48ce8ef6b761d"
+    },
+    {
+      "path": "vendor/HDRLoader.js",
+      "bytes": 12468,
+      "sha256": "d3a9522cd17b988a4fe93e1be799e59f06c8e9bd0d811665a917df140350eef4"
     },
     {
       "path": "vendor/SkeletonUtils.js",
@@ -1391,17 +1581,17 @@
     {
       "path": "water.js",
       "bytes": 31779,
-      "sha256": "f65bc9f73e5300c7a3940ddff7f920090b01a4681c003d8cb2a8f5912fc59c31"
+      "sha256": "244a94c2807999c642d442711b42b8a7584f845fc135a7ad9506a4d6c2f499a3"
     },
     {
       "path": "weapon-audio.js",
       "bytes": 8935,
-      "sha256": "ee64a160aac1f6371602f3e2873fd25dc1f5e6b21d21d8b3f448dea2198021af"
+      "sha256": "a5cb7f865d15ff8c466a150cc59f2205c3093c55ae62d5c55165ba6fb0a4a09b"
     },
     {
       "path": "weapon-grips.js",
       "bytes": 10587,
-      "sha256": "4ffb73011135b4db385b33637f89d927d6d3b4fccd3b707c13d53297915cb2a7"
+      "sha256": "7efbe895024f8713e8fe009f3f03c31c59e5c057650552e8375ac7745728d97d"
     },
     {
       "path": "weapon-identity.js",
@@ -1416,7 +1606,7 @@
     {
       "path": "weapon-performance.js",
       "bytes": 7943,
-      "sha256": "df1c645cd2129fccf9c969fdd71e73a5c40b02a041ce04ec0617302a0b93109d"
+      "sha256": "2ca615c49304b909d7407adac529e7c4200ea83ce1b48f07bf6225a1cce1c44e"
     },
     {
       "path": "weapon-route-vfx.js",
@@ -1431,12 +1621,12 @@
     {
       "path": "wild-weapons.js",
       "bytes": 6457,
-      "sha256": "1e5cf7e6f620eadf3e19ba3a3b461f025896051a9a79760e9586404a9209c0f0"
+      "sha256": "3eadc12658d5276b54084b36699b784fcfdb8dcb19a5d1ea30b4bcd60b50f7dc"
     },
     {
       "path": "woodland-places.js",
       "bytes": 18588,
-      "sha256": "70e5ba5710649e85abde4b2078f41b72b2fc53c2dcc503c8c5d364f0d33dc2e1"
+      "sha256": "38c770cfe2131538180d5943738bc4c238c293928eb930fea48a33a22a114503"
     },
     {
       "path": "world-light-shafts.js",
@@ -1446,17 +1636,17 @@
     {
       "path": "world.js",
       "bytes": 38709,
-      "sha256": "e4f7da006e98c9b6bb4c1062646b549a9d0267389c4ecf5e162cf2e4572fb3ca"
+      "sha256": "a5f6aae3b7904267bd20313a5cde8dee19f94c161c0311f0f8002a3f8d00d9c8"
     },
     {
       "path": "wuling-appearance.js",
-      "bytes": 10385,
-      "sha256": "9c1fba8c9050ab124e5b8f9755609f5b1082e0dd6e34dea261b854e106283e7e"
+      "bytes": 12055,
+      "sha256": "a1d2a13e341942699320d7ff7caa17b18b14d8a2f49967a30ddc5b6985dc20d4"
     },
     {
       "path": "sw.js",
-      "bytes": 12917,
-      "sha256": "459036e13633b286f355c7ef5d5e350f9653b3491a48465d89e687a8c2763718"
+      "bytes": 14663,
+      "sha256": "00b2b4356d254d8e2e5554b89a455022b7b84ba71e2c780a62cd50e41bd8b5b9"
     }
   ]
 }

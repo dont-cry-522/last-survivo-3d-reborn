@@ -1,0 +1,27 @@
+Upstream character artwork: Quaternius
+Universal Base Characters / Modular Character Outfits - Fantasy
+Free Standard editions, supplied under CC0 1.0 Universal:
+https://creativecommons.org/publicdomain/zero/1.0/
+https://quaternius.com/packs/universalbasecharacters.html
+https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+
+The original author notices remain in assets/characters/:
+universal-base-characters-LICENSE.txt
+modular-character-outfits-fantasy-LICENSE.txt
+
+v217 locally adapts approved existing free character surfaces in Blender.
+These local project faces, masks and clothes are not official Quaternius
+characters or animations. No paid Source edition or new external character
+has been adopted in this revision. The source archives actually available
+are the free Standard Superhero male/female bases and male/female Ranger
+and Peasant outfits; the product pages' larger full-pack counts are not
+claimed as downloaded or licensed paid content.
+
+See sources.json for the exact selected files, hashes, authoring scripts,
+and retained v215/v216 surfaces. Previous revision notices remain intact.
+
+The initial Lingya outfit adaptation is authored by
+scripts/prepare-lingya-v217.py from the existing Female Ranger and female
+Superhero rest surfaces. It changes continuous shirt/sleeve construction and
+shorts tailoring while retaining original uncovered limb positions and rig.
+Her previously delivered head and facial expression assets remain selected.

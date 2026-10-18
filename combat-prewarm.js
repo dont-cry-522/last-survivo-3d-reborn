@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
-import {actor} from './world.js?v=212';
-import {MAP_ROSTERS} from './map-enemies.js?v=212';
-import {BOSS_ROUTES} from './boss-expedition.js?v=212';
-import {AIR_ROSTERS, AIR_ENEMIES, makeAirborne} from './airborne-enemies.js?v=212';
+import {actor} from './world.js?v=216';
+import {MAP_ROSTERS} from './map-enemies.js?v=216';
+import {BOSS_ROUTES} from './boss-expedition.js?v=216';
+import {AIR_ROSTERS, AIR_ENEMIES, makeAirborne} from './airborne-enemies.js?v=216';
 
 // Models only: no enemy instances, encounters, random rolls, audio or game clocks.
 export function combatSampleKinds(mapId){

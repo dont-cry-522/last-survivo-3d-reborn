@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {prepareCreatureSurface} from './creature-surface.js?v=212';
+import {prepareCreatureSurface} from './creature-surface.js?v=216';
 
 // Finite shared geometry, native morph targets and the existing IK. No skinning
 // texture per spawn, new timers, CPU vertex uploads or extra render pass.
@@ -10,17 +10,26 @@ const QUADRUPEDS=new Set(['wolf','frostwolf','ashstalker','thornstag','rimefang'
 const PLATED=new Set(['golem','lavabrute','boss','cinderlord','clawbeetle','tidecrab','reefturtle','dunescorpion','wreckwarden','obeliskwarden','moltenrhino','sunscarab']);
 
 function limbGeometry(source,a,b,kind,back,arm=false){
- const key=source.uuid+':'+a+':'+b+':'+back+':'+arm;
+ const key=source.uuid+':'+kind+':'+a+':'+b+':'+back+':'+arm;
  if(limbs.has(key))return limbs.get(key);
  source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),width=Math.min(size.x,size.z)*.5;
  const p=[],ix=[],colors=[],sine=[],cosine=[],sides=10,rows=['frostking','rimefang','thornstag','cinderdrake'].includes(kind)?28:19,color=new T.Color(0),c=source.attributes.color;
  // Sample coat at the broad upper muscle, preserving that species' palette.
  let count=0;for(let i=0;i<c.count;i++)if(source.attributes.position.getY(i)>-a*.5){color.r+=c.getX(i);color.g+=c.getY(i);color.b+=c.getZ(i);count++;}
  color.multiplyScalar(1/Math.max(1,count));
- const wolf=kind==='wolf';
+ const wolf=kind==='wolf'||kind==='frostwolf',hare=kind==='snowhare',ape=kind==='frostking';
  // Keep the existing bend axis and endpoints. Canine muscles vary in depth as
  // well as width: a narrow forearm/wrist and a fuller thigh above the hock.
- const shape=wolf?(back?
+ // These are cross-sections of one deforming skin, not extra muscle pieces.
+ // A hare keeps a deep, flattened haunch and slim foreleg; the giant ape keeps
+ // the loaded forearm all the way into its authored broad knuckle/hand batch.
+ const shape=hare?(back?
+  [[-a*.23,0,0],[-a*.12,.66,.89],[0,.96,1.21],[a*.24,1.00,1.25],[a*.55,.88,1.08],[a*.83,.58,.65],[a,.47,.49],[a+b*.23,.51,.43],[a+b*.61,.30,.29],[a+b,.26,.25],[a+b+.012,0,0]]:
+  [[-a*.23,0,0],[-a*.12,.69,.73],[0,.96,.97],[a*.26,.93,.92],[a*.62,.66,.65],[a,.55,.51],[a+b*.24,.54,.47],[a+b*.66,.39,.35],[a+b,.43,.39],[a+b+.012,0,0]]):ape?(arm?
+  [[-a*.23,0,0],[-a*.12,.78,.83],[0,1.00,1.02],[a*.23,1.03,1.07],[a*.58,.83,.90],[a*.85,.62,.69],[a,.59,.65],[a+b*.20,.72,.76],[a+b*.50,.79,.77],[a+b*.78,.70,.65],[a+b,.57,.57],[a+b+.015,0,0]]:
+  [[-a*.23,0,0],[-a*.12,.77,.87],[0,1.00,1.13],[a*.25,1.07,1.17],[a*.61,.89,.94],[a,.64,.68],[a+b*.24,.68,.70],[a+b*.64,.50,.52],[a+b,.42,.45],[a+b+.015,0,0]]):kind==='badger'?(back?
+  [[-a*.22,0,0],[-a*.12,.78],[0,1.12],[a*.25,1.18],[a*.62,.83],[a,.59],[a+b*.25,.55],[a+b*.70,.40],[a+b,.38],[a+b+.012,0]]:
+  [[-a*.22,0,0],[-a*.12,.74],[0,1.04],[a*.30,1.05],[a*.63,.78],[a,.66],[a+b*.25,.60],[a+b*.70,.43],[a+b,.40],[a+b+.012,0]]):wolf?(back?
   [[-a*.23,0,0],[-a*.12,.74,.92],[0,1.02,1.28],[a*.24,1.06,1.32],[a*.60,.76,1.02],[a*.88,.49,.66],[a,.52,.67],[a+b*.20,.48,.60],[a+b*.63,.29,.40],[a+b,.24,.30],[a+b+.015,0,0]]:
   [[-a*.23,0,0],[-a*.12,.68,.89],[0,.84,1.12],[a*.24,.88,1.13],[a*.62,.60,.81],[a*.86,.46,.65],[a,.49,.67],[a+b*.20,.36,.48],[a+b*.68,.25,.34],[a+b,.30,.35],[a+b+.015,0,0]]):
   [[-a*.23,0],[-a*.12,.72],[0,1],[a*.23,back?1.08:.96],[a*.62,.74],[a,.53],[a+b*.23,arm?.75:back?.64:.55],[a+b*.65,arm?.70:.39],[a+b,arm?.56:.27],[a+b+.015,0]];
@@ -28,7 +37,7 @@ function limbGeometry(source,a,b,kind,back,arm=false){
  for(let j=0;j<=rows;j++){
   const sample=contour.getPoint(j/rows),along=sample.x,radius=width*Math.max(0,sample.y),w=smooth(along,a-a*.20,a+b*.20);
   for(let i=0;i<sides;i++){
-   const angle=i/sides*Math.PI*2,x=Math.cos(angle)*radius,z=Math.sin(angle)*(wolf?width*Math.max(0,sample.z):radius),y=-along,dy=y+a;
+   const angle=i/sides*Math.PI*2,x=Math.cos(angle)*radius,z=Math.sin(angle)*(wolf||hare||ape?width*Math.max(0,sample.z):radius),y=-along,dy=y+a;
    p.push(x,y,z);sine.push(0,-z*w,dy*w);cosine.push(0,-dy*w,-z*w);
    const shade=.93+.07*Math.sin(angle+1.1);colors.push(color.r*shade,color.g*shade,color.b*shade);
    if(j){const n=j*sides+i,next=j*sides+(i+1)%sides;ix.push(n-sides,next-sides,n,n,next-sides,next);}
@@ -44,13 +53,13 @@ function limbGeometry(source,a,b,kind,back,arm=false){
  for(const [name,n]of [['creatureFlex',2],['creatureBend',3]])g.setAttribute(name,new T.Float32BufferAttribute(new Float32Array(p.length/3*n),n));
  prepareCreatureSurface(g,kind,'ContinuousLimb');g.computeBoundingBox();g.computeBoundingSphere();g.boundingBox.setFromBufferAttribute(g.attributes.position);g.userData.limbRows=rows;g.userData.limbSides=sides;g.name='SM_Enemy_'+kind+'_ContinuousLimb';limbs.set(key,g);return g;
 }
-function soften(l,kind){
+export function softenCreatureLimb(l,kind){
  const source=l.upper.children.find(o=>o.isMesh),lower=l.knee.children.find(o=>o.isMesh);if(!source||!lower)return;
  const mesh=new T.Mesh(limbGeometry(source.geometry,l.upperLength,l.lowerLength,kind,l.back??l.hip?.z<0,l.arm),source.material);
  mesh.name='SM_Enemy_'+kind+'_ContinuousLimb';mesh.castShadow=mesh.receiveShadow=true;mesh.customDepthMaterial=source.customDepthMaterial;
  l.upper.remove(source);l.knee.remove(lower);l.upper.add(mesh);l.softLimb=mesh;
 }
-function poseLimb(l){
+export function poseCreatureLimb(l){
  const mesh=l.softLimb;if(!mesh)return;
  direction.copy(down).applyQuaternion(l.knee.quaternion);
  if(l.knee.parent!==l.upper)direction.applyQuaternion(inverse.copy(l.upper.quaternion).invert());
@@ -99,16 +108,16 @@ export function installCreatureAnatomy(g,kind){
  const root=d.regionalRoot||d.rig,body=d.body||root.children.find(o=>o.isMesh&&/body/i.test(o.name));
  const chains=[...(d.legs||[]),...(d.knuckles||[])];
  if(kind==='frostking')for(let i=0;i<d.arms.length;i++)chains.push({upper:d.arms[i],knee:d.forearms[i],upperLength:1.02,lowerLength:.83,arm:true});
- if(SOFT_LIMBS.has(kind))for(const l of chains)if(l.upper&&l.knee)soften(l,kind);
+ if(SOFT_LIMBS.has(kind))for(const l of chains)if(l.upper&&l.knee)softenCreatureLimb(l,kind);
  // The ape builder keeps its fingers in a separate hand batch, so replacing
  // the continuous arm sleeve does not hide or disconnect the actual hand.
  const flex=PLATED.has(kind)?null:bodyFlex(body,kind);
  d.anatomy={kind,chains,flex};
- for(const l of chains)poseLimb(l);return g;
+ for(const l of chains)poseCreatureLimb(l);return g;
 }
 export function animateCreatureAnatomy(g,t,speed=0){
  const d=g.userData,a=d.anatomy;if(!a)return;
- for(const l of a.chains)poseLimb(l);
+ for(const l of a.chains)poseCreatureLimb(l);
  const phase=d.walkPhase??d.phase??t*2,stride=d.walkStride??d.stride??Math.min(1,speed/3),stage=d.bossStage;
  const wind=stage==='wind'?smooth(d.windProgress||0,0,1):stage==='strike'?1-smooth(d.strikeProgress||0,0,.32):d.previousAttack>0?smooth(1-d.previousAttack/(d.attackLength||1),0,.7):0;
  const drive=stage==='strike'?Math.sin(Math.PI*(d.strikeProgress||0)):Math.min(1,(d.release||0)*3),soft=a.kind==='snowhare'||a.kind==='mushroom';

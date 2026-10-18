@@ -1,6 +1,6 @@
-import{installHarborHorizon,harborBayLayout,harborBayCut}from'./harbor-horizon.js?v=212';
-import{installForestBackdrop}from'./tree-scenery.js?v=212';
-import{environmentDetailTexture}from'./biome-scenery.js?v=212';
+import{installHarborHorizon,harborBayLayout,harborBayCut}from'./harbor-horizon.js?v=216';
+import{installForestBackdrop}from'./tree-scenery.js?v=216';
+import{environmentDetailTexture}from'./biome-scenery.js?v=216';
 import * as T from './vendor/three.module.js';
 
 // The same three lights serve every climate; transitions do not allocate lights or shadow maps.
@@ -145,6 +145,29 @@ function indexRidgeQueries(mesh,segments,rows){
   }
  };
 }
+// Unequal massifs leave real low valleys between groups. These are heights on
+// the existing two radial surfaces, not extra rocks stacked around the arena.
+const rangeGroups={
+ forest:[[.30,.93,.86],[2.02,.70,.63],[3.73,.86,1.02],[5.37,.59,.73]],
+ snow:[[.20,.62,.63],[1.93,.88,1.08],[3.81,.65,.76],[5.35,.73,.93]],
+ ash:[[.37,.79,1.12],[2.67,.95,.76],[4.80,.81,.97]],
+ sand:[[.18,.74,.70],[1.95,.69,1.02],[3.69,.85,.82],[5.42,.54,.61]],
+ coast:[[.08,.42,.74],[1.55,.51,1.05],[3.30,.39,.68],[5.11,.53,.93]]
+};
+function rangeMass(biome,angle,ring){
+ let mass=biome==='coast'?.035:.075;
+ for(const [i,[center,width,height]]of rangeGroups[biome].entries()){
+  // The back range is independently offset, so foreground saddles frame
+  // distant peaks instead of showing a uniformly enlarged duplicate.
+  const turn=center+(ring?[.23,-.30,.36,-.18][i]:0),spread=width*(ring?1.04:1),delta=Math.abs(Math.atan2(Math.sin(angle-turn),Math.cos(angle-turn)));
+  const plateau=biome==='sand'?.42:biome==='coast'?.15:biome==='forest'?.06:0;
+  const shoulder=1-T.MathUtils.smoothstep(delta,spread*plateau,spread);
+  const power=biome==='snow'?1.65:biome==='ash'?1.2:biome==='coast'?.85:1;
+  mass+=height*Math.pow(shoulder,power)*(ring?[1,.84,1.06,.94][i]:1);
+ }
+ return mass;
+}
+
 // Opaque foothill silhouettes live beyond the playable square. No new collision or rewards.
 export function installDistantLandscape(world,id,biomeAt=()=>id){
  const positions=[],colors=[],indices=[],climates=[],layers=[],segments=192,rows=9,half=world.half;
@@ -156,20 +179,22 @@ export function installDistantLandscape(world,id,biomeAt=()=>id){
  const sample=(biome,angle,ring,t)=>{
   const p=CLIMATE_LIGHT[biome]||CLIMATE_LIGHT.forest,form=landforms[biome]||landforms.forest,fade=Math.sin(t*Math.PI),phase=ring*1.7;
   const passAngle=angle-form.pass-ring*.22,pass=1-T.MathUtils.smoothstep(Math.abs(Math.atan2(Math.sin(passAngle),Math.cos(passAngle))),.15,.65);
-  const mass=.66+.22*Math.sin(angle*2+phase+.5)+.12*Math.cos(angle*3-phase);
+  const mass=rangeMass(biome,angle,ring);
   let rhythm=ring?.61+.19*Math.sin(angle*5+1.6)+.13*Math.sin(angle*11+.3)+.07*Math.cos(angle*19-1.1):.56+.20*Math.sin(angle*7+.8)+.14*Math.sin(angle*13-1)+.10*Math.cos(angle*23+.4);
   let contour=1,slope=.20*t+.80*t*t,relief=0,cut=0,scarp=0;
   const fold=Math.sin(angle*17+phase+t*2.8),gully=.5+.5*Math.sin(angle*29+phase-t*3+Math.sin(angle*7)*.65);
   if(biome==='forest'){
-   rhythm=mass+.13*Math.sin(angle*(ring?7:5)+phase)+.035*Math.cos(angle*13+.4);
+   rhythm=mass*(.94+.06*Math.cos(angle*7+phase));
    // The shoulder rises in front of the skyline, with broad, shallow valleys.
    cut=(.5+.5*Math.sin(angle*11+phase+t*.8))**3;
    slope=.12*t+.88*T.MathUtils.smoothstep(t,0,1);
-   relief=fade*(.065*fold-.14*cut);
+   // Low wooded spurs reach down from each shoulder while drainage channels
+   // stay continuous to the foot; the ridge is no longer an unbroken wall.
+   relief=fade*(.075*fold-.16*cut);
   }else if(biome==='snow'){
    // Deep drainage cuts run down from the saddles instead of rippling across the slope.
    cut=(.5+.5*Math.sin(angle*17+phase+t*.7+.35*Math.sin(angle*3)))**5;
-   rhythm=mass*(.48+.52*Math.abs(Math.sin(angle*(ring?7:5)+.4)))+.06*Math.sin(angle*13+phase);
+   rhythm=mass*(.74+.26*Math.abs(Math.sin(angle*(ring?7:5)+.4)));
    contour=.94+.22*(.5+.5*Math.sin(angle*11+ring))**2;
    slope=.07*t+.93*t**1.12;
    relief=fade*(.055*fold-.24*cut)-T.MathUtils.smoothstep(t,.6,1)*.07*cut;
@@ -177,15 +202,18 @@ export function installDistantLandscape(world,id,biomeAt=()=>id){
    // Three broad cones keep straight flanks and a shallow broken summit rim.
    const cone=.5+.5*Math.sin(angle*3+phase);
    cut=(.5+.5*Math.sin(angle*15+phase+t*.45))**4;
-   rhythm=mass*(.34+.86*cone**1.5);
-   contour=1-.19*T.MathUtils.smoothstep(cone,.92,1);
-   slope=.08*t+.92*t**1.12;
-   relief=fade*(.04*fold-.12*cut);
+   rhythm=mass*(.82+.18*cone);
+   // Broken summit and stepped flank belong to each volcanic mass. Broad
+   // gaps between the three mountains remain open, rather than serrating
+   // the same-height rim all the way around the map.
+   contour=1-.24*T.MathUtils.smoothstep(cone,.88,1);
+   slope=.08*t+.92*t**1.04;
+   relief=fade*(.055*fold-.15*cut);
   }else if(biome==='sand'){
    // Low talus, one exposed escarpment, then a broad table. Its height and
    // setback change along the ridge so the ledge is not a horizontal stripe.
    const mesa=T.MathUtils.smoothstep(Math.sin(angle*(ring?4:3)+phase),-.3,.25),setback=.49+.045*Math.sin(angle*5+phase);
-   rhythm=.29+.28*mass+.47*mesa;contour=.90+.10*Math.sin(angle*2+phase);
+   rhythm=mass*(.93+.07*mesa);contour=.96+.04*Math.sin(angle*2+phase);
    slope=.16*t+.27*T.MathUtils.smoothstep(t,.05,.46)+.57*T.MathUtils.smoothstep(t,setback,setback+.23);
    cut=(.5+.5*Math.sin(angle*13+phase+t*.5))**4;
    scarp=T.MathUtils.smoothstep(t,setback-.08,setback+.05)*(1-T.MathUtils.smoothstep(t,setback+.17,setback+.30));
@@ -193,7 +221,7 @@ export function installDistantLandscape(world,id,biomeAt=()=>id){
   }else if(biome==='coast'){
    // Preserve every vertex of the near quay-bearing shelf. Only the outer
    // islands gain low straits and separate, flat-shouldered headlands.
-   if(ring)rhythm=mass*(.20+.95*T.MathUtils.smoothstep(.5+.5*Math.sin(angle*4+phase),.13,.85));
+   if(ring)rhythm=mass;
    contour=.28+.72*(.5+.5*Math.sin(angle*3+ring))**2;
    const profile=[0,.12,.68,.91,1],q=t*4,k=Math.min(3,Math.floor(q));slope=T.MathUtils.lerp(profile[k],profile[k+1],q-k);
    relief=fade*Math.sin(angle*29+ring*1.3)*.055+T.MathUtils.smoothstep(t,.50,.95)*fade*(.035*fold-.018*gully);

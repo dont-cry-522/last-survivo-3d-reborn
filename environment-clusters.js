@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries,toCreasedNormals} from './vendor/BufferGeometryUtils.js';
-import {naturalRockGeometry} from './biome-scenery.js?v=212';
-import {batchedSurfaceMaterial,prepareBatchedSurface,wornStoneBlock} from './environment-props.js?v=212';
-import {addTree} from './tree-scenery.js?v=212';
-import {bridgeContains} from './coast.js?v=212';
-import {seeded,segmentDistance} from './rules.js?v=212';
+import {naturalRockGeometry} from './biome-scenery.js?v=216';
+import {batchedSurfaceMaterial,prepareBatchedSurface,wornStoneBlock} from './environment-props.js?v=216';
+import {addTree} from './tree-scenery.js?v=216';
+import {bridgeContains} from './coast.js?v=216';
+import {seeded,segmentDistance} from './rules.js?v=216';
 
 const templates=new Map(),finishes=new Map(),BIOMES=['forest','snow','ash','sand','coast'];
 function finish(kind){
@@ -181,7 +181,7 @@ function clusterTemplate(id,variant){
  const rock=(color,x,y,z,sx,sy,sz,ry=0,kind='stone')=>add(naturalRockGeometry.clone(),finish(kind),color,{x,y,z,sx,sy,sz,ry});
  const wood=(points,radius,color=0x635744)=>add(bent(points,radius),finish('wood'),color);
  const tree=(biome,x,z,width,height)=>{
-  const root=new T.Group();addTree(root,biome,3,{angle:variant*.7,variation:.93,bend:.1});root.position.set(x,-.04,z);root.scale.set(width,height,width);root.updateMatrixWorld(true);
+  const root=new T.Group();addTree(root,biome,3,{angle:variant*.7,variation:.93,bend:.1,compact:true});root.position.set(x,-.04,z);root.scale.set(width,height,width);root.updateMatrixWorld(true);
   for(const mesh of root.children)add(mesh.geometry.clone().applyMatrix4(mesh.matrixWorld),mesh.material);
   return root;
  };
@@ -301,7 +301,7 @@ export function installEnvironmentClusters(world,mapId){
   const list=records.filter(r=>r.biome===biome&&r.variant===variant);if(!list.length)continue;
   const template=list[0].template;
   for(const [index,part]of template.batches.entries()){
-   const batch=new T.InstancedMesh(part.geometry.clone(),part.material,list.length);batch.name='SM_Cluster_'+biome+'_'+variant+'_'+index;batch.castShadow=batch.receiveShadow=true;batch.userData.ownedGeometry=true;
+   const batch=new T.InstancedMesh(part.geometry.clone(),part.material,list.length);batch.name='SM_Cluster_'+biome+'_'+variant+'_'+index;batch.castShadow=batch.receiveShadow=true;batch.userData.ownedGeometry=true;batch.userData.clusterBiome=biome;batch.userData.clusterVariant=variant;batch.userData.clusterSurface=part.material===finish('stone')?'stone':part.material===finish('snow')?'snow':'other';
    list.forEach((r,i)=>{transform.position.set(r.x,0,r.z);transform.rotation.set(0,r.angle,0);transform.scale.setScalar(r.scale);transform.updateMatrix();batch.setMatrixAt(i,transform.matrix);batch.setColorAt(i,color.setScalar(.95+.05*Math.sin(r.x*.31+r.z*.19)));});
    batch.computeBoundingSphere();batch.addEventListener('dispose',()=>{batch.visible=false;});group.add(batch);draws++;triangles+=part.geometry.index.count/3*list.length;
   }

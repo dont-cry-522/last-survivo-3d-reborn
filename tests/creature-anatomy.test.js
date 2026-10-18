@@ -58,3 +58,22 @@ test('living torso deformation stays local and finite while rigid shell creature
  }
  for(const kind of ['golem','lavabrute','moltenrhino','dunescorpion','wreckwarden','clawbeetle','tidecrab','obeliskwarden'])assert.equal(actor(kind).userData.anatomy.flex,null,kind+' rigid armor bends like jelly');
 });
+
+test('snow species retain haunch, canine shoulder and loaded ape forearm silhouettes in the continuous skin',()=>{
+ const section=(limb,along)=>{
+  const geometry=limb.softLimb.geometry,p=geometry.attributes.position,{limbRows:rows,limbSides:sides}=geometry.userData;
+  let closest=0,error=Infinity;
+  for(let row=0;row<=rows;row++){const distance=Math.abs(-p.getY(row*sides)-along);if(distance<error){error=distance;closest=row;}}
+  const radius={width:0,depth:0};
+  for(let side=0;side<sides;side++){const vertex=closest*sides+side;radius.width=Math.max(radius.width,Math.abs(p.getX(vertex)));radius.depth=Math.max(radius.depth,Math.abs(p.getZ(vertex)));}
+  return radius;
+ };
+ const hare=actor('snowhare').userData.anatomy.chains,back=hare.find(l=>l.back),front=hare.find(l=>!l.back),haunch=section(back,back.upperLength*.23),foreleg=section(front,front.upperLength*.23);
+ assert(haunch.depth>haunch.width*1.12,'hare haunch became a circular rod');
+ assert(haunch.depth>foreleg.depth*2,'hare lost its powerful rear quarters');
+ const wolf=actor('frostwolf').userData.anatomy.chains;
+ for(const limb of wolf){const muscle=section(limb,limb.upperLength*.23),wrist=section(limb,limb.upperLength+limb.lowerLength*.94);assert(muscle.depth>muscle.width*1.12,'canine muscle profile became circular');assert(muscle.depth>wrist.depth*2.4,'wolf lost its loaded shoulder/thigh taper');}
+ const ape=actor('frostking').userData.anatomy.chains.filter(l=>l.arm);
+ assert.equal(ape.length,2);
+ for(const arm of ape){const elbow=section(arm,arm.upperLength),forearm=section(arm,arm.upperLength+arm.lowerLength*.5),wrist=section(arm,arm.upperLength+arm.lowerLength*.94);assert(forearm.width>elbow.width*1.2,'ape forearm lost its weight');assert(wrist.width>.28,'ape wrist no longer reaches its broad hand');}
+});

@@ -1,9 +1,25 @@
 import * as T from './vendor/three.module.js';
-import{weaponInlay,nameWeapon,lanternCoreMaterial}from'./weapon-identity.js?v=212';
+import{weaponInlay,nameWeapon,lanternCoreMaterial}from'./weapon-identity.js?v=216';
 // Programmatic prototype: existing rig and cloth surfaces, original herb-gatherer accessories.
 export const WULING_PALETTE=Object.freeze({cloak:0x342139,trim:0x927955,copper:0x9d7f4d,leather:0x322730,ivory:0xb6a995,glass:0xe4c484});
 const geometry=new Map(),materials=new Map();
-function part(parent,kind,args,color,x,y,z,sx=1,sy=1,sz=1){const key=kind+JSON.stringify(args);if(!geometry.has(key))geometry.set(key,new T[kind](...args));if(!materials.has(color))materials.set(color,new T.MeshStandardMaterial({color,roughness:color===WULING_PALETTE.copper?.60:.92,metalness:color===WULING_PALETTE.copper?.52:0}));const m=new T.Mesh(geometry.get(key),materials.get(color));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
+function copperSurface(color){
+ const material=new T.MeshStandardMaterial({color,roughness:.56,metalness:.70});
+ material.userData.identityFinish=true;
+ material.onBeforeCompile=shader=>{
+  shader.vertexShader='varying vec3 vHerbCopper;\n'+shader.vertexShader;
+  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvHerbCopper=position;');
+  shader.fragmentShader='varying vec3 vHerbCopper;\n'+shader.fragmentShader;
+  shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   float herbPatina=smoothstep(.30,.88,.5+.5*sin(vHerbCopper.y*37.0+sin(vHerbCopper.x*31.0))*sin(vHerbCopper.z*29.0+1.1));
+   diffuseColor.rgb*=1.0-herbPatina*.23;`);
+  shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+   float herbBrushing=sin(vHerbCopper.y*480.0+vHerbCopper.x*24.0)*.019;
+   roughnessFactor=clamp(.47+herbPatina*.22+herbBrushing,.43,.74);`);
+  shader.fragmentShader=shader.fragmentShader.replace('#include <metalnessmap_fragment>','#include <metalnessmap_fragment>\nmetalnessFactor*=1.0-herbPatina*.18;');
+ };material.customProgramCacheKey=()=> 'herbal-worn-copper-v216';return material;
+}
+function part(parent,kind,args,color,x,y,z,sx=1,sy=1,sz=1){const key=kind+JSON.stringify(args);if(!geometry.has(key))geometry.set(key,new T[kind](...args));if(!materials.has(color))materials.set(color,color===WULING_PALETTE.copper?copperSurface(color):new T.MeshStandardMaterial({color,roughness:.92,metalness:0}));const m=new T.Mesh(geometry.get(key),materials.get(color));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=m.receiveShadow=true;parent.add(m);return m;}
 const ell=(g,c,x,y,z,sx,sy,sz)=>part(g,'SphereGeometry',[1,12,8],c,x,y,z,sx,sy,sz);
 export function wulingOutfit(root){root.traverse(o=>{
  if(!o.isMesh)return;o.material=o.material.clone();if(/Pauldron/.test(o.name))o.visible=false;if(o.material.name.includes('Regular'))return;
@@ -19,11 +35,17 @@ export function wulingOutfit(root){root.traverse(o=>{
    if(!body||z<=.035)continue;const w=(1-T.MathUtils.smoothstep(Math.abs(x),.105,.165))*T.MathUtils.smoothstep(y,1.20,1.26)*(1-T.MathUtils.smoothstep(y,1.40,1.46));p.setZ(i,T.MathUtils.lerp(z,.132-.024*(x/.165)**2,w*.82));}
   o.geometry.computeVertexNormals();
  }
- o.material.onBeforeCompile=s=>{s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>\nfloat herbWeave=dot(diffuseColor.rgb,vec3(.21,.72,.07));diffuseColor.rgb=vec3(${tint})*(.78+herbWeave*.48);`);};o.material.customProgramCacheKey=()=> 'wuling-cloth-'+tint;
+ o.material.onBeforeCompile=s=>{s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+  float herbWeave=dot(diffuseColor.rgb,vec3(.21,.72,.07));
+  #if defined(USE_COLOR) || defined(USE_COLOR_ALPHA)
+   diffuseColor.rgb=vec3(.78+herbWeave*.48);
+  #else
+   diffuseColor.rgb=vec3(${tint})*(.78+herbWeave*.48);
+  #endif`);};o.material.customProgramCacheKey=()=> 'wuling-cloth-v216-'+tint;
 });}
 export function wulingMask(model,sample){
  let skin;model.traverse(o=>{if(o.isSkinnedMesh&&o.material.name.includes('Superhero'))skin=o;});
- const material=new T.MeshStandardMaterial({color:0x756d88,roughness:.72,metalness:.07,side:T.DoubleSide});
+ const material=new T.MeshPhysicalMaterial({color:0x756d88,roughness:.62,metalness:.07,clearcoat:.24,clearcoatRoughness:.32,side:T.DoubleSide});
  const probe=new T.Mesh(skin.geometry,material),ray=new T.Raycaster(),pos=[],uv=[],indices=[],cols=32,rows=24;
  // Full forehead-to-chin shell with cheek returns tucked inside the hood.
  // The sculpted profile bridges facial creases; ray clearance keeps the actual nose behind it.
@@ -53,7 +75,10 @@ export function wulingMask(model,sample){
    float engraving=(1.0-smoothstep(.06,.17,abs(leaf-1.0)))*smoothstep(1.684,1.693,y);
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.25,.22,.19),max(rim*.65,engraving*.65));
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.006,.004,.009),eye);`);
- };material.customProgramCacheKey=()=> 'wuling-full-mask';
+  s.fragmentShader=s.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+   float herbMaskGrain=sin(herbMaskPoint.x*1120.0)*sin(herbMaskPoint.y*1390.0);
+   roughnessFactor=clamp(roughnessFactor+herbMaskGrain*.014,.48,.75);`);
+ };material.customProgramCacheKey=()=> 'wuling-full-mask-v216';
  const mask=new T.Mesh(shape,material);mask.name='wuling-full-mask';mask.castShadow=mask.receiveShadow=true;return mask;
 }
 export function sporeLantern(){

@@ -1,13 +1,13 @@
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=212';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=216';
 import * as T from './vendor/three.module.js';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=212';
-import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=212';
-import {sporePod} from './wuling-appearance.js?v=212';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=216';
+import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=216';
+import {sporePod} from './wuling-appearance.js?v=216';
 import {poseSlingshot} from './slingshot-model.js';
 
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=212';
-import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=212';
+import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=216';
+import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=216';
 
 // Camera-space equipment assembled from the actual weapon plus a small procedural hand rig.
 // This is not a new authored arm-animation asset. Layer 1 gets a small depth-correct overlay pass.
@@ -187,13 +187,13 @@ export class FirstPersonView {
   const detail=source.isMesh?(source.userData.herbalDynamic?source.geometry.clone():closeDetail(source,this.source,this.weaponId)):null;if(detail)this.ownedGeometry.push(detail);
   const node=source.isMesh?new T.Mesh(detail||source.geometry,Array.isArray(source.material)?source.material.map(m=>this.material(m)):this.material(source.material)):new T.Group();
   node.name=source.name;node.position.copy(source.position);node.quaternion.copy(source.quaternion);node.scale.copy(source.scale);node.visible=source.visible;
-  node.layers.set(1);node.renderOrder=10000;node.frustumCulled=false;node.castShadow=node.receiveShadow=false;this.parts.push([source,node]);
+  node.layers.set(1);node.renderOrder=10000;node.frustumCulled=false;node.castShadow=false;node.receiveShadow=!!source.isMesh;this.parts.push([source,node]);
   for(const child of source.children)node.add(this.copyPart(child));return node;
  }
  addDetail(batch,parent,name,{roughness=.55,metalness=.35,emissive=0,side=T.FrontSide}={}){
   const geometry=batch.finish();geometry.name='First_person_'+name;this.ownedGeometry.push(geometry);
   const material=new T.MeshStandardMaterial({vertexColors:true,roughness,metalness,fog:false,side,emissive,emissiveIntensity:.13});this.materials.set(material,material);
-  const mesh=new T.Mesh(geometry,material);mesh.name=geometry.name;mesh.layers.set(1);mesh.renderOrder=10000;mesh.frustumCulled=false;parent.add(mesh);this.details.push(mesh);return mesh;
+  const mesh=new T.Mesh(geometry,material);mesh.name=geometry.name;mesh.layers.set(1);mesh.renderOrder=10000;mesh.frustumCulled=false;mesh.receiveShadow=true;parent.add(mesh);this.details.push(mesh);return mesh;
  }
  finishWeapon(){
   const id=this.weaponId,gun=this.source,find=source=>this.parts.find(([s])=>s===source)?.[1];
@@ -286,17 +286,24 @@ export class FirstPersonView {
   const type=this.profile.type,rightGrip=lamp||type==='pot'?'hook':['gun','bow'].includes(type)?'trigger':['staff','scythe','thrust','whip'].includes(type)?'shaft':type==='throw'||type==='fan'?'pinch':type==='book'?'read':type==='palm'?'cast':'handle';
   const hand=handGeometry(palette,fingerless,rightGrip),supportGrip=weaponId==='boomerang'?'pinch':weaponId==='sporelantern'||type==='pot'?'cup':weaponId==='arcstaff'?'conduct':lamp?'handle':type==='gun'||type==='bow'||type==='scythe'||type==='thrust'?'guide':type==='book'?'read':type==='staff'||isHerbalWeapon(weaponId)?'cast':null;
   const supportHand=supportGrip?handGeometry(palette,fingerless,supportGrip):hand,sleeve=sleeveGeometry(palette,this.kind);this.ownedGeometry.push(hand,sleeve);if(supportHand!==hand)this.ownedGeometry.push(supportHand);
-  const cloth=new T.MeshStandardMaterial({vertexColors:true,roughness:.9,fog:false}),glove=new T.MeshStandardMaterial({vertexColors:true,roughness:.67,metalness:.015,fog:false});this.materials.set(cloth,cloth);this.materials.set(glove,glove);
-  if(this.kind==='wraith'){finishShadowTone(cloth);finishShadowTone(glove);}
   // Share the real outfit's micro-surface without owning or recoloring its maps.
   let sleeveSurface;hero.userData.model?.traverse(o=>{if(!sleeveSurface&&o.isMesh&&(/Sleeve/i.test(o.geometry.name)||o.userData.wildMistPart==='sleeves'))sleeveSurface=o.material;});
-  if(sleeveSurface){cloth.normalMap=sleeveSurface.normalMap;cloth.roughnessMap=sleeveSurface.roughnessMap;cloth.normalScale.copy(sleeveSurface.normalScale);cloth.roughness=sleeveSurface.roughness;}
+  const ClothMaterial=sleeveSurface?.sheen>0?T.MeshPhysicalMaterial:T.MeshStandardMaterial;
+  const cloth=new ClothMaterial({vertexColors:true,roughness:.9,fog:false}),glove=new T.MeshStandardMaterial({vertexColors:true,roughness:.67,metalness:.015,fog:false});this.materials.set(cloth,cloth);this.materials.set(glove,glove);
+  if(this.kind==='wraith'){finishShadowTone(cloth);finishShadowTone(glove);}
+  if(sleeveSurface){
+   cloth.normalMap=sleeveSurface.normalMap;cloth.roughnessMap=sleeveSurface.roughnessMap;cloth.normalScale.copy(sleeveSurface.normalScale);cloth.roughness=sleeveSurface.roughness;
+   // Keep the camera-space palette/shader; only match the outfit's cloth lobe.
+   if(cloth.isMeshPhysicalMaterial){cloth.sheen=sleeveSurface.sheen;cloth.sheenColor.copy(sleeveSurface.sheenColor);cloth.sheenRoughness=sleeveSurface.sheenRoughness;}
+  }
   cloth.name='MAT_Hero_'+this.kind+'_FirstPersonCloth';glove.name='MAT_Hero_'+this.kind+'_FirstPersonLeather';
   this.hands=[];this.arms=[];this.handPoints=[this.grip,new T.Vector3(...(this.profile.support||[-.20,-.07,.08])).sub(this.center)];
   for(let i=0;i<2;i++){
    const mesh=new T.Mesh(i?supportHand:hand,glove);mesh.name=i?'First_person_support_hand':'First_person_grip_hand';this.root.add(mesh);this.hands.push(mesh);
    const arm=new T.Mesh(sleeve,cloth);arm.name=i?'First_person_left_sleeve':'First_person_right_sleeve';this.root.add(arm);this.arms.push(arm);
-   for(const node of[mesh,arm]){node.layers.set(1);node.renderOrder=10000;node.frustumCulled=false;node.castShadow=node.receiveShadow=false;}
+   // The overlay reads the world's existing sun shadow, so hands dim under
+   // trees like the hero does. It never writes a self-shadow into that map.
+   for(const node of[mesh,arm]){node.layers.set(1);node.renderOrder=10000;node.frustumCulled=false;node.castShadow=false;node.receiveShadow=true;}
   }
   if(weaponId==='sporelantern'){
    // Share the existing held pod's geometry; its cloned materials belong to this view.

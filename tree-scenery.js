@@ -185,13 +185,14 @@ firMaterial.onBeforeCompile=shader=>{
 firMaterial.customProgramCacheKey=()=> 'tree-rounded-snow-sprays';
 leafMaterial.onBeforeCompile=shader=>{
  shader.uniforms.treeBreezeTime=treeBreezeTime;
- shader.vertexShader='uniform float treeBreezeTime; attribute float treeLeafFlex;\n'+shader.vertexShader;
+ shader.vertexShader='uniform float treeBreezeTime; attribute float treeLeafFlex; varying float treeTint;\n'+shader.vertexShader;
  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
   mat4 treeFrame=modelMatrix;
   #ifdef USE_INSTANCING
    treeFrame=modelMatrix*instanceMatrix;
   #endif
   vec3 treeOrigin=treeFrame[3].xyz;
+  treeTint=.5+.5*sin(dot(treeOrigin.xz,vec2(.139,.173)));
   float treePhase=treeOrigin.x*.17+treeOrigin.z*.13;
   float treeGust=.65+.35*(.5+.5*sin(treeBreezeTime*.42+treeOrigin.x*.08+treeOrigin.z*.06));
   float treeFlutter=sin(treeBreezeTime*1.3+position.x*2.1+position.z*1.4+treePhase)*.008+sin(treeBreezeTime*2.07+position.y*2.4+treePhase*.7)*.003;
@@ -199,10 +200,11 @@ leafMaterial.onBeforeCompile=shader=>{
   vec2 treeLocalWind=vec2(dot(treeWind,normalize(treeFrame[0].xz)),dot(treeWind,normalize(treeFrame[2].xz)));
   transformed.xz+=treeLocalWind*treeFlutter*treeGust*treeLeafFlex;
  `);
- shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n diffuseColor.rgb*=vec3(1.13,1.10,1.02);');
+ shader.fragmentShader='varying float treeTint;\n'+shader.fragmentShader;
+ shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n diffuseColor.rgb*=mix(vec3(.99,1.13,1.08),vec3(1.14,1.12,.96),treeTint);');
  thinLeafLight(shader);
 };
-leafMaterial.customProgramCacheKey=()=> 'tree-branched-thin-leaves-breeze';
+leafMaterial.customProgramCacheKey=()=> 'tree-grown-crowns-varied-green-breeze';
 function sprayPose(x,y,z,width,depth,height,phase,spray){
  // A twig carries a hanging skirt, two shoulders and a tilted top, with their
  // edges overlapping. The crown reads as a volume even from ground level.
@@ -254,28 +256,34 @@ function rootedStem(stem,radii,snow,variant){
  }
  return surface(vertices,indices);
 }
-function firFan(angle,height,reach,width,variant,level){
+function firFan(angle,height,reach,width,variant,level,farSides=6){
  // Overlapping needle wings carry a scalloped snow ridge. Close LODs include
  // the dark lower surface, so looking up sees foliage rather than white cards.
- const vertices=[],indices=[],colors=[],normals=[],c=new T.Color(),normal=new T.Vector3(),cos=Math.cos(angle),sin=Math.sin(angle),needles=new T.Color(0x55766b),snow=new T.Color(0xd0dfd9);
+ const vertices=[],indices=[],colors=[],normals=[],c=new T.Color(),normal=new T.Vector3(),cos=Math.cos(angle),sin=Math.sin(angle),needles=new T.Color(0x45675a),snow=new T.Color(0xe0e9e3);
  const vertex=(x,y,z,nx,ny,nz,cover)=>{
   vertices.push(cos*x-sin*z,y,sin*x+cos*z);normal.set(nx,ny,nz).normalize();normals.push(cos*normal.x-sin*normal.z,normal.y,sin*normal.x+cos*normal.z);
   c.copy(needles).lerp(snow,cover);colors.push(c.r,c.g,c.b);return vertices.length/3-1;
  };
- for(let leaf=0;leaf<6;leaf++){
-  const start=.08+Math.floor(leaf/2)*.24+Math.sin(angle+leaf*1.9+variant)*.026,side=leaf%2?1:-1,spread=1-start*.45;
-  const x=(start+.19)*reach,z=side*spread*width*.46,y=height-(start+.17)*reach*.17,rx=reach*(.25+.015*Math.sin(angle+leaf)),rz=spread*width*.58,rise=reach*(.065+.02*Math.sin(angle*2+leaf+variant)),drop=reach*.050;
+ const distant=level===2;
+ for(let leaf=0;leaf<(distant?3:6);leaf++){
+  const start=.08+(distant?leaf:Math.floor(leaf/2))*.24+Math.sin(angle+leaf*1.9+variant)*.026,side=leaf%2?1:-1,spread=1-start*.45;
+  // Three overlapping broad cushions carry the distant silhouette; the
+  // close levels split them into paired needle wings. No new mesh or material.
+  const x=(start+.19)*reach,z=side*spread*width*(distant?.06:.46),y=height-(start+.17)*reach*.17,rx=reach*(.25+.015*Math.sin(angle+leaf)),rz=spread*width*(distant?.96:.58),rise=reach*(.065+.02*Math.sin(angle*2+leaf+variant)),drop=reach*.050;
   const point=(u,v,depth=0,lower=false)=>{
    // Needles hang below each ridge. Even the distant four-point fold has a
    // raised spine and drooping wings, so conifers retain depth in side views.
    const q=u*u+v*v,edge=q>.99,py=y-u*rx*.20-side*v*rz*.15+(lower?-drop:rise)*(1-q)-Math.abs(v)*reach*.16+(level===2?rise*(1-Math.abs(v)):0);
-   return vertex(x+u*rx,py,z+v*rz+side*u*width*.13,edge?u/rx:.20+2*(lower?-drop:rise)*u/rx,edge?.10:lower?-1:1,edge?v/rz:side*.15+2*(lower?-drop:rise)*v/rz,level===2?.48+.045*Math.sin(leaf+u):lower?.06:edge?.22:.74-depth*.13);
+   return vertex(x+u*rx,py,z+v*rz+side*u*width*.13,edge?u/rx:.20+2*(lower?-drop:rise)*u/rx,edge?.10:lower?-1:1,edge?v/rz:side*.15+2*(lower?-drop:rise)*v/rz,level===2?.17+.64*(1-T.MathUtils.smoothstep(q,.15,1)):lower?.06:edge?.22:.74-depth*.13);
   };
   if(level===2){
-   const first=vertices.length/3;for(let i=0;i<4;i++){const a=i*Math.PI*.5;point(Math.cos(a),Math.sin(a));}
-   indices.push(first,first+2,first+1,first,first+3,first+2);
+   // A six-sided cushion follows the same curved branch as close LODs. A
+   // raised center and continuous normals remove the distant triangular cards.
+   const center=point(0,0),ring=[];
+   for(let i=0;i<farSides;i++){const a=i*Math.PI*2/farSides,r=1-.055*Math.sin(i*2.3+angle+leaf)**2;ring.push(point(Math.cos(a)*r,Math.sin(a)*r));}
+   for(let i=0;i<farSides;i++)indices.push(center,ring[(i+1)%farSides],ring[i]);
   }else{
-   const sides=level===0?8:4,center=point(0,0),rings=[];
+   const sides=level===0?6:4,center=point(0,0),rings=[];
    for(const radius of level===0?[.55,1]:[1]){
     const ring=[];for(let i=0;i<sides;i++){const a=i/sides*Math.PI*2,edge=radius===1&&sides===8&&i%2?.84:1;ring.push(point(Math.cos(a)*radius*edge,Math.sin(a)*radius*edge,radius));}rings.push(ring);
    }
@@ -291,11 +299,11 @@ function firFan(angle,height,reach,width,variant,level){
  indices.push(first,first+1,first+2,first,first+2,first+3);
  const g=surface(vertices,indices);g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));return g;
 }
-function firCrown(variant,level){
+function firCrown(variant,level,farSides=6){
  const parts=[];
  for(let layer=0;layer<4;layer++)for(let j=0;j<6;j++){
   const a=j*Math.PI/3+layer*.65+variant*.57+Math.sin(j*2.8+layer+variant)*.10,reach=(1.42-layer*.23)*(1+Math.sin(j*2.2+variant+layer*.7)*.09),rise=Math.sin(j*1.8+variant+layer*2.4)*.105;
-  parts.push(firFan(a,.38+layer*.56+rise,reach,(.56-layer*.080)*(1+Math.cos(j*1.7+layer)*.08),(j+variant)%3,level));
+  parts.push(firFan(a,.38+layer*.56+rise,reach,(.56-layer*.080)*(1+Math.cos(j*1.7+layer)*.08),(j+variant)%3,level,farSides));
  }
  // Short, tapering sprays grow from one eccentric leader rather than carrying
  // detached snowballs. The sparse green tip continues the upper branch group.
@@ -303,7 +311,7 @@ function firCrown(variant,level){
  for(let i=0;i<p.count;i++)p.setY(i,Math.min(2.76,p.getY(i)));
  parts.push(tint(leader,0x577568));
  for(let j=0;j<3;j++){
-  const y=[2.18,2.42,2.65][j],t=(y-1.94)/.82,g=firFan(j*2.399+variant*.71,y,[.38,.29,.18][j],[.15,.115,.085][j],(j+variant)%3,level);
+  const y=[2.18,2.42,2.65][j],t=(y-1.94)/.82,g=firFan(j*2.399+variant*.71,y,[.38,.29,.18][j],[.15,.115,.085][j],(j+variant)%3,level,farSides);
   g.translate(lean+.01+t*.055,0,-Math.sin(t*Math.PI)*.018);parts.push(g);
  }
  return merge(parts);
@@ -319,45 +327,64 @@ function treeTemplate(id,variant){
   const a=i*2.15+variant*.71,cos=Math.cos(a),sin=Math.sin(a),start=snow?2.8+i*.42:1.88+i*.48,reach=snow?.62:1.18-(i%2)*.12,tip=snow?start+.65:3.64+i*.31;
   branches.push(tint(limb([[lean*.7,start,0],[cos*reach*.38,start+.48,sin*reach*.30],[cos*reach*.78,tip-.12,sin*reach*.74],[cos*reach,tip,sin*reach]],snow?[.09,.052,.018]:[.19-i*.018,.105,.017],snow?4:6),wood));
  }
- const crowns=[],tips=[],sprays=[];
+ const crowns=[],tips=[],sprays=[],crownRatio=snow?.46:.52,crownWidth=snow?1:2.3;
  if(snow){
   crowns.push(firCrown(variant,2));
  }else{
+  const growSpray=(spec,branch)=>{
+   let[x,y,z,width,depth,h,phase]=spec;
+   if(variant===0){
+    // A deep rounded crown narrows at both its lower skirt and its leader;
+    // its widest foliage sits halfway up, not along a flat umbrella rim.
+    const shoulder=.62+.38*Math.sin(T.MathUtils.clamp((y+.12)/2.03,0,1)*Math.PI);
+    x*=shoulder;z*=shoulder;y*=1.16;width*=.94;depth*=.96;h*=1.10;
+   }else if(variant===1){
+    // A leaning woodland crown grows diagonally from lower left to upper
+    // right. Its narrower depth leaves a recognisably tall side silhouette.
+    x=x*.72+(y-.65)*.43;z*=.72;y*=1.17;width*=.86;depth*=.84;h*=1.06;
+   }else{
+    // Two unequal forks each carry their own leaf mass. The saddle between
+    // them remains open rather than being filled by a centered top cap.
+    const side=branch===4?(sprays.length%2?1:-1):branch%2?1:-1;
+    x=x*.25+side*.63;z*=.72;y=y*.81+(side>0?.40:0);width*=.83;depth*=.88;h*=1.05;
+   }
+   sprays.push([x,y,z,width,depth,h,phase]);crowns.push(broadFan(...sprays.at(-1)));tips.push({x,y:y+h*.24,z,branch});
+  };
   // Open spreading, upright forked, and one-sided woodland crowns. The same
   // twenty clusters form uneven interlocking lobes, with middle leaves rooted
   // on the forks instead of an empty hollow between the outer branch tips.
   const shape=[
-   [[.15,.09,.90,1.00],[1.96,.50,.79,.96],[3.53,.28,.87,1.03],[5.05,.94,.65,.88]],
-   [[.57,.15,.74,.90],[3.62,.44,.83,.96],[2.08,.99,.62,.83],[5.21,1.12,.59,.87]],
-   [[-.12,.20,.97,.96],[1.08,.66,.85,1.00],[2.71,.31,.66,.85],[4.68,1.03,.61,.87]],
+   [[.15,.09,.90,1.00],[1.96,.47,.79,.96],[3.53,.18,.87,1.03],[5.05,1.03,.65,.88]],
+   [[.57,.15,.74,.90],[3.62,.63,.83,.96],[2.08,1.11,.62,.83],[5.21,.75,.59,.87]],
+   [[-.12,.18,.97,.96],[1.08,.95,.85,1.00],[2.71,.20,.66,.85],[4.68,.92,.61,.87]],
   ][variant],twigs=[[4,3,3,2],[3,4,2,3],[4,3,2,3]][variant];
   for(let branch=0;branch<4;branch++){
    const[a,y,r,spread]=shape[branch],count=twigs[branch];
    for(let twig=0;twig<count;twig++){
     const side=twig-(count-1)*.5,central=1-Math.abs(side)/(count*.5),angle=a+side*(.38+variant*.055),reach=r+central*.13+Math.sin(branch*2.7+twig+variant)*.045;
     const inset=variant===0?.975:1,x=(Math.cos(angle)*reach+(variant===2?.08:0))*inset,z=Math.sin(angle)*reach*(variant===1?.9:1)*inset,leafY=y+central*.20+side*.12+Math.cos(twig*2.1+a)*.075,h=(.61+central*.12)*(variant===1?1.13:1);
-    sprays.push([x,leafY,z,(.51+central*.12)*spread*inset,(.37+central*.06)*spread*inset,h,angle+.16*side]);crowns.push(broadFan(...sprays.at(-1)));tips.push({x,y:leafY+h*.24,z,branch});
+    growSpray([x,leafY,z,(.51+central*.12)*spread*inset,(.37+central*.06)*spread*inset,h,angle+.16*side],branch);
    }
   }
   for(let j=0;j<3;j++){
    const a=j*2.3+variant*.8,r=j===2?.14:.34;
-   const x=Math.cos(a)*r+(variant===2?.12:variant===1?.16:0),z=Math.sin(a)*r,y=1.30+j*.21+Math.sin(a)*.11;sprays.push([x,y,z,.58-j*.07,.42-j*.025,.65,a]);crowns.push(broadFan(...sprays.at(-1)));tips.push({x,y:y+.65*.24,z,branch:4});
+   const x=Math.cos(a)*r+(variant===2?.12:variant===1?.16:0),z=Math.sin(a)*r,y=1.27+j*.21+Math.sin(a)*.11;growSpray([x,y,z,.58-j*.07,.42-j*.025,.65,a],4);
   }
   for(let j=0;j<5;j++){
-   const branch=j%4,[a,y]=shape[branch],angle=a+(j===4?.62:-.22),r=j===4?.22:.48+.04*Math.sin(a+variant),x=Math.cos(angle)*r+(variant===2?.13:0),z=Math.sin(angle)*r,leafY=j===4?1.08:y+.36,h=.76;
-   sprays.push([x,leafY,z,.60,.43,h,angle+.35]);crowns.push(broadFan(...sprays.at(-1)));tips.push({x,y:leafY+h*.24,z,branch});
+   const branch=j%4,[a,y]=shape[branch],angle=a+(j===4?.62:-.22),r=j===4?.22:.48+.04*Math.sin(a+variant),x=Math.cos(angle)*r+(variant===2?.13:0),z=Math.sin(angle)*r,leafY=j===4?1.08:Math.max(.56,y+.36),h=.76;
+   growSpray([x,leafY,z,.60,.43,h,angle+.35],branch);
   }
  }
  const canopy=merge(crowns),bottom=canopy.boundingBox.min.y;canopy.translate(0,-bottom,0);canopy.computeBoundingBox();
  // Match twig tips to the same normalized crown coordinates used by addTree.
  // Thus tall trees keep supported leaf groups without changing their overall height or collision radius.
  if(!snow){
-  const tipPosition=tip=>[tip.x*2.04,((tip.y-bottom)/canopy.boundingBox.max.y*.47+.53)*5/.8496,tip.z*2.04*(.94+variant*.035)],stemCurve=new T.CatmullRomCurve3(stem.map(p=>new T.Vector3(...p))),forkEnds=[];
+  const tipPosition=tip=>[tip.x*crownWidth,((tip.y-bottom)/canopy.boundingBox.max.y*crownRatio+1-crownRatio)*5/(1-crownRatio*.32),tip.z*crownWidth*(.94+variant*.035)],stemCurve=new T.CatmullRomCurve3(stem.map(p=>new T.Vector3(...p))),forkEnds=[];
   for(let b=0;b<4;b++){
    const ends=tips.filter(t=>t.branch===b).map(tipPosition),end=[0,0,0];for(const p of ends)for(let i=0;i<3;i++)end[i]+=p[i]/ends.length;
    end[0]*=.72;end[2]*=.72;end[1]-=.42;
-   const base=stemCurve.getPoint([.56,.64,.73,.80][b]).toArray(),middle=base.map((v,i)=>T.MathUtils.lerp(v,end[i],.5)+(i===1?.13:0));forkEnds.push(end);
-   branches.push(tint(limb([base,middle,end],[.215-b*.021,.115-b*.009,.067-b*.004],6),wood));
+   const base=stemCurve.getPoint([.44,.55,.66,.77][b]).toArray(),middle=base.map((v,i)=>T.MathUtils.lerp(v,end[i],.5)+(i===1?.13:0));forkEnds.push(end);
+   branches.push(tint(limb([base,middle,end],[.235-b*.021,.135-b*.009,.067-b*.004],6),wood));
   }
   for(const tip of tips){
    const base=tip.branch===4?stem.at(-1):forkEnds[tip.branch],end=tipPosition(tip),middle=base.map((v,i)=>T.MathUtils.lerp(v,end[i],.54)+(i===1?.08:0));
@@ -366,15 +393,26 @@ function treeTemplate(id,variant){
  }
  const trunk=merge(branches);
  for(const [geometry,kind]of[[trunk,0],[canopy,snow?2:1]])geometry.setAttribute('treeSurface',new T.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count).fill(kind),1));
- const template={trunk,trunkHeight,canopy,canopyHeight:canopy.boundingBox.max.y,sprays,bottom,snow,variant,lods:[null,null,canopy]};templates.set(key,template);return template;
+ const template={trunk,trunkHeight,canopy,canopyHeight:canopy.boundingBox.max.y,crownRatio,crownWidth,sprays,bottom,snow,variant,lods:[null,null,canopy]};templates.set(key,template);return template;
 }
-export function addTree(parent,id,tall,{angle=0,variation=1,bend=0}={}){
- const variant=Math.abs(Math.floor(angle*1.7))%3,template=treeTemplate(id,variant),height=id==='snow'?5.2+tall*.52:5.6+tall*.26,canopyHeight=height*(id==='snow'?.46:.47),width=(.88+variation*.12)*(id==='snow'?1:2.04);
+export function addTree(parent,id,tall,{angle=0,variation=1,bend=0,compact=false}={}){
+ // Reuse the existing seeded height input for a two-metre canopy line rather
+ // than a nearly level row of identical parasols. Roots/obstacle radii stay put.
+ const variant=Math.abs(Math.floor(angle*1.7))%3,template=treeTemplate(id,variant),height=id==='snow'?5.2+tall*.52:5.5+tall*.50,canopyHeight=height*template.crownRatio,width=(.88+variation*.12)*template.crownWidth;
  parent.userData.treeBiome=id;parent.rotation.y=angle;
  const trunk=new T.Mesh(template.trunk,material);trunk.name='tree-trunk';trunk.scale.set(.94+variation*.06,(height-canopyHeight*.32)/template.trunkHeight,.94+variation*.06);trunk.rotation.z=bend*.10;
  // Snow hangs slightly lower while its top and the independently scaled trunk stay fixed.
- const snowDrop=id==='snow'?.24:0,canopy=new T.Mesh(template.canopy,id==='snow'?firMaterial:leafMaterial);canopy.name='tree-canopy';canopy.userData.treeCanopy=true;canopy.userData.treeTemplate=template;canopy.userData.treeLOD=2;canopy.position.set(bend*.5,height-canopyHeight-snowDrop,0);canopy.scale.set(width,(canopyHeight+snowDrop)/template.canopyHeight,width*(.94+variant*.035));
+ const snowDrop=id==='snow'?.24:0,canopy=new T.Mesh(compact&&template.snow?compactFirCrown(template):template.canopy,id==='snow'?firMaterial:leafMaterial);canopy.name='tree-canopy';canopy.userData.treeCanopy=true;canopy.userData.treeTemplate=template;canopy.userData.treeLOD=2;canopy.position.set(bend*.5,height-canopyHeight-snowDrop,0);canopy.scale.set(width,(canopyHeight+snowDrop)/template.canopyHeight,width*(.94+variant*.035));
  for(const mesh of[trunk,canopy]){mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);}return canopy;
+}
+
+// Small, permanently batched saplings retain the rounded ridge and normal
+// shading while using four rim samples. They need no standalone LOD meshes.
+function compactFirCrown(template){
+ if(template.compactCanopy)return template.compactCanopy;
+ const g=firCrown(template.variant,2,4),p=g.attributes.position,bounds=template.canopy.boundingBox;g.translate(0,-template.bottom,0);
+ for(let i=0;i<p.count;i++)p.setXYZ(i,T.MathUtils.clamp(p.getX(i),bounds.min.x,bounds.max.x),T.MathUtils.clamp(p.getY(i),bounds.min.y,bounds.max.y),T.MathUtils.clamp(p.getZ(i),bounds.min.z,bounds.max.z));
+ g.setAttribute('treeSurface',new T.Float32BufferAttribute(new Float32Array(p.count).fill(2),1));g.computeBoundingBox();g.computeBoundingSphere();return template.compactCanopy=g;
 }
 
 // Add folded leaves to the existing silhouette, rather than swapping it for a
@@ -389,7 +427,7 @@ function detailedCrown(template,level){
   g.setAttribute('treeSurface',new T.Float32BufferAttribute(new Float32Array(p.count).fill(2),1));g.computeBoundingBox();g.computeBoundingSphere();return template.lods[level]=g;
  }
  const p=[],ix=[],uv=[],colors=[],flex=[],point=new T.Vector3();
- const u=.5,v=.5,count=level===0?14:5;
+ const u=.5,v=.5,count=level===0?8:3;
  for(const [x,y,z,width,depth,height,phase]of template.sprays)for(let spray=0;spray<5;spray++){
   const {center,normal,across,along}=sprayPose(x,y,z,width,depth,height,phase,spray);
   for(let leaf=0;leaf<count;leaf++){

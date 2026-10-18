@@ -39,7 +39,7 @@ export function creatureFinish(species='',part=''){
  if(/mushroom/.test(key))return 5;
  if(/jelly|foam|tidestar|skyray/.test(key))return 7;
  if(/turtle|crab|beetle|scarab/.test(key))return wing?7:3;
- if(/wolf|hare|yeti|duskbat|frostwing/.test(key))return wing?7:1;
+ if(/wolf|hare|yeti|badger|duskbat|frostwing/.test(key))return wing?7:1;
  if(/stalker|emberling|sandworm|cinderwing|spitter/.test(key))return wing?7:6;
  return 0;
 }

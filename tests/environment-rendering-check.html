@@ -3,10 +3,68 @@
 <button id="run" disabled>运行环境回归</button><select id="map"><option value="forest">林地</option><option value="snow">雪地</option><option value="ash">赤烬</option><option value="sand">沙漠</option><option value="coast">海港</option><option value="confluence">五境</option></select><button id="lobby" disabled>预览大厅</button><button id="battle" disabled>预览实战</button><button id="mobile" disabled>预览手机横屏</button><button id="first-view" disabled>预览第一人称</button><button id="water" disabled>查看水岸</button><button id="paths">路径显示检查</button><button id="ruins" disabled>查看林中古迹</button><button id="cache" disabled>查看遗落补给</button><button id="trail" disabled>查看三段寻迹</button><button id="gpu" disabled>深度解析性能对照</button><button id="capture-button" disabled>保存当前画面</button><p id="status">载入中。此页使用隔离存档和固定帧进度；手机尺寸是模拟，不代表真机帧率。</p><div id="view"></div><pre id="report"></pre><img id="capture" alt="当前游戏环境画面" hidden style="max-width:100%">
 <script type="module">
 import * as T from'../vendor/three.module.js';
+import {clearAt} from '../world.js?v=213';
 const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms)),assert=(v,n)=>{if(!v)throw Error(n);};
 const initialSize=new URLSearchParams(location.search).get('size'),singleSizeBatch=['desktop','mobile'].includes(initialSize);
 const pixelButton=document.createElement('button');pixelButton.id='pixels';pixelButton.disabled=true;pixelButton.textContent='深度解析像素诊断';$('#gpu').after(pixelButton);
 const pixelCaptures=document.createElement('div');pixelCaptures.id='pixel-captures';$('#capture').after(pixelCaptures);
+const qualityCapture=document.createElement('button');qualityCapture.id='quality-capture';qualityCapture.textContent='同机位人物与五境画质对照';$('#capture-button').after(qualityCapture);
+qualityCapture.onclick=async()=>{
+ qualityCapture.disabled=true;pixelCaptures.replaceChildren();const records=[];
+ try{
+  await load(false,1180,720);
+  const save=(name)=>{step(3,100);const image=document.createElement('img');image.src=g.renderer.domElement.toDataURL('image/png');image.id='quality-'+name;image.alt=name+' · 正式游戏固定机位';image.style.maxWidth='49%';pixelCaptures.append(image);records.push({name,...reportFrame()});};
+  for(const hero of ['scout','silver','wraith','tide','lingya','wuling','mirage']){select('forest',hero);save('hero-'+hero);await sleep(0);}
+  for(const id of ['forest','snow','ash','sand','coast']){select(id,'silver',true);g.pause();save('map-'+id);await sleep(0);}
+  select('forest','lingya',true);g.setView('first');step(20);g.pause();save('first-lingya');
+  $('#report').textContent=JSON.stringify({scope:'fixed 1180x720, seed 522, same capture sequence, CPU/GPU counters not FPS',records,errors:[...win.qaErrors]},null,2);$('#status').textContent='画质对照完成 · '+records.length+' 张';
+ }catch(error){$('#status').textContent='画质对照失败 '+error.message;}finally{qualityCapture.disabled=false;}
+};
+const qualityVerify=document.createElement('button');qualityVerify.id='quality-verify';qualityVerify.textContent='v216 人物/画质/光照回归';qualityCapture.after(qualityVerify);
+qualityVerify.onclick=async()=>{
+ qualityVerify.disabled=true;const records=[];pixelCaptures.replaceChildren();
+ try{
+  await load(false,1180,720);assert(Object.keys(g.reflections.maps).length===2,'本地HDR未加载');
+  const capture=name=>{step(3,100);const image=document.createElement('img');image.src=g.renderer.domElement.toDataURL('image/png');image.id='detail-'+name;image.alt=name;image.style.maxWidth='49%';pixelCaptures.append(image);};
+  for(const hero of ['scout','silver','wraith','tide','lingya','wuling','mirage']){
+   select('forest',hero);win.document.querySelector('#preview-detail').click();step(5);capture(hero);records.push({kind:'portrait',hero,...reportFrame()});
+   g.start();g.setView('third');g.player.inv=9999;g.player.attack=9999;step(50);g.dash();step(30);capture('third-'+hero);records.push({kind:'motion-third',hero,...reportFrame()});
+   g.setView('first');step(30);assert(g.firstPerson.root.visible,'第一人称手臂未显示');capture('first-'+hero);records.push({kind:'first',hero,...reportFrame()});
+  }
+  select('forest','silver',true);g.pause();const gameTime=g.time,scene=g.hero.parent;
+  for(const mode of ['high','balanced','mobile','auto']){
+   const select=win.document.querySelector('#render-quality');select.value=mode;select.dispatchEvent(new win.Event('change'));step(3,100);
+   assert(g.renderQualityMode===mode,'档位未应用 '+mode);assert(g.time===gameTime,'设置推进战斗时钟');assert(scene.environment,'画质切换丢失环境反射');records.push({kind:'preset',mode,...reportFrame()});
+  }
+  g.menu();g.select('silver','forest',0);step(10);win.document.querySelector('#preview-detail').click();
+  for(const [name,tone]of [['ACES',T.ACESFilmicToneMapping],['AgX',T.AgXToneMapping]]){g.renderer.toneMapping=tone;capture('tone-'+name);records.push({kind:'tone',name,...reportFrame()});}g.renderer.toneMapping=T.ACESFilmicToneMapping;
+  for(const [width,height]of [[844,390],[390,844]]){
+   await load(true,width,height);select('coast','tide',true);g.pause();
+   for(const mode of ['high','balanced','mobile','auto']){const select=win.document.querySelector('#render-quality');select.value=mode;select.dispatchEvent(new win.Event('change'));step(3,100);assert(g.renderQualityMode===mode,'手机档位未应用');assert(reportFrame().pixels<=2200000,'手机画质越界');records.push({kind:'mobile-preset',width,height,mode,...reportFrame()});}
+   capture('mobile-'+width);assert(win.document.body.classList.contains('touch'),'手机控件分支错误');
+  }
+  $('#report').textContent=JSON.stringify({records,errors:[...win.qaErrors],note:'实际WebGL；手机为尺寸与触控分支模拟，非真机FPS'},null,2);$('#status').textContent='v216 回归完成 '+records.length+' 组';
+ }catch(error){$('#status').textContent='v216 回归失败 '+error.stack;$('#report').textContent=JSON.stringify({records,errors:[...win.qaErrors]},null,2);}finally{qualityVerify.disabled=false;}
+};
+const qualityPerf=document.createElement('button');qualityPerf.id='quality-perf';qualityPerf.textContent='v216 渲染耗时与预热';qualityVerify.after(qualityPerf);
+qualityPerf.onclick=async()=>{
+ qualityPerf.disabled=true;const samples=[];
+ const median=a=>{a.sort((a,b)=>a-b);return a.length?a[Math.floor(a.length/2)]:null;};
+ try{
+  for(const [mobile,width,height]of [[false,1920,1080],[true,844,390]]){
+   await load(mobile,width,height);assert(g.hero.parent.environment,'预热完成时缺少环境反射');select('forest','silver',true);g.player.inv=9999;g.player.attack=9999;
+   for(let i=0;i<12;i++){const a=i*2.399,e=g.spawn(['mushroom','wolf','golem','spitter'][i%4],g.player.x+Math.sin(a)*7,g.player.z+Math.cos(a)*7);if(e){e.speed=0;e.cool=999;e.hp=e.maxHp=10000;}}
+   for(const mode of mobile?['auto','mobile']:['auto','high','balanced']){
+    const select=win.document.querySelector('#render-quality');select.value=mode;select.dispatchEvent(new win.Event('change'));step(15);
+    const submitted=[];for(let i=0;i<45;i++){const t=performance.now();step();submitted.push(performance.now()-t);await sleep(0);}
+    g.pause();const gl=g.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),gpu=[];
+    if(ext)for(let i=0;i<5;i++){const query=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,query);step(1,100);gl.endQuery(ext.TIME_ELAPSED_EXT);gl.flush();for(let j=0;j<200&&!gl.getQueryParameter(query,gl.QUERY_RESULT_AVAILABLE);j++)await sleep(5);if(gl.getQueryParameter(query,gl.QUERY_RESULT_AVAILABLE)&&!gl.getParameter(ext.GPU_DISJOINT_EXT))gpu.push(gl.getQueryParameter(query,gl.QUERY_RESULT)/1e6);gl.deleteQuery(query);}
+    samples.push({mobileSimulation:mobile,width,height,mode,scene:'forest/silver/12 enemies; 45 CPU submissions and 5 paused GPU samples',cpuMedianMs:median(submitted),cpuP95Ms:submitted[Math.floor(submitted.length*.95)],gpuMedianMs:median(gpu),gpuSamples:gpu.length,reflections:Object.fromEntries(Object.entries(g.reflections.maps).map(([k,v])=>[k,[v.width,v.height]])),...reportFrame()});g.resume();
+   }
+  }
+  $('#report').textContent=JSON.stringify({note:'Measured render submission and paused GPU costs, not real-device FPS. Sequential runs do not constitute a controlled GPU benchmark.',samples,errors:[...win.qaErrors]},null,2);$('#status').textContent='v216 耗时检查完成 '+samples.length+' 组';
+ }catch(error){$('#status').textContent='耗时检查失败 '+error.stack;}finally{qualityPerf.disabled=false;}
+};
 const motionButton=document.createElement('button');motionButton.id='creature-motion';motionButton.disabled=true;motionButton.textContent='实战怪物追击与首领检查';$('#first-view').after(motionButton);
 const creatureButton=document.createElement('button');creatureButton.id='creature-near';creatureButton.disabled=true;creatureButton.textContent='近看当前地图怪物';$('#first-view').after(creatureButton);
 const placeControls=document.createElement('span');placeControls.innerHTML='<select id="place-biome" aria-label="五境区域"><option value="auto">自动区域</option><option value="forest">林地</option><option value="snow">雪地</option><option value="ash">赤烬</option><option value="sand">沙漠</option><option value="coast">海港</option></select> <select id="place-index" aria-label="景点编号"><option value="0">第 0 处景点</option><option value="1">第 1 处景点</option></select> <select id="place-camera" aria-label="入口视角"><option value="first">第一人称</option><option value="third">第三人称</option></select> <select id="place-framing" aria-label="入口构图"><option value="panorama">环境全景（−0.04）</option><option value="ground">原地面机位（−0.16）</option></select> <select id="place-size" aria-label="入口预览尺寸"><option value="desktop">普通横屏 1180×720</option><option value="mobile">手机横屏 844×390</option></select> <button id="place-entry" disabled>预览当前环境机位</button>';$('#first-view').after(placeControls);
@@ -14,15 +72,19 @@ if(singleSizeBatch)$('#place-size').value=initialSize;
 const placeCheckButton=document.createElement('button');placeCheckButton.id='place-check';placeCheckButton.disabled=true;placeCheckButton.textContent=singleSizeBatch?'检查当前尺寸 · 20 组':'检查五图与五境双视角 · 40 组';placeControls.after(placeCheckButton);
 const landscapeButton=document.createElement('button');landscapeButton.id='landscape-near';landscapeButton.disabled=true;landscapeButton.textContent='近看地貌植被';placeControls.append(' ',landscapeButton);
 const landscapeFocus=document.createElement('select');landscapeFocus.id='landscape-focus';landscapeFocus.setAttribute('aria-label','地貌植被取景');landscapeFocus.innerHTML='<option value="group">植被组（原机位）</option><option value="roots">近处根部</option>';landscapeButton.before(landscapeFocus,' ');
+const assetControls=document.createElement('span');assetControls.innerHTML=' <button id="asset-near" disabled>近看实装外部模型</button> <button id="asset-new" disabled>同机位 · 新模型</button> <button id="asset-old" disabled>同机位 · 旧模型</button> <button id="asset-check" disabled>检查外部模型 · 五图及五境 10 区</button> <button id="asset-pair" disabled>生成新旧同机位对照</button>';placeControls.after(assetControls);
+const assetMaterialControls=document.createElement('span');assetMaterialControls.innerHTML=' <button id="asset-diagnostic" disabled>外部材质参数诊断</button> <button id="asset-gray" disabled>标准灰材质</button> <button id="asset-color" disabled>仅颜色贴图</button> <button id="asset-unlit" disabled>无光照颜色贴图</button> <button id="asset-pbr" disabled>完整 PBR</button>';assetControls.after(assetMaterialControls);
+const districtControls=document.createElement('span');districtControls.innerHTML=' <select id="district-kind" aria-label="建筑类型"><option value="warehouse">海港仓棚</option><option value="wreck">残船</option><option value="beacon">航标灯</option><option value="dock">码头</option><option value="gate">沙漠石门</option><option value="court">沙漠断院</option></select> <button id="district-near" disabled>近看实际建筑</button>';assetMaterialControls.after(districtControls);
 const sourceHtml=await(await fetch('../index.html')).text(),css=await(await fetch('../style.css')).text();
 // srcdoc is a rendering fixture, not an offline install/export test. Excluding
 // this module also avoids its runtime URLs resolving against /tests/.
 const html=sourceHtml.replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?offline\.js[^"']*["'][^>]*><\/script>/gi,'');
-let frame,g,win,now=0,loadedSize=null,placeWorld=null;const results=[],errors=[],vegetationCache=new WeakMap();
+let frame,g,win,now=0,loadedSize=null,placeWorld=null,assetView=null,assetMaterialTest=null;const results=[],errors=[],vegetationCache=new WeakMap();
 function step(n=1,ms=1000/60){for(let i=0;i<n;i++)win.qaFrame(now+=ms);}
 function publish(){document.querySelector('#report').textContent=JSON.stringify({results,errors},null,2);}
 async function load(mobile=false,width=1180,height=720){
- loadedSize={mobile,width,height};placeWorld=null;
+ restoreAssetMaterials();
+ loadedSize={mobile,width,height};placeWorld=null;assetView=null;
  creatureButton.disabled=true;motionButton.disabled=true;
  if(g){errors.push(...win.qaErrors);g.audio.stopMusic();g.cinema?.dispose();g.renderer.dispose();g.renderer.forceContextLoss();}frame?.remove();
  frame=document.createElement('iframe');frame.title='真实游戏环境预览';frame.style.width=width+'px';frame.style.height=height+'px';$('#view').append(frame);
@@ -58,7 +120,8 @@ function spellBattle(){
  }finally{for(const id of Object.keys(originals))v[id]=originals[id];}
 }
 async function check(name,fn){$('#status').textContent=name;try{results.push({name,pass:true,detail:await fn()});}catch(e){results.push({name,pass:false,error:e.message});}publish();await sleep(0);}
-function reportFrame(){const r=g.renderer;assert(!win.qaErrors.length,win.qaErrors.join('\n'));assert(r.info.programs.every(p=>p.diagnostics?.runnable!==false),'GPU 着色器未通过');assert(r.getContext().getError()===0,'WebGL 错误');return{calls:r.info.render.calls,triangles:r.info.render.triangles,geometries:r.info.memory.geometries,textures:r.info.memory.textures,pixels:r.domElement.width*r.domElement.height};}
+function environmentAssetStats(){const a=g.world.environmentAssets;return a?{records:a.records.length,biomes:Object.fromEntries(['forest','snow','ash','sand','coast'].map(id=>[id,a.records.filter(r=>r.biome===id).length])),levels:[...a.levels],batches:a.batches.length,activeBatches:a.batches.filter(b=>b.mesh.visible&&b.mesh.count).length,instances:a.batches.reduce((n,b)=>n+b.mesh.count,0),hiddenOriginals:a.hidden.length,groupVisible:a.group.visible,disposed:a.disposed}:null;}
+function reportFrame(){const r=g.renderer;assert(!win.qaErrors.length,win.qaErrors.join('\n'));assert(r.info.programs.every(p=>p.diagnostics?.runnable!==false),'GPU 着色器未通过');assert(r.getContext().getError()===0,'WebGL 错误');return{calls:r.info.render.calls,triangles:r.info.render.triangles,geometries:r.info.memory.geometries,textures:r.info.memory.textures,pixels:r.domElement.width*r.domElement.height,environmentAssets:environmentAssetStats()};}
 function pixelDifference(a,b,width){
  let pixels=0,channels=0,maxDelta=0,total=0,minX=Infinity,minY=Infinity,maxX=-1,maxY=-1;const examples=[];
  for(let i=0;i<a.length;i+=4){let changed=false;for(let c=0;c<4;c++){const delta=Math.abs(a[i+c]-b[i+c]);if(delta){changed=true;channels++;total+=delta;maxDelta=Math.max(maxDelta,delta);}}
@@ -152,7 +215,7 @@ $('#run').onclick=async()=>{
  publish();for(const b of document.querySelectorAll('button'))b.disabled=false;$('#status').textContent=results.every(r=>r.pass)?'全部 '+results.length+' 项通过（手机尺寸模拟，非真机性能测试）':'有检查失败';
 };
 async function preview(battle=false,mobile=false){await load(mobile,mobile?844:1180,mobile?390:720);select($('#map').value,'silver',battle);$('#status').textContent='固定帧画面预览 · '+$('#map').selectedOptions[0].text+' · '+JSON.stringify({view:g.world.lobbyView,heroYaw:g.hero.rotation.y,cameraYaw:Math.atan2(win.qaCamera.position.x-g.hero.position.x,win.qaCamera.position.z-g.hero.position.z)});}
-$('#capture-button').onclick=()=>{step();const image=$('#capture');image.src=g.renderer.domElement.toDataURL('image/png');image.hidden=false;const link=document.createElement('a');link.href=image.src;link.download='forest-echoes-environment.png';link.click();};
+$('#capture-button').onclick=()=>{step(1,g.state==='paused'?100:1000/60);const image=$('#capture');image.src=g.renderer.domElement.toDataURL('image/png');image.hidden=false;const link=document.createElement('a');link.href=image.src;link.download='forest-echoes-environment.png';link.click();};
 $('#first-view').onclick=async()=>{await preview(true);g.setView('first');step(60);$('#status').textContent='第一人称实景 · '+JSON.stringify(reportFrame());};
 function placeGroundMetrics(place){
  const state=g.world.environmentGrounding,image=state?.texture.image;if(!image?.data)return null;
@@ -169,6 +232,126 @@ function placeGroundMetrics(place){
 function preparePlaceWorld(map,force=false){
  if(force||placeWorld?.world!==g.world||placeWorld.map!==map||g.state!=='playing'){select(map,'silver',true);placeWorld={map,world:g.world};}
 }
+// Test-only player/camera placement. Buildings remain at their real seeded map
+// positions, with all surrounding trees, terrain, collision and lighting active.
+$('#district-near').onclick=async()=>{
+ const button=$('#district-near');button.disabled=true;$('#status').textContent='寻找实际建筑的安全游玩机位';await sleep(0);
+ try{
+  await assetSize();const kind=$('#district-kind').value,id=['gate','court'].includes(kind)?'sand':'coast',map=$('#map').value==='confluence'?'confluence':id;$('#map').value=map;
+  select(map,'silver',true);const world=g.world,districts=world.regions?world.regions.flatMap(r=>r.districts||[]):world.districts||[],district=districts.find(d=>d.kind===kind);assert(district,'当前地图没有 '+kind+'，五境中只有仓棚和断院');
+  const floor=(x,z)=>world.groundHeightAt?.(x,z)||0,c=Math.cos(district.angle||0),s=Math.sin(district.angle||0),target={x:district.x,y:floor(district.x,district.z)+(kind==='wreck'?.45:1.5),z:district.z},own=world.obstacles.filter(o=>o.mesh.userData.district===kind&&Math.hypot(o.x-district.x,o.z-district.z)<14),eye=(g.player.standHeight||1.68)-.13;
+  let position;
+  search:for(const distance of[11,14,17,8])for(const lateral of[0,3,-3,5,-5])for(const facing of[-1,1]){
+   const x=district.x+c*lateral+s*facing*distance,z=district.z-s*lateral+c*facing*distance,y=floor(x,z),candidate={x,y,z};
+   if(!clearAt(world,x,z,.65,y)||Math.abs(x)>world.half-2||Math.abs(z)>world.half-2)continue;
+   if((world.ponds||[]).some(p=>{const a=p.angle||0,dx=x-p.x,dz=z-p.z;return Math.hypot((Math.cos(a)*dx-Math.sin(a)*dz)/((p.baseRx??p.rx??p.r)*1.2+.4),(Math.sin(a)*dx+Math.cos(a)*dz)/((p.baseRz??p.rz??p.r)*1.2+.4))<1;}))continue;
+   const dx=target.x-x,dz=target.z-z,len=dx*dx+dz*dz;
+   if(world.obstacles.some(o=>{if(own.includes(o))return false;const t=T.MathUtils.clamp(((o.x-x)*dx+(o.z-z)*dz)/len,0,1);return Math.hypot(x+dx*t-o.x,z+dz*t-o.z)<o.r+.3&&y+eye+(target.y-y-eye)*t<(o.y||0)+(o.sceneryHeight??o.height??10);}))continue;
+   position=candidate;break search;
+  }
+  assert(position,'建筑周围没有安全且无遮挡的干燥机位');Object.assign(g.player,{...position,groundHeight:position.y,vx:0,vy:0,vz:0,waterDepth:0,attack:9999,inv:9999});g.hero.position.set(position.x,position.y,position.z);
+  g.adventureCamera.yaw=Math.atan2(target.x-position.x,target.z-position.z);g.adventureCamera.pitch=Math.atan2(target.y-position.y-eye,Math.hypot(target.x-position.x,target.z-position.z));g.adventureCamera._ready=false;g.setView($('#place-camera').value);step(12);g.pause();win.document.querySelector('#dialog').close();step(2,0);
+  let meshes=0,triangles=0;for(const o of own)o.mesh.traverse(m=>{if(m.isMesh){meshes++;triangles+=(m.geometry.index?.count??m.geometry.attributes.position.count)/3;}});
+  const report={seed:522,map,kind,position,cameraPosition:g.camera.position.toArray(),target,building:{roots:own.length,meshes,triangles},width:win.innerWidth,height:win.innerHeight,render:reportFrame(),errors:[...win.qaErrors],offlineTested:false};$('#report').textContent=JSON.stringify(report,null,2);$('#status').textContent='实际建筑实景 · '+kind+' · '+meshes+' 个建筑网格 · '+report.render.calls+' 次绘制';
+ }catch(error){$('#status').textContent='建筑近景失败：'+error.message;$('#report').textContent=JSON.stringify({error:error.message,errors:[...(win?.qaErrors||[])]},null,2);}finally{button.disabled=false;}
+};
+function assertEnvironmentAssets(biome){
+ const a=g.world.environmentAssets;assert(a&&!a.disposed,'实际世界未安装外部模型');assert(a.records.some(r=>r.biome===biome),biome+' 没有实际外部模型实例');
+ assert(a.levels.length===3&&a.levels.reduce((n,v)=>n+v,0)===a.records.length,'三档 LOD 数量与实际记录不一致');
+ assert(a.batches.reduce((n,b)=>n+b.mesh.count,0)===a.records.length,'外部模型漏绘或在多个 LOD 重复绘制');
+ assert(a.records.every(r=>r.level>=0&&r.level<3),'未分配有效 LOD');
+ const groups=new Map();for(const b of a.batches){const r=b.records[0],key=r.biome+':'+r.id;if(!groups.has(key))groups.set(key,new Set());groups.get(key).add(b.level);}
+ assert([...groups.values()].every(levels=>levels.size===3),'模型缺少近中远三级网格');return a;
+}
+function externalAssetNear(map,requestedBiome='auto'){
+ restoreAssetMaterials();
+ // This intentionally builds a fresh real world. It does not alter any of the
+ // existing preview/baseline entry points or move scenery into a test scene.
+ select(map,'silver',true);const world=g.world,biome=map==='confluence'?(requestedBiome==='auto'?'forest':requestedBiome):map,a=assertEnvironmentAssets(biome),floor=(x,z)=>world.groundHeightAt?.(x,z)||0;
+ const records=a.records.filter(r=>r.biome===biome),clusters=(world.environmentClusters?.records||[]).filter(r=>r.biome===biome).sort((p,q)=>Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)-Math.hypot(q.x-world.spawn.x,q.z-world.spawn.z));
+ const candidates=biome==='coast'?[...records].sort((p,q)=>Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)-Math.hypot(q.x-world.spawn.x,q.z-world.spawn.z)):[...new Set(clusters.flatMap(cluster=>records.filter(r=>Math.hypot(r.x-cluster.x,r.z-cluster.z)<3*cluster.scale).sort((p,q)=>Math.hypot(p.x-cluster.x,p.z-cluster.z)-Math.hypot(q.x-cluster.x,q.z-cluster.z))))];
+ const eye=(g.player.standHeight||1.68)-.13,testCamera=new T.PerspectiveCamera(),trial=new g.adventureCamera.constructor(testCamera,{mode:'first'});let chosen;
+ const dry=p=>!(world.ponds||[]).some(o=>{const c=Math.cos(o.angle||0),s=Math.sin(o.angle||0),dx=p.x-o.x,dz=p.z-o.z;return Math.hypot((c*dx-s*dz)/((o.baseRx??o.rx??o.r)*1.2+.5),(s*dx+c*dz)/((o.baseRz??o.rz??o.r)*1.2+.5))<1;});
+ for(const record of candidates.slice(0,50)){
+  const bounds=record.model.lods[0].geometry.boundingBox.clone().applyMatrix4(record.matrix),center=bounds.getCenter(new T.Vector3()),base=Math.atan2(world.spawn.x-center.x,world.spawn.z-center.z);
+  for(const distance of[3.1,3.6,4.2]){
+   for(let i=0;i<24;i++){
+    const angle=base+i*Math.PI/12,p={x:center.x+Math.sin(angle)*distance,z:center.z+Math.cos(angle)*distance};p.y=floor(p.x,p.z);
+    if(!clearAt(world,p.x,p.z,.60,p.y)||!dry(p)||[[.5,0],[-.5,0],[0,.5],[0,-.5]].some(([x,z])=>Math.abs(floor(p.x+x,p.z+z)-p.y)>.4))continue;
+    const yaw=Math.atan2(center.x-p.x,center.z-p.z),pitch=Math.atan2(center.y-p.y-eye,distance);trial.yaw=yaw;trial.pitch=pitch;trial.update(0,p,world.obstacles,{eyeHeight:eye,groundHeight:world.groundHeightAt,snap:true});
+    if(testCamera.position.distanceTo(center)<3||world.overhead?.firstHit(testCamera.position,center,.04))continue;
+    // Ignore only the target's own footprint. Trees/other obstacles between
+    // the eye and target remain real visibility blockers.
+    const blocked=world.obstacles.some(o=>{if(Math.hypot(o.x-center.x,o.z-center.z)<o.r+.35)return false;const dx=center.x-testCamera.position.x,dz=center.z-testCamera.position.z,t=Math.max(0,Math.min(1,((o.x-testCamera.position.x)*dx+(o.z-testCamera.position.z)*dz)/(dx*dx+dz*dz)));return Math.hypot(testCamera.position.x+dx*t-o.x,testCamera.position.z+dz*t-o.z)<o.r+.08&&testCamera.position.y+(center.y-testCamera.position.y)*t<(o.y||0)+(o.sceneryHeight??o.height??10)+.08;});
+    if(blocked)continue;chosen={record,center,position:p,yaw,pitch};break;
+   }if(chosen)break;
+  }if(chosen)break;
+ }
+ assert(chosen,'外部模型周围没有安全的三米近景机位');const {position,center,record,yaw,pitch}=chosen;
+ Object.assign(g.player,{...position,groundHeight:position.y,vx:0,vy:0,vz:0,waterDepth:0,attack:9999,inv:9999});g.hero.position.set(position.x,position.y,position.z);g.adventureCamera.yaw=yaw;g.adventureCamera.pitch=pitch;g.adventureCamera._ready=false;g.setView('first');step(12);
+ if(g.state==='playing')g.pause();win.document.querySelector('#dialog').close();step(2,0);assertEnvironmentAssets(biome);
+ assetView={world,map,biome,record,center: center.toArray(),time:g.time,camera:g.camera.matrixWorld.toArray(),position:{x:g.player.x,y:g.player.y,z:g.player.z}};
+ return showExternalAssetMode(true);
+}
+function showExternalAssetMode(newModels){
+ assert(assetView?.world===g.world,'请先近看当前地图的实装模型');const a=assertEnvironmentAssets(assetView.biome);
+ a.group.visible=newModels;for(const hidden of a.hidden)hidden.mesh.visible=newModels?false:hidden.visible;
+ // The real paused frame intentionally throttles identical wall-clock times.
+ // Draw the frozen scene through the existing cinema/first-person passes,
+ // without advancing ambient particles or changing the camera for the A/B.
+ g.renderer.shadowMap.needsUpdate=true;const visible=g.hero.visible;g.hero.visible=false;
+ try{g.cinema.render(()=>{g.renderer.render(g.hero.parent,g.camera);g.firstPerson.render(g.renderer,g.hero.parent);},g.renderQuality);}finally{g.hero.visible=visible;}
+ assert(g.time===assetView.time,'对照推进了游戏时间');assert(g.camera.matrixWorld.elements.every((v,i)=>Math.abs(v-assetView.camera[i])<1e-9),'对照改变了机位');
+ const render=reportFrame(),report={seed:522,map:assetView.map,biome:assetView.biome,mode:newModels?'new':'original',model:assetView.record.id,record:{x:assetView.record.x,y:assetView.record.y,z:assetView.record.z,level:assetView.record.level},target:assetView.center,position:assetView.position,cameraPosition:g.camera.position.toArray(),cameraMatrix:[...assetView.camera],viewDistance:g.camera.position.distanceTo(new T.Vector3(...assetView.center)),time:g.time,width:win.innerWidth,height:win.innerHeight,render,errors:[...win.qaErrors],offlineTested:false};
+ window.externalAssetViewReport=report;$('#report').textContent=JSON.stringify(report,null,2);$('#status').textContent='实装模型近景 · '+report.biome+' / '+report.model+' / '+(newModels?'新模型':'原模型')+' · 固定时间 '+report.time.toFixed(3)+' 秒 · '+report.viewDistance.toFixed(2)+' 米';return report;
+}
+function restoreAssetMaterials(){
+ if(!assetMaterialTest)return;const {state,originals,temporary}=assetMaterialTest;
+ if(!state.disposed)for(const b of state.batches)if(originals.has(b))b.mesh.material=originals.get(b);
+ for(const material of temporary)material.dispose();assetMaterialTest=null;
+}
+function assetMaterialDiagnostic(){
+ assert(assetView?.world===g.world,'请先近看实装外部模型');const state=g.world.environmentAssets;
+ const texture=t=>t?{uuid:t.uuid,name:t.name,width:t.image?.width??null,height:t.image?.height??null,imageType:t.image?.constructor?.name,complete:t.image?.complete??null,colorSpace:t.colorSpace,channel:t.channel,flipY:t.flipY,format:t.format,type:t.type,minFilter:t.minFilter,magFilter:t.magFilter,generateMipmaps:t.generateMipmaps,version:t.version,sourceVersion:t.source?.version}:null;
+ const material=m=>({name:m.name,type:m.type,color:m.color?.toArray(),hex:m.color?.getHexString(),vertexColors:m.vertexColors,roughness:m.roughness,metalness:m.metalness,normalScale:m.normalScale?.toArray(),normalMapType:m.normalMapType,aoMapIntensity:m.aoMapIntensity,opacity:m.opacity,transparent:m.transparent,side:m.side,toneMapped:m.toneMapped,version:m.version,maps:Object.fromEntries(['map','normalMap','aoMap','roughnessMap','metalnessMap','alphaMap','emissiveMap'].map(k=>[k,texture(m[k])]))});
+ const attribute=a=>{if(!a)return null;let min=Infinity,max=-Infinity,finite=true;for(const n of a.array){min=Math.min(min,n);max=Math.max(max,n);finite&&=Number.isFinite(n);}return{count:a.count,itemSize:a.itemSize,normalized:a.normalized,arrayType:a.array.constructor.name,min,max,finite,first:Array.from(a.array.slice(0,12))};};
+ const key=assetView.biome+':'+assetView.record.id,selected=state.batches.filter(b=>b.records[0]?.biome===assetView.biome&&b.records[0]?.id===assetView.record.id),lights=[];g.hero.parent.traverse(o=>{if(o.isLight)lights.push({type:o.type,name:o.name,intensity:o.intensity,color:o.color.toArray(),visible:o.visible,layers:o.layers.mask,position:o.getWorldPosition(new T.Vector3()).toArray()})});
+ return{mode:assetMaterialTest?.mode||'pbr',key,view:window.externalAssetViewReport,cameraLayers:g.camera.layers.mask,groupLayers:state.group.layers.mask,lights,materials:[...state.materials].map(([key,m])=>({key,original:material(m),effective:material(state.batches.find(b=>b.records[0]?.biome+':'+b.records[0]?.id===key)?.mesh.material||m)})),selectedGeometry:selected.map(b=>({level:b.level,count:b.mesh.count,visible:b.mesh.visible,layers:b.mesh.layers.mask,attributes:Object.fromEntries(['position','normal','uv','uv1','tangent','color'].map(k=>[k,attribute(b.mesh.geometry.attributes[k])]))})),errors:[...win.qaErrors]};
+}
+function testAssetMaterial(mode){
+ assert(assetView?.world===g.world,'请先近看实装外部模型');restoreAssetMaterials();const state=g.world.environmentAssets;
+ if(mode!=='pbr'){
+  const originals=new Map(),variants=new Map();for(const b of state.batches){const source=b.mesh.material;originals.set(b,source);if(!variants.has(source)){
+   let m;if(mode==='gray')m=new T.MeshStandardMaterial({color:0xaaaaaa,roughness:1,metalness:0,side:T.DoubleSide});
+   else if(mode==='unlit')m=new T.MeshBasicMaterial({map:source.map,color:source.color,side:T.DoubleSide});
+   else{m=source.clone();m.vertexColors=false;m.normalMap=null;m.aoMap=null;m.roughnessMap=null;m.metalnessMap=null;m.alphaMap=null;m.roughness=.85;m.metalness=0;m.needsUpdate=true;}
+   variants.set(source,m);
+  }b.mesh.material=variants.get(source);}
+  assetMaterialTest={state,mode,originals,temporary:[...variants.values()]};
+ }
+ showExternalAssetMode(true);const report=assetMaterialDiagnostic();$('#report').textContent=JSON.stringify(report,null,2);$('#status').textContent='材质隔离诊断 · '+mode+' · '+report.key+' · 同机位同时间';window.assetMaterialReport=report;return report;
+}
+for(const [id,mode]of [['asset-gray','gray'],['asset-color','color'],['asset-unlit','unlit'],['asset-pbr','pbr']])$('#'+id).onclick=()=>{try{testAssetMaterial(mode);}catch(error){$('#status').textContent='材质诊断失败：'+error.message;}};
+$('#asset-diagnostic').onclick=()=>{try{const report=assetMaterialDiagnostic();window.assetMaterialReport=report;$('#report').textContent=JSON.stringify(report,null,2);$('#status').textContent='已读取真实材质、纹理、法线及灯光参数';}catch(error){$('#status').textContent=error.message;}};
+async function assetSize(){const mobile=$('#place-size').value==='mobile',width=mobile?844:1180,height=mobile?390:720;if(!g||loadedSize?.mobile!==mobile||loadedSize.width!==width||loadedSize.height!==height)await load(mobile,width,height);}
+$('#asset-near').onclick=async()=>{const b=$('#asset-near');b.disabled=true;$('#status').textContent='构建实际世界并寻找外部模型安全近景';await sleep(0);try{await assetSize();externalAssetNear($('#map').value,$('#place-biome').value);}catch(error){$('#status').textContent='外部模型近景失败：'+error.message;$('#report').textContent=JSON.stringify({error:error.message,errors:[...(win?.qaErrors||[])]},null,2);}finally{b.disabled=false;}};
+for(const [id,newModels]of [['asset-new',true],['asset-old',false]])$('#'+id).onclick=()=>{try{showExternalAssetMode(newModels);}catch(error){$('#status').textContent=error.message;}};
+$('#asset-check').onclick=async()=>{
+ for(const b of document.querySelectorAll('button'))b.disabled=true;const checks=[];$('#status').textContent='检查五图与五境的真实外部模型实例';
+ try{
+  await assetSize();for(const map of ['forest','snow','ash','sand','coast','confluence'])for(const biome of map==='confluence'?['forest','snow','ash','sand','coast']:[map]){
+   $('#status').textContent='外部模型检查 '+map+' / '+biome;await sleep(0);
+   try{const current=externalAssetNear(map,biome),original=showExternalAssetMode(false),restored=showExternalAssetMode(true);assert(restored.render.environmentAssets.groupVisible,'新模型没有恢复');assert(!original.render.environmentAssets.groupVisible,'旧模型没有显示');checks.push({map,biome,pass:true,current,original,restored});}
+   catch(error){checks.push({map,biome,pass:false,error:error.message,errors:[...(win?.qaErrors||[])]});}
+   $('#report').textContent=JSON.stringify({expected:10,checks},null,2);
+  }
+ }catch(error){checks.push({pass:false,error:error.message});}
+ const report={expected:10,size:loadedSize,checks,errors:[...(win?.qaErrors||[])],offlineTested:false};window.externalAssetChecks=report;$('#report').textContent=JSON.stringify(report,null,2);$('#status').textContent=checks.length===10&&checks.every(r=>r.pass)&&!report.errors.length?'外部模型 10 区检查通过 · 三档 LOD 总数一致 · 新旧切换不改变时间机位':'外部模型检查存在失败，请查看报告';for(const b of document.querySelectorAll('button'))b.disabled=false;
+};
+$('#asset-pair').onclick=()=>{
+ try{pixelCaptures.replaceChildren();const reports=[];for(const [mode,label]of [[false,'原模型'],[true,'新模型']]){reports.push(showExternalAssetMode(mode));const figure=document.createElement('figure'),img=document.createElement('img'),caption=document.createElement('figcaption');img.src=g.renderer.domElement.toDataURL('image/png');img.alt=assetView.biome+' '+label+' 同机位实际游戏截图';img.style.width='100%';caption.textContent=img.alt;figure.style.cssText='display:inline-block;width:48%;margin:0 1% 12px 0;vertical-align:top';figure.append(img,caption);pixelCaptures.append(figure);}$('#report').textContent=JSON.stringify({comparison:reports},null,2);$('#status').textContent='已生成同机位、同时间的新旧实际游戏画面对照';}
+ catch(error){$('#status').textContent='对照失败：'+error.message;}
+};
 function vegetationMetrics(place){
  let layers=vegetationCache.get(g.world);
  if(!layers){

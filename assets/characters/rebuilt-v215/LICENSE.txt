@@ -1,0 +1,16 @@
+Upstream character artwork: Quaternius
+Universal Base Characters / Modular Character Outfits - Fantasy (free Standard editions)
+https://quaternius.com/packs/universalbasecharacters.html
+https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+
+The upstream models are supplied under CC0 1.0 Universal:
+https://creativecommons.org/publicdomain/zero/1.0/
+Author-supplied notices are retained in the parent assets/characters directory:
+universal-base-characters-LICENSE.txt
+modular-character-outfits-fantasy-LICENSE.txt
+
+The local derivatives were made in Blender 4.5.9 LTS. See sources.json for
+exact delivered files, hashes and adaptations. No paid/source edition or
+unverified third-party character is included. Original game materials and
+65-bone rig are reused. The local project changes are not official Quaternius
+characters or animations.

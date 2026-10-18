@@ -5,7 +5,7 @@
 <select id="biome"><option value="forest">森林</option><option value="snow">雪地</option><option value="ash">灰烬</option><option value="sand">沙漠</option><option value="coast">海港</option><option value="air">五境飞行怪</option><option value="boss">原五境守卫</option><option value="boss-forest">森林三首领</option><option value="boss-snow">雪地三首领</option><option value="boss-ash">灰烬三首领</option><option value="boss-sand">沙漠三首领</option><option value="boss-coast">海港三首领</option></select><select id="mode"><option value="walk">行走</option><option value="attack">蓄力 → 攻击 → 收招</option><option value="idle">待机</option></select>
 <select id="focus" aria-label="观察距离"><option value="all">全组对照</option><option value="0">近看第一种</option><option value="1">近看第二种</option><option value="2">近看第三种</option><option value="3">近看第四种</option><option value="4">近看第五种</option></select><label><input type="checkbox" id="old">旧造型对照</label><button id="pause">暂停</button><button id="step">前进 0.1 秒</button><button id="portraits-button">生成正式图鉴图片</button>
 <select id="view" aria-label="观察角度"><option value="front">正面</option><option value="side">侧面</option><option value="three-quarter" selected>斜侧</option><option value="back">背面</option></select><label><input type="checkbox" id="translate" checked>真实根移动 · 1 米地面刻线</label><button id="boss-filmstrip">生成首领动作连续帧</button><button id="filmstrip-button">狼 / 霜狼 / 雪兔 · 连续 8 帧</button>
-<button id="checks">检查全部怪物</button><button id="hit">受击预览</button><button id="still">固定展示姿势</button><pre id="checks-report"></pre><pre id="report">LOADING</pre><div id="stage"></div><div id="portraits"></div>
+<button id="checks">检查全部怪物</button><button id="hit">受击预览</button><button id="still">固定展示姿势</button><button id="snow-anatomy">雪兔 / 霜狼 / 霜冠巨猿 · 正侧与连续动作</button><pre id="checks-report"></pre><pre id="report">LOADING</pre><div id="stage"></div><div id="portraits"></div>
 <section id="filmstrip"><h2>连续走动对照</h2><p>每组先连续行走 1 秒，再按 0.1 秒间隔截取 8 帧；抽帧之间仍以 1/60 秒推进正式动作。相机跟随，地面刻线保持世界坐标，便于观察脚是否滑地。此页只检查模型动作，不模拟寻路或伤害。</p><pre id="filmstrip-report">尚未生成</pre><div id="filmstrip-images"></div></section>
 <script type="module">
 import * as T from '../vendor/three.module.js';
@@ -99,6 +99,40 @@ document.querySelector('#filmstrip-button').onclick=()=>{
   }
   document.querySelector('#filmstrip-report').textContent=JSON.stringify({status:'PASS',frames:results});
  }catch(e){document.querySelector('#filmstrip-report').textContent=JSON.stringify({status:'FAIL',error:String(e)});}
+ finally{filmstripBusy=false;renderer.setSize(1120,460);draw();}
+};
+document.querySelector('#snow-anatomy').onclick=()=>{
+ if(filmstripBusy)return;filmstripBusy=true;paused=true;document.querySelector('#pause').textContent='继续';
+ const output=document.querySelector('#filmstrip-images');output.replaceChildren();const results=[];
+ try{
+  renderer.setSize(480,320);document.querySelector('#translate').checked=true;document.querySelector('#old').checked=false;
+  for(const [biome,kind]of [['snow','snowhare'],['snow','frostwolf'],['boss-snow','frostking']]){
+   document.querySelector('#biome').value=biome;document.querySelector('#focus').value='all';reset();
+   const index=kinds.indexOf(kind);if(index<0)throw Error(kind+' is absent from '+biome);
+   document.querySelector('#focus').value=String(index);
+   const title=document.createElement('h3');title.textContent=kind+' · 正面 / 侧面 / 行走 / 攻击';output.append(title);
+   const capture=(row,label)=>{
+    draw();if(kinds[index]!==kind||document.querySelector('#focus').value!==String(index)||!models[index].visible||models.some((model,i)=>i!==index&&model.visible))throw Error(kind+' rendered focus mismatch');
+    if(renderer.getContext().getError()!==0||renderer.info.programs.some(p=>p.diagnostics?.runnable===false))throw Error(kind+' shader/GL');
+    models[index].updateMatrixWorld(true);models[index].traverse(o=>{if(!o.matrixWorld.elements.every(Number.isFinite))throw Error(kind+' invalid pose');});
+    const fig=document.createElement('figure'),img=document.createElement('img'),cap=document.createElement('figcaption');
+    img.id='anatomy-'+kind+'-'+results.filter(r=>r.kind===kind).length;img.alt=kind+' '+label;img.src=renderer.domElement.toDataURL('image/png');
+    cap.textContent=label+' · '+clock.toFixed(2)+' s';fig.append(img,cap);row.append(fig);
+    results.push({kind:kinds[index],requestedKind:kind,focus:index,imageId:img.id,label,time:clock,z:models[index].position.z,view:document.querySelector('#view').value,mode:document.querySelector('#mode').value,stage:models[index].userData.bossStage,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
+   };
+   const stills=document.createElement('div');stills.className='filmstrip-row';output.append(stills);
+   document.querySelector('#mode').value='idle';reset();advanceTime(.5);
+   for(const view of ['front','side']){document.querySelector('#view').value=view;capture(stills,view);}
+   const walk=document.createElement('div');walk.className='filmstrip-row';output.append(walk);
+   document.querySelector('#mode').value='walk';document.querySelector('#view').value='side';reset();advanceTime(1);
+   for(let frame=0;frame<4;frame++){if(frame)advanceTime(.16);capture(walk,'walk '+frame);}
+   const attack=document.createElement('div');attack.className='filmstrip-row';output.append(attack);
+   document.querySelector('#mode').value='attack';document.querySelector('#view').value='three-quarter';reset();
+   const style=BOSS_STYLES[kind],wind=style?.wind??ENEMY_MOTION[kind].wind,duration=style?bossAttackPlan(kind,style.moves[0],{x:0,z:0,phase:1},{x:0,z:4}).duration:.55,recovery=style?.recovery??.6;
+   for(const [frame,time]of [0,wind*.75,wind+duration*.25,wind+duration*.75,wind+duration+recovery*.5].entries()){advanceTime(Math.max(0,time-clock));capture(attack,'attack '+frame);}
+  }
+  document.querySelector('#filmstrip-report').textContent=JSON.stringify({status:'PASS',scope:'rendered model / IK / shader, not combat balance',frames:results});
+ }catch(e){document.querySelector('#filmstrip-report').textContent=JSON.stringify({status:'FAIL',error:String(e),frames:results});}
  finally{filmstripBusy=false;renderer.setSize(1120,460);draw();}
 };
 document.querySelector('#boss-filmstrip').onclick=()=>{

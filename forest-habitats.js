@@ -44,7 +44,8 @@ export function installForestHabitats(world,id){
     const radius=Math.min(r*scale,Math.max(r,o.r*.89)),fork=MathUtils.smoothstep(y,1.8,3.3),thickness=r>1e-6?radius/r:1;
     // Inverse of treeTemplate's tipPosition: trunk template -> crown coordinates.
     // Finish the blend below every terminal twig, so low sprays also stay attached.
-    target.set(p.getX(i)/2.04,(y*.8496/5-.53)*template.canopyHeight/.47,p.getZ(i)/(2.04*(.94+template.variant*.035))).applyMatrix4(crownTransform);
+    const crownRatio=template.crownRatio??.47,crownWidth=template.crownWidth??2.04;
+    target.set(p.getX(i)/crownWidth,(y*(1-crownRatio*.32)/5-(1-crownRatio))*template.canopyHeight/crownRatio,p.getZ(i)/(crownWidth*(.94+template.variant*.035))).applyMatrix4(crownTransform);
     p.setXYZ(i,MathUtils.lerp(p.getX(i)*thickness,target.x,fork),MathUtils.lerp(y,target.y,fork),MathUtils.lerp(p.getZ(i)*thickness,target.z,fork));
    }
    trunk.geometry.computeVertexNormals();trunk.geometry.computeBoundingBox();trunk.geometry.computeBoundingSphere();

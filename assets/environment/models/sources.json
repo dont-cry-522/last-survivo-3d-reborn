@@ -1,0 +1,388 @@
+{
+  "retrieved": "2026-10-18",
+  "licenseEvidence": [
+    {
+      "file": "polyhaven-license.html",
+      "url": "https://polyhaven.com/license",
+      "bytes": 72685,
+      "sha256": "46158a6b319ae8ef55acd18bd96d986c9261fb0cc8086124e97bcbefe779a623"
+    },
+    {
+      "file": "CC0-1.0.txt",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/legalcode.txt",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    }
+  ],
+  "assets": [
+    {
+      "id": "weathered-rock-a",
+      "node": "SM_Rock_Weathered_A",
+      "sourceAsset": "rock_07",
+      "source": "https://polyhaven.com/a/rock_07",
+      "authors": {
+        "Jenelle van Heerden": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license",
+      "retrieved": "2026-10-18",
+      "sourceFiles": [
+        {
+          "file": "rock_07/rock_07_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_07/rock_07_1k.gltf",
+          "bytes": 2979,
+          "sha256": "efcc2dcaa133ff8ad5c865dc2135772e8f5dbc83fa38db2ee2cf25382436b6e6"
+        },
+        {
+          "file": "rock_07/rock_07.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_07/rock_07.bin",
+          "bytes": 468936,
+          "sha256": "e4a532a6d6cf4a08c288f501b790f32cba0528136a29959ce774c3cd39369e7e"
+        },
+        {
+          "file": "rock_07/textures/rock_07_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_arm_1k.jpg",
+          "bytes": 309735,
+          "sha256": "1ed76e9a8542c76bdc6b7b018720ae1f52cd75d9f5ae719f613de3f5032cf4da"
+        },
+        {
+          "file": "rock_07/textures/rock_07_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_diff_1k.jpg",
+          "bytes": 635452,
+          "sha256": "8ff1965aa1664cc4abcc0131c44ee2b97ab14d6e131d7a51429ff261eeb101c8"
+        },
+        {
+          "file": "rock_07/textures/rock_07_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_07/rock_07_nor_gl_1k.jpg",
+          "bytes": 766986,
+          "sha256": "57cb2210951aeb376164fce5f7c65f03e5599def04873b56cad0f173c275d78d"
+        }
+      ],
+      "officialMetadata": [
+        {
+          "file": "rock_07/info.json",
+          "url": "https://api.polyhaven.com/info/rock_07",
+          "bytes": 1056,
+          "sha256": "ab0e481f590ff41bb7971e7ec2656db7ba24df88c0dbb809db3623dd65fef8e9"
+        },
+        {
+          "file": "rock_07/files.json",
+          "url": "https://api.polyhaven.com/files/rock_07",
+          "bytes": 25290,
+          "sha256": "97d8555cfa560dbb870ad7b150e26659eedee5e018a19181fbc9fcce74a1166c"
+        }
+      ],
+      "file": "weathered-rock-a.glb",
+      "bytes": 252188,
+      "sha256": "df2a12a17ae3cc902d96f8487c724fe58e3d8fa67a6b65943ca97631c5886be6",
+      "sourceTriangles": 14844,
+      "lods": [
+        {
+          "node": "SM_Rock_Weathered_A_LOD0",
+          "triangles": 1800,
+          "vertices": 1198,
+          "horizontalRadius": 1.0009802299079886,
+          "boundsYUp": {
+            "min": [
+              -0.5118544101715088,
+              0.0004977432545274496,
+              -0.9763568043708801
+            ],
+            "max": [
+              0.5108516216278076,
+              0.8695760369300842,
+              0.9735561609268188
+            ]
+          }
+        },
+        {
+          "node": "SM_Rock_Weathered_A_LOD1",
+          "triangles": 700,
+          "vertices": 527,
+          "horizontalRadius": 1.012372369121533,
+          "boundsYUp": {
+            "min": [
+              -0.5140591859817505,
+              0.0006772882188670337,
+              -0.9776105284690857
+            ],
+            "max": [
+              0.5180861949920654,
+              0.8719319105148315,
+              0.9780641794204712
+            ]
+          }
+        },
+        {
+          "node": "SM_Rock_Weathered_A_LOD2",
+          "triangles": 179,
+          "vertices": 165,
+          "horizontalRadius": 0.9974986720142037,
+          "boundsYUp": {
+            "min": [
+              -0.507768452167511,
+              0.000506306707393378,
+              -0.9618255496025085
+            ],
+            "max": [
+              0.5268546342849731,
+              0.8646659255027771,
+              0.9652235507965088
+            ]
+          }
+        }
+      ],
+      "materials": 1,
+      "textureSize": 512,
+      "normalization": "Y-up; x/z centred; base y approximately 0; horizontal radius approximately 1 (all LODs <=1.02 after decimation)",
+      "transform": "Authored source geometry preserved, normalized, smooth shaded and decimated to three discrete meshes; original UVs retained; unused vertex colours removed; base/normal/ARM maps resized to 512 JPEG; rock base saturation reduced 40%; roughness remapped to 0.62+0.38*source; AO from ARM red enabled at 0.65 strength; normal strength 0.75; single shared PBR material."
+    },
+    {
+      "id": "weathered-rock-b",
+      "node": "SM_Rock_Weathered_B",
+      "sourceAsset": "rock_09",
+      "source": "https://polyhaven.com/a/rock_09",
+      "authors": {
+        "Jenelle van Heerden": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license",
+      "retrieved": "2026-10-18",
+      "sourceFiles": [
+        {
+          "file": "rock_09/rock_09_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/rock_09/rock_09_1k.gltf",
+          "bytes": 2745,
+          "sha256": "636e57eb0090889627da18edaec202ff9f65f83101b94f91b7da4d21dc080ab9"
+        },
+        {
+          "file": "rock_09/textures/rock_09_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_arm_1k.jpg",
+          "bytes": 322950,
+          "sha256": "594e2cec49e6bb40bd9bab2649e37dcc261079456cf4d6f680f56770c19db5ea"
+        },
+        {
+          "file": "rock_09/textures/rock_09_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_nor_gl_1k.jpg",
+          "bytes": 757031,
+          "sha256": "2195b5c7da3a23af2a5f93dbb20f38bc069028509b106397bc8d2aee0bc55729"
+        },
+        {
+          "file": "rock_09/textures/rock_09_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/rock_09/rock_09_diff_1k.jpg",
+          "bytes": 595103,
+          "sha256": "afb7ae5ae82238d304aba589391ac6bc87f7cf1dbfe50980c21f762cfdd87efd"
+        },
+        {
+          "file": "rock_09/rock_09.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_09/rock_09.bin",
+          "bytes": 286592,
+          "sha256": "780c37d6fc11ca3a01c3763535ef883908b6007271a46bd446d2289ded820751"
+        }
+      ],
+      "officialMetadata": [
+        {
+          "file": "rock_09/info.json",
+          "url": "https://api.polyhaven.com/info/rock_09",
+          "bytes": 1057,
+          "sha256": "573e972deef9aa7cd7bbbe49ffccf785366dfd1820ffdb0f5080280b1caa18b6"
+        },
+        {
+          "file": "rock_09/files.json",
+          "url": "https://api.polyhaven.com/files/rock_09",
+          "bytes": 25278,
+          "sha256": "8cd1e314602910d6f768683e2adda86b72853c9e4a5fb85f5e6aeff131cb3a87"
+        }
+      ],
+      "file": "weathered-rock-b.glb",
+      "bytes": 250108,
+      "sha256": "f4ef96c7221e1c964262c704004da83761ca3da9bba5c5f8707ea518f3f4c2d3",
+      "sourceTriangles": 12416,
+      "lods": [
+        {
+          "node": "SM_Rock_Weathered_B_LOD0",
+          "triangles": 1800,
+          "vertices": 1151,
+          "horizontalRadius": 1.0018923987283552,
+          "boundsYUp": {
+            "min": [
+              -0.4948119819164276,
+              0.0016408455558121204,
+              -0.9674097299575806
+            ],
+            "max": [
+              0.4952075183391571,
+              0.4374854266643524,
+              0.9696459174156189
+            ]
+          }
+        },
+        {
+          "node": "SM_Rock_Weathered_B_LOD1",
+          "triangles": 699,
+          "vertices": 507,
+          "horizontalRadius": 1.002168980922396,
+          "boundsYUp": {
+            "min": [
+              -0.5025397539138794,
+              -0.003694097977131605,
+              -0.9667246341705322
+            ],
+            "max": [
+              0.4913387894630432,
+              0.44649630784988403,
+              0.9696459174156189
+            ]
+          }
+        },
+        {
+          "node": "SM_Rock_Weathered_B_LOD2",
+          "triangles": 180,
+          "vertices": 161,
+          "horizontalRadius": 1.0177904460455538,
+          "boundsYUp": {
+            "min": [
+              -0.5014510154724121,
+              0.0015123487683013082,
+              -0.9660178422927856
+            ],
+            "max": [
+              0.49301308393478394,
+              0.4187876284122467,
+              0.9785081148147583
+            ]
+          }
+        }
+      ],
+      "materials": 1,
+      "textureSize": 512,
+      "normalization": "Y-up; x/z centred; base y approximately 0; horizontal radius approximately 1 (all LODs <=1.02 after decimation)",
+      "transform": "Authored source geometry preserved, normalized, smooth shaded and decimated to three discrete meshes; original UVs retained; unused vertex colours removed; base/normal/ARM maps resized to 512 JPEG; rock base saturation reduced 40%; roughness remapped to 0.62+0.38*source; AO from ARM red enabled at 0.65 strength; normal strength 0.75; single shared PBR material."
+    },
+    {
+      "id": "old-stump",
+      "node": "SM_Stump_Old_A",
+      "sourceAsset": "tree_stump_02",
+      "source": "https://polyhaven.com/a/tree_stump_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license",
+      "retrieved": "2026-10-18",
+      "sourceFiles": [
+        {
+          "file": "tree_stump_02/tree_stump_02_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/tree_stump_02/tree_stump_02_1k.gltf",
+          "bytes": 2802,
+          "sha256": "a79189160d1c7cfd6d875ab4470e4d2ff9cee08d58943be69d6028034a08c7ec"
+        },
+        {
+          "file": "tree_stump_02/textures/tree_stump_02_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_nor_gl_1k.jpg",
+          "bytes": 1334839,
+          "sha256": "24c07761bbdfd43b5342690b4f8dd7fc0773f9e4b966dd310bb77fa5c5ede77a"
+        },
+        {
+          "file": "tree_stump_02/tree_stump_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/tree_stump_02/tree_stump_02.bin",
+          "bytes": 1433880,
+          "sha256": "db5e85d08beb889f0cc5be3b9bdfbcb1ae6df47e8e242af3c355766422f49d1d"
+        },
+        {
+          "file": "tree_stump_02/textures/tree_stump_02_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_diff_1k.jpg",
+          "bytes": 901605,
+          "sha256": "318dbe92494887d137607144ef20bc170cbda1796dad15364ecf40683a79b8a2"
+        },
+        {
+          "file": "tree_stump_02/textures/tree_stump_02_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/tree_stump_02/tree_stump_02_arm_1k.jpg",
+          "bytes": 796214,
+          "sha256": "d009168a1e043b9b980dd23a1699805d8888b8fe9cc79455f809a4e58d18b96b"
+        }
+      ],
+      "officialMetadata": [
+        {
+          "file": "tree_stump_02/info.json",
+          "url": "https://api.polyhaven.com/info/tree_stump_02",
+          "bytes": 1175,
+          "sha256": "364bf46349b9eec60abf93b15308750b452b14c4cbacf872488f74dc0786eae7"
+        },
+        {
+          "file": "tree_stump_02/files.json",
+          "url": "https://api.polyhaven.com/files/tree_stump_02",
+          "bytes": 25439,
+          "sha256": "8d9a77e3c81b3a474f0a61eeeada5556ff6e62d9fd1b5731e869f1b2992c0de2"
+        }
+      ],
+      "file": "old-stump.glb",
+      "bytes": 384536,
+      "sha256": "f93312d443f8c48d7833e726573eeb141a7c10fd1effe4894c536df1451186fc",
+      "sourceTriangles": 62345,
+      "lods": [
+        {
+          "node": "SM_Stump_Old_A_LOD0",
+          "triangles": 1800,
+          "vertices": 1447,
+          "horizontalRadius": 0.9988134331469103,
+          "boundsYUp": {
+            "min": [
+              -0.9427698254585266,
+              0.0010593307670205832,
+              -0.8614264130592346
+            ],
+            "max": [
+              0.9444789886474609,
+              0.6464336514472961,
+              0.8646709322929382
+            ]
+          }
+        },
+        {
+          "node": "SM_Stump_Old_A_LOD1",
+          "triangles": 700,
+          "vertices": 682,
+          "horizontalRadius": 0.9999416603106903,
+          "boundsYUp": {
+            "min": [
+              -0.9415225982666016,
+              -0.0012939308071509004,
+              -0.8643521666526794
+            ],
+            "max": [
+              0.9444789886474609,
+              0.6416348218917847,
+              0.8654866814613342
+            ]
+          }
+        },
+        {
+          "node": "SM_Stump_Old_A_LOD2",
+          "triangles": 180,
+          "vertices": 295,
+          "horizontalRadius": 1.0031567722279966,
+          "boundsYUp": {
+            "min": [
+              -0.9410585761070251,
+              0.000746792065910995,
+              -0.8583311438560486
+            ],
+            "max": [
+              0.942676305770874,
+              0.6298669576644897,
+              0.865755558013916
+            ]
+          }
+        }
+      ],
+      "materials": 1,
+      "textureSize": 512,
+      "normalization": "Y-up; x/z centred; base y approximately 0; horizontal radius approximately 1 (all LODs <=1.02 after decimation)",
+      "transform": "Authored source geometry preserved, normalized, smooth shaded and decimated to three discrete meshes; original UVs retained; unused vertex colours removed; base/normal/ARM maps resized to 512 JPEG; rock base saturation reduced 40%; roughness remapped to 0.62+0.38*source; AO from ARM red enabled at 0.65 strength; normal strength 0.75; single shared PBR material."
+    }
+  ],
+  "generatedBy": "scripts/prepare-environment-assets.py",
+  "blender": "4.5.9 LTS",
+  "runtimeNotes": "Each GLB contains three overlapping LOD meshes. Select exactly one LOD; do not show all three. Existing collider dimensions remain the authority. Textures are embedded once per GLB; no Draco/KTX/meshopt extension or CDN required."
+}

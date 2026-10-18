@@ -12,7 +12,7 @@ vec3 readLight(vec2 uv){
  // the same branch, avoiding five redundant brightness gates per output pixel.
  if(extract<.5)return c;
  float brightness=max(dot(c,vec3(.2126,.7152,.0722)),max(c.r,max(c.g,c.b))*.72);
- float gate=smoothstep(.70,1.25,brightness);
+ float gate=smoothstep(1.05,1.85,brightness);
  return c*gate;
 }
 void main(){
@@ -46,8 +46,8 @@ void main(){
  color+=texture2D(glowColor,vUv).rgb*glowStrength;
  gl_FragColor=vec4(color,1.);
  #include <tonemapping_fragment>
- // Very gentle shoulder contrast, without crushed blacks or a blurred combat field.
- gl_FragColor.rgb=mix(gl_FragColor.rgb,gl_FragColor.rgb*gl_FragColor.rgb*(3.-2.*gl_FragColor.rgb),.09);
+ // Keep the same tone curve as direct rendering on slower devices. Extra
+ // contrast here used to crush dark cloth only when postprocessing was active.
  #include <colorspace_fragment>
 }`;
 

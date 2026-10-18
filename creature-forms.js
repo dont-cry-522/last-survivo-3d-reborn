@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {prepareCreatureSurface,installCreatureSurface,installCreatureEmission} from './creature-surface.js?v=212';
+import {prepareCreatureSurface,installCreatureSurface,installCreatureEmission} from './creature-surface.js?v=216';
 
 // Finite templates and three shared finishes (one translucent jelly membrane). No per-enemy geometry/material,
 // bone textures, extra lights or disposable particle resources.
@@ -49,7 +49,16 @@ export function tube(color,points,radii,{sides=7,steps=12,flexible}={}){
  // Seal even the tapered ends; knees can expose them during deep recovery.
  const positions=Array.from(p.array),indices=Array.from(g.index.array);
  for(const end of[0,1]){const center=positions.length/3,at=curve.getPointAt(end),offset=end*steps*(sides+1);positions.push(at.x,at.y,at.z);for(let j=0;j<sides;j++)indices.push(...(end?[center,offset+j+1,offset+j]:[center,offset+j,offset+j+1]));}
- g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.deleteAttribute('normal');g.computeVertexNormals();return tint(g,color,flexible);
+ g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(indices);g.deleteAttribute('normal');g.computeVertexNormals();
+ // TubeGeometry duplicates each ring's UV seam. After tapering, recomputing
+ // normals gives its two coincident vertices separate half-fan normals.
+ // Share only this radial seam; keep caps, curved silhouette and joints intact.
+ const normals=g.attributes.normal;
+ for(let i=0;i<=steps;i++){
+  const a=i*(sides+1),b=a+sides,x=normals.getX(a)+normals.getX(b),y=normals.getY(a)+normals.getY(b),z=normals.getZ(a)+normals.getZ(b),length=Math.hypot(x,y,z)||1;
+  normals.setXYZ(a,x/length,y/length,z/length);normals.setXYZ(b,x/length,y/length,z/length);
+ }
+ return tint(g,color,flexible);
 }
 export function form(parent,key,build,{glow=false,translucent=false}={}){
  if(!cache.has(key)){
@@ -61,8 +70,8 @@ export function form(parent,key,build,{glow=false,translucent=false}={}){
 export const joint=(parent,x=0,y=0,z=0)=>{const p=new T.Group();p.position.set(x,y,z);parent.add(p);return p;};
 export function face(color,y,z,spread=.12){return[-1,1].flatMap(s=>[oval(0x26312f,s*spread,y,z,.059,.049,.025),oval(color,s*spread,y+.008,z+.019,.027,.027,.012),oval(0xf2edcf,s*spread-.008,y+.018,z+.031,.008,.009,.004,6,4)]);}
 export const smooth=x=>{x=T.MathUtils.clamp(x,0,1);return x*x*(3-2*x);};
-export {footCycle as gait} from './creature-gait.js?v=212';
-import {footCycle as gait} from './creature-gait.js?v=212';
+export {footCycle as gait} from './creature-gait.js?v=216';
+import {footCycle as gait} from './creature-gait.js?v=216';
 const down=new T.Vector3(0,-1,0),target=new T.Vector3(),direction=new T.Vector3(),bend=new T.Vector3(),elbow=new T.Vector3(),segment=new T.Vector3(),inverse=new T.Matrix4(),worldTarget=new T.Vector3(),actorInverse=new T.Matrix4();
 const rootPoint=new T.Vector3(),nominalPoint=new T.Vector3(),rootDelta=new T.Vector3(),nextContact=new T.Vector3();
 // Both articulated rigs use this same contact history. Ordinary swing follows

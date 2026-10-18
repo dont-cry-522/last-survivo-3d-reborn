@@ -112,3 +112,41 @@ Each set supplies its diffuse and displacement map. Runtime shaders mix the diff
 - 使用 [Poly Haven Island Tree 01](https://polyhaven.com/a/island_tree_01) 的原始 1K 叶片漫反射与透明遮罩，作者 Rico Cilliers、Rob Tuytel，[CC0](https://polyhaven.com/license)。2 张文件共 249,324 字节；来源、许可和 SHA256 见 `assets/environment/tree-leaf-sources.json`。
 - 只取叶片贴图，未导入完整树模型。运行时将独立叶片拼成共享枝叶簇供树冠使用，灌木使用单叶 UV；几何、弯曲与摆动由本项目制作。图片在本地加载，包含在离线包中；失败时保留程序化回退。
 - 蕨叶透明、法线和漫反射纹理现在由两层林下植被共享，不重复下载。倒木树皮、码头木箱板缝和桶身鼓腹仍为程序化几何/材质。
+
+## Scanned environment models — Poly Haven, CC0 1.0 (v213)
+
+The following three models were downloaded from Poly Haven's official model/API endpoints on 2026-10-18. Their meshes, UVs and texture maps are external artwork; they are not models newly authored by this project. Poly Haven distributes these assets under [CC0 1.0](https://polyhaven.com/license).
+
+| Delivered file in `assets/environment/models/` | Original model | Author | Delivered size | LOD0 / LOD1 / LOD2 triangles |
+| --- | --- | --- | --- | --- |
+| `weathered-rock-a.glb` | [Rock 07](https://polyhaven.com/a/rock_07) | Jenelle van Heerden | 252,188 bytes | 1,800 / 700 / 179 |
+| `weathered-rock-b.glb` | [Rock 09](https://polyhaven.com/a/rock_09) | Jenelle van Heerden | 250,108 bytes | 1,800 / 699 / 180 |
+| `old-stump.glb` | [Tree Stump 02](https://polyhaven.com/a/tree_stump_02) | Rob Tuytel | 384,536 bytes | 1,800 / 700 / 180 |
+
+Local adaptations in Blender 4.5.9 LTS: import the source glTF without executing source Blender scripts, bake source transforms, centre the horizontal origin, place the base at ground level, normalize the horizontal radius to approximately 1, smooth the surface and decimate three independent LOD meshes. Decimation slightly changes vertex positions; the largest delivered horizontal radius is approximately 1.01779, not an exact unit collider. The original UV layout is retained. Base colour, OpenGL normal and ARM (ambient occlusion/roughness/metalness) maps are resized from 1K to 512-pixel JPEGs and embedded in each GLB. Rock base-colour saturation is reduced by 40%; roughness is remapped to `0.62 + 0.38 × source`; ambient occlusion strength is 0.65 and normal strength is 0.75. Each asset uses one shared PBR material across its three LODs. Runtime biome colouring and placement adapt the models to the existing art direction; collision dimensions remain controlled by the existing game world.
+
+The three delivery GLBs total **886,832 bytes** (about 0.85 MiB). Each contains three overlapping alternative meshes: render exactly one LOD at a time. Textures and buffers are embedded; no Draco, meshopt, KTX decoder or external CDN is needed. `sources.json` records the original asset/API URLs, authors, retrieval date, source and derivative hashes, transformations and per-LOD measurements. `LICENSE.txt` retains the attribution summary and `CC0-1.0.txt` the original CC0 legal text.
+
+Reproduction: `python scripts/prepare-environment-assets.py --blender "/path/to/blender"`. Downloaded source glTF/bin/JPG files and original license evidence remain in the workspace's `outputs/art-upgrade-v213/sources/environment/`, outside the shipping repository. The script produces only the three selected GLBs and their provenance/license files in the runtime directory. `scripts/build-offline.mjs` explicitly includes those six files in both the service-worker cache and complete disk export; unselected models, source archives and Blender projects are not added by a recursive scan.
+
+## Hero surface rebuilds — Quaternius CC0 sources and local Blender work (v215)
+
+The seven playable heroes retain the existing Quaternius CC0 body/outfit foundations and 65 named bones. Local Blender reconstruction changes selected clothing, hoods, masks, hair and facial surfaces; it does not replace the animation library or create seven newly downloaded characters. See [the implementation record](docs/characters-v215.md) and [the exact delivery/source manifest](assets/characters/rebuilt-v215/sources.json).
+
+The only newly downloaded external meshes adopted in this release are **Hair_Buzzed** and **Hair_Beard**, from the free Standard edition of [Quaternius Universal Base Characters](https://quaternius.com/packs/universalbasecharacters.html), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Selected entries were downloaded from the artist's official itch.io delivery on 2026-10-18. The author's notice remains in `assets/characters/universal-base-characters-LICENSE.txt`; `assets/characters/rebuilt-v215/LICENSE.txt` records this release's provenance.
+
+Blender adaptations combine the short hair and beard into the ranger's existing head slot, fit a low natural crest and close beard, add restrained brown vertex colours, smooth and decimate, then transfer normalized weights from the existing head. The delivered `scout-head-bfb5e5fa2c98.glb` contains 1,491 triangles, 868 vertices, one material and no texture images; 91,120 bytes. The existing face, eyes, skeleton, animations and weapon attachments remain in use. Source hashes and other delivered GLB hashes are recorded in the manifest above.
+
+The other six heroes and the ranger clothing use previously bundled CC0 foundations, with project-authored surface reconstruction performed in Blender. The earlier [Fantasy Outfits](https://quaternius.com/packs/modularcharacteroutfitsfantasy.html) notice remains in `assets/characters/modular-character-outfits-fantasy-LICENSE.txt`. Previously bundled masks, patterned materials and project-generated details retain their existing origins. No models, textures or animations were extracted from commercial reference games.
+
+Downloaded `Male_Peasant` and `Hair_BuzzedFemale` were evaluated but not integrated. `Female_Peasant`, `Hair_Buns` and `Hair_Long` are re-downloaded validation copies of resources already used by the project, not new asset introductions. Unused files and full source archives are outside the shipping repository.
+
+The active v215 manifest contains 12 local GLBs totaling **5,769,436 bytes**; no new runtime textures. Existing local character textures are reused where applicable. Reproduction uses `scripts/hero-blender-tools.py`, the five `prepare-*` scripts listed in `assets/characters/rebuilt-v215/sources.json`, and `scripts/pack-hero-refinements.mjs`. Blender 4.5.9 LTS and the existing MIT-licensed [MCP for Blender](https://github.com/ahujasid/mcp-for-blender) were verified locally; no paid generation service was used. Toolchain tests are not additional game assets.
+
+
+## v216 · Local environment reflections
+
+- `assets/environment/lighting/forest-1k.hdr`: [Nature Reserve Forest](https://polyhaven.com/a/nature_reserve_forest), Dimitrios Savva / Jarod Guest.
+- `assets/environment/lighting/sky-1k.hdr`: [Kloofendal 48d Partly Cloudy](https://polyhaven.com/a/kloofendal_48d_partly_cloudy), Greg Zaal.
+- Both files are CC0 under [Poly Haven’s asset license](https://polyhaven.com/license), downloaded at 1K from the official asset host. Byte counts and hashes are recorded in `assets/environment/lighting/sources.json`. Original HDR files are kept; runtime only normalizes and filters the reflection illumination.
+- `vendor/HDRLoader.js` is the official Three.js r180 MIT loader, with only its import path localized; the existing `vendor/LICENSE` applies. No runtime CDN or paid generator is used.

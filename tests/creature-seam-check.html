@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><title>怪物曲面接缝 · 固定侧光验证</title>
+<style>body{background:#202932;color:#e6e8e4;font:14px system-ui;margin:18px}button{padding:8px;font:inherit}#images{display:grid;grid-template-columns:1fr 1fr;gap:10px}figure{margin:0}img{width:100%}pre{white-space:pre-wrap}</style>
+<h1>曲面接缝 · 固定几何与光照</h1><p>取正式曲线参数隔离法线问题；旧图仅恢复原来的法线计算，形状、色彩、三角形、光照、相机完全相同。不是完整怪物重建或整场景质量验收。</p>
+<button id="capture">生成五组旧 / 新接缝对照</button><p id="status">READY</p><div id="images"></div><pre id="report"></pre>
+<script type="module">
+import * as T from '../vendor/three.module.js';
+import {tube} from '../creature-forms.js';
+const cases=[
+ {name:'straight',label:'直管诊断',points:[[0,0,0],[0,1,0]],radii:[.1,.14,.1],sides:10,steps:12},
+ {name:'frostking',label:'霜冠巨猿前臂',points:[[0,.12,0],[.03,-.19,.015],[.06,-.43,.03],[0,-.83,.08]],radii:[.29,.35,.36,.28],sides:16,steps:16},
+ {name:'root',label:'树王弯曲根须',points:[[0,-.73,.08],[.25,-1.04,.16],[.30,-1.34,.31],[.27,-1.46,.45]],radii:[.13,.11,.065,.012],sides:8,steps:12},
+ {name:'pincer',label:'沉船守卫蟹钳',points:[[0,0,0],[-.25,.02,.37],[-.24,.03,.77],[.08,0,.97]],radii:[.23,.21,.13,.01],sides:10,steps:15},
+ {name:'tentacle',label:'柔软触须诊断',points:[[0,0,0],[.1,-.4,.06],[-.1,-.8,.1],[0,-1,.04]],radii:[.07,.055,.03,.003],sides:5,steps:9},
+];
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.setSize(620,460);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
+const scene=new T.Scene();scene.background=new T.Color(0x29333d);const hemi=new T.HemisphereLight(0xc7d9e6,0x39362c,1),sun=new T.DirectionalLight(0xffe9cc,3);scene.add(hemi,sun,sun.target);
+const camera=new T.OrthographicCamera(-1,1,1,-1,.01,40),material=new T.MeshStandardMaterial({color:0xb3bcc0,roughness:.60,metalness:.04});
+const canvas=document.createElement('canvas');canvas.width=620;canvas.height=460;const ctx=canvas.getContext('2d',{willReadFrequently:true}),images=document.querySelector('#images');
+function capture(mesh,c,mode){
+ renderer.render(scene,camera);ctx.drawImage(renderer.domElement,0,0);const figure=document.createElement('figure'),image=document.createElement('img'),caption=document.createElement('figcaption');image.id=`seam-${c.name}-${mode}`;image.src=canvas.toDataURL();caption.textContent=c.label+' · '+(mode==='before'?'旧：环缝断裂法线':'新：环缝共享法线');figure.append(image,caption);images.append(figure);return ctx.getImageData(0,0,620,460).data;
+}
+document.querySelector('#capture').onclick=()=>{
+ images.replaceChildren();const reports=[];
+ for(const c of cases){
+  const after=tube(0xffffff,c.points,c.radii,c),before=after.clone();before.computeVertexNormals();const mesh=new T.Mesh(before,material);scene.add(mesh);
+  const bounds=new T.Box3().setFromObject(mesh),center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()),half=Math.max(size.x,size.y,size.z)*.65;
+  const row=Math.floor(c.steps/2),normal=new T.Vector3().fromBufferAttribute(after.attributes.normal,row*(c.sides+1)),curve=new T.CatmullRomCurve3(c.points.map(p=>new T.Vector3(...p))),tangent=curve.getTangentAt(.5).normalize();
+  camera.up.copy(tangent);camera.position.copy(center).addScaledVector(normal,5);camera.lookAt(center);camera.left=-half*620/460;camera.right=half*620/460;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();
+  const lateral=new T.Vector3().crossVectors(tangent,normal).normalize();sun.target.position.copy(center);sun.position.copy(center).addScaledVector(normal,3).addScaledVector(lateral,4).addScaledVector(tangent,2);
+  const oldPixels=capture(mesh,c,'before');mesh.geometry=after;const newPixels=capture(mesh,c,'after');let changed=0,total=0,maxAngle=0,newMaxAngle=0;
+  for(let i=0;i<oldPixels.length;i+=4){const delta=Math.max(...[0,1,2].map(j=>Math.abs(oldPixels[i+j]-newPixels[i+j])));if(delta>1){changed++;total+=delta;}}
+  for(let r=0;r<=c.steps;r++){const i=r*(c.sides+1),a=new T.Vector3().fromBufferAttribute(before.attributes.normal,i),b=new T.Vector3().fromBufferAttribute(before.attributes.normal,i+c.sides);maxAngle=Math.max(maxAngle,a.angleTo(b)*180/Math.PI);a.fromBufferAttribute(after.attributes.normal,i);b.fromBufferAttribute(after.attributes.normal,i+c.sides);newMaxAngle=Math.max(newMaxAngle,a.angleTo(b)*180/Math.PI);}
+  const glError=renderer.getContext().getError();reports.push({kind:c.name,triangles:after.index.count/3,changedPixels:changed,meanDelta:changed?total/changed:0,oldMaxSeamDegrees:maxAngle,newMaxSeamDegrees:newMaxAngle,glError,pass:changed>20&&newMaxAngle<.001&&glError===0});scene.remove(mesh);before.dispose();after.dispose();
+ }
+ document.querySelector('#report').textContent=JSON.stringify({size:[620,460],lights:2,scope:'isolated real creature tube construction, not full monster model or performance QA',reports},null,2);document.querySelector('#status').textContent=reports.every(x=>x.pass)?'PASS · 请目视检查接缝':'FAIL · 查看报告';
+};
+</script>

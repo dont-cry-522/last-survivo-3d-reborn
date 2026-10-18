@@ -1,96 +1,100 @@
-import{ARCSTAFF,BRIARPOT,traceArcStaff,arcFocusMultiplier,wildWeaponBlock,briarTargetPoint,BriarPods,briarStagger}from'./wild-weapons.js?v=212';
-import{bossZoneEffect}from'./boss-effects.js?v=212';
-import{setCreatureTime}from'./creature-forms.js?v=212';
-import{enemyCastFlight as castEnemyFlight}from'./enemy-cast-vfx.js?v=212';
-import{installClimateLandforms}from'./climate-landforms.js?v=212';
-import{installHarborLife}from'./harbor-life.js?v=212';
-import {createLoadingScreen} from './loading-screen.js?v=212';
-import {warmScene} from './render-prewarm.js?v=212';
-import {prepareCombatSamples} from './combat-prewarm.js?v=212';
-import {loadTreeTextures} from './tree-scenery.js?v=212';
-import {loadFernTextures} from './fern-surfaces.js?v=212';
-import{bodiesClear}from'./actor-collision.js?v=212';
-import{BOSS_ROUTES,BOSS_ROUNDS,BOSS_BREAK,createBossRun,advanceBossRun}from'./boss-expedition.js?v=212';
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=212';
-import{shotInterval,shotgunVolley,shotgunHit,SHOTGUN_PUSH}from'./gun-handling.js?v=212';
-import{beginScythe,scytheHits,scytheDamage,scythePrimary,finishScytheSweep,scytheRestRemaining,SCYTHE}from'./scythe-combat.js?v=212';
-import{AIR_ENEMIES,AIR_ROSTERS,airWaveEligible,makeAirborne,tickAirborne}from'./airborne-enemies.js?v=212';
-import{MOBILITY,resetMobility,airborne,bodyHeight,attackReachesPlayer,beginJump,tickMobility,restoreMobilityPose,applyMobilityPose}from'./adventure-mobility.js?v=212';
-import{installAdventureCampfire,updateAdventureCampfire}from'./adventure-campfire.js?v=212';
-import{loadSurfaceTextures}from'./surface-textures.js?v=212';
-import{createOverheadQuery,mobilityCeiling as queryMobilityCeiling,needsMobilityCeiling}from'./adventure-overheads.js?v=212';
-import{installAdventureGroundDetail,installHabitatDetail,animateAdventureGroundDetail}from'./adventure-ground-detail.js?v=212';
-import{AdventureCamera}from'./adventure-camera.js?v=212';
-import{FirstPersonView}from'./first-person-view.js?v=212';
-import{AdventureAtmosphere}from'./adventure-atmosphere.js?v=212';
-import{aimPoint,groundAim,launchVelocity,segmentHitsBody,bodyContact,segmentBodyEntry,segmentGroundEntry}from'./adventure-combat.js?v=212';
-import{CinematicRenderer}from'./cinematic-renderer.js?v=212';
-import{EnvironmentImpacts,waterCrossing}from'./environment-impact.js?v=212';
-import{lobbyLandscape,entryLandscapeYaw}from'./lobby-landscape.js?v=212';
-import{installForestHabitats}from'./forest-habitats.js?v=212';
-import{installExplorationRoutes}from'./exploration-routes.js?v=212';
-import{installBiomePlaces}from'./biome-places.js?v=212';
-import{installEnvironmentClusters}from'./environment-clusters.js?v=212';
-import{installEnvironmentGrounding}from'./environment-grounding.js?v=212';
-import{installForestTerrain}from'./forest-terrain.js?v=212';
-import{installForestFloorRelief}from'./forest-floor-relief.js?v=212';
-import{installExplorationLandmarks}from'./exploration-landmarks.js?v=212';
-import{installExplorationComposition}from'./exploration-composition.js?v=212';
-import{installForestVista}from'./forest-vista.js?v=212';
-import{installWorldLightShafts,updateWorldLightShafts,installForestMist}from'./world-light-shafts.js?v=212';
-import{mapBrief}from'./expedition-brief.js?v=212';
-import{polishEnvironmentModels}from'./environment-props.js?v=212';
-import{EnvironmentLighting,installDistantLandscape}from'./environment-lighting.js?v=212';
-import{MirageCombat}from'./mirage-combat.js?v=212';
-import{MirageVFX}from'./mirage-vfx.js?v=212';
-import{mirageSound}from'./mirage-audio.js?v=212';
-import{herbalDelay,herbalPoint,herbalContact,herbalFront,whipTipMultiplier,HerbalWaves}from'./herbal-weapons.js?v=212';
-import{PoisonCombat}from'./poison-combat.js?v=212';
-import{PoisonVFX}from'./poison-vfx.js?v=212';
-import{poisonSound}from'./poison-audio.js?v=212';
-import {HeroPreview} from './hero-preview.js?v=212';
-import {knownMapPoints,mapWaypoint,waypointHint,drawMapObstacles} from './map-navigation.js?v=212';
-import {createExploration,EXPLORATION_SIZE} from './map-exploration.js?v=212';
-import{REGIONS,biomeAt,biomeWeights,biomeColor,CONFLUENCE_TEXT}from'./confluence.js?v=212';
-import{observePlayer}from'./target-awareness.js?v=212';
-import{TERRAIN_TIPS,onIce,iceMotion,damageTerrain,updateTactics,terrainMesh}from'./map-tactics.js?v=212';
-import{advanceRoaming,roamingHint,courierDirection,campRewardChoices,campRewardPool,roamingReward}from'./roaming-events.js?v=212';
-import{discoveryInfo,discoveryVariants,discoveryThreatened,advanceDiscovery,discoveryHint,animateDiscoveries}from'./map-discoveries.js?v=212';
-import{recordEnemyHit,EnemyDeaths}from'./enemy-feedback.js?v=212';
-import{sandWeather}from'./sand-weather.js?v=212';
-import{HERO_DODGES,HERO_ABILITY_TEXT,dodgeTravel}from'./hero-dodge.js?v=212';
-import{LINGYA_HOP_DURATION,lingyaHopScale,planLingyaHop,steerLingyaHop}from'./lingya-motion.js?v=212';
-import{BeastCompanion,PET_TIMING,sideHopTravel}from'./beast-companion.js?v=212';
-import{makeBadger,animateBadger}from'./beast-model.js?v=212';
-import{updateTide,harpoonHit,tideDashTravel,HARPOON_ATTACKS}from'./coast.js?v=212';
-import{tickBoss}from'./boss-combat.js?v=212';
-import{inMeleeArc,meleeDamageScale}from'./melee.js?v=212';
-import{discoverSite}from'./site-discovery.js?v=212';
-import{MAP_EVENTS,createMapEvent,acceptForestTrial,advanceMapEvent,eventProgress}from'./map-events.js?v=212';
-import{MAP_HALF as DEFAULT_HALF}from'./map-layout.js?v=212';
-import{terrainAt,updateWaterLighting}from'./water.js?v=212';
-import{crossedSwimPhase}from'./swim-motion.js?v=212';
-import{FIELD_SUPPLIES,equipFieldSupply,fieldSupplyEvent,fieldSupplyLabel,RELICS,relicChoices,equipRelic,relicEvent,incomingRelicDamage,readJournal,writeJournal,recordDiscovery,recordVictory}from'./expedition.js?v=212';
-import{EXPEDITION_BOSS_TIME,encounterPhase,enemyGrowth,encounterRole,HUNT_SQUAD,huntFormation,nextHuntFormation,enemyRecovery,HUNT_BOONS,takeHuntBoon,enemyApproach,separation,attackSlotAvailable}from'./encounters.js?v=212';
-import{setupMobileDisplay}from'./mobile-display.js?v=212';
-import{weaponCuePhases,mirageShotDelay}from'./weapon-performance.js?v=212';
-import{ENEMY_VOICES}from'./enemy-audio.js?v=212';
-import{ENEMY_MOTION,gaitPace,advanceEnemyLocomotion}from'./enemy-motion.js?v=212';
-import{MAP_ROSTERS,REGIONAL_ENEMIES,regionalEnemy}from'./map-enemies.js?v=212';
-import{HeroSkills}from'./hero-skills.js?v=212';
-import{EXTRA_BY_ID,skillPairState,skillPairHint}from'./skill-catalog.js?v=212';
-import{SCOUT_ROLL_DURATION,rollTravel}from'./dodge-motion.js?v=212';
-import{adventureDodgePose}from'./adventure-dodge.js?v=212';
-import{renderPixelRatio,RenderBudget}from'./render-budget.js?v=212';
-import{groundCue,disposeCue,fitGroundCue,fitGroundSurface,disposeGroundSurface}from'./ground-cues.js?v=212';
-import{weaponRouteEffect,WEAPON_ROUTE_LOOKS}from'./weapon-route-vfx.js?v=212';
-import{SkillVFX}from'./skill-vfx.js?v=212';
-import{loadHeroAssets,disposeHero}from'./skinned-hero.js?v=212';
-import{GameAudio,SFX_STYLES}from'./audio.js?v=212';
-import{ENEMY_GUIDE,CIRCLE_GUIDE}from'./battle-guide.js?v=212';
+import {loadEnvironmentAssets,installEnvironmentAssets,updateEnvironmentAssets} from './environment-assets.js?v=216';
+import{ARCSTAFF,BRIARPOT,traceArcStaff,arcFocusMultiplier,wildWeaponBlock,briarTargetPoint,BriarPods,briarStagger}from'./wild-weapons.js?v=216';
+import{bossZoneEffect}from'./boss-effects.js?v=216';
+import{setCreatureTime}from'./creature-forms.js?v=216';
+import{enemyCastFlight as castEnemyFlight}from'./enemy-cast-vfx.js?v=216';
+import{installClimateLandforms}from'./climate-landforms.js?v=216';
+import{installHarborLife}from'./harbor-life.js?v=216';
+import {createLoadingScreen} from './loading-screen.js?v=216';
+import {warmScene} from './render-prewarm.js?v=216';
+import {prepareCombatSamples} from './combat-prewarm.js?v=216';
+import {loadTreeTextures} from './tree-scenery.js?v=216';
+import {loadFernTextures} from './fern-surfaces.js?v=216';
+import{bodiesClear}from'./actor-collision.js?v=216';
+import{BOSS_ROUTES,BOSS_ROUNDS,BOSS_BREAK,createBossRun,advanceBossRun}from'./boss-expedition.js?v=216';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=216';
+import{shotInterval,shotgunVolley,shotgunHit,SHOTGUN_PUSH}from'./gun-handling.js?v=216';
+import{beginScythe,scytheHits,scytheDamage,scythePrimary,finishScytheSweep,scytheRestRemaining,SCYTHE}from'./scythe-combat.js?v=216';
+import{AIR_ENEMIES,AIR_ROSTERS,airWaveEligible,makeAirborne,tickAirborne}from'./airborne-enemies.js?v=216';
+import{MOBILITY,resetMobility,airborne,bodyHeight,attackReachesPlayer,beginJump,tickMobility,restoreMobilityPose,applyMobilityPose}from'./adventure-mobility.js?v=216';
+import{installAdventureCampfire,updateAdventureCampfire}from'./adventure-campfire.js?v=216';
+import{loadSurfaceTextures}from'./surface-textures.js?v=216';
+import{createOverheadQuery,mobilityCeiling as queryMobilityCeiling,needsMobilityCeiling}from'./adventure-overheads.js?v=216';
+import{installAdventureGroundDetail,installHabitatDetail,animateAdventureGroundDetail}from'./adventure-ground-detail.js?v=216';
+import{AdventureCamera}from'./adventure-camera.js?v=216';
+import{FirstPersonView}from'./first-person-view.js?v=216';
+import{AdventureAtmosphere}from'./adventure-atmosphere.js?v=216';
+import{aimPoint,groundAim,launchVelocity,segmentHitsBody,bodyContact,segmentBodyEntry,segmentGroundEntry}from'./adventure-combat.js?v=216';
+import{CinematicRenderer}from'./cinematic-renderer.js?v=216';
+import{EnvironmentImpacts,waterCrossing}from'./environment-impact.js?v=216';
+import{lobbyLandscape,entryLandscapeYaw}from'./lobby-landscape.js?v=216';
+import{installForestHabitats}from'./forest-habitats.js?v=216';
+import{installExplorationRoutes}from'./exploration-routes.js?v=216';
+import{installBiomePlaces}from'./biome-places.js?v=216';
+import{installEnvironmentClusters}from'./environment-clusters.js?v=216';
+import{installEnvironmentGrounding}from'./environment-grounding.js?v=216';
+import{installForestTerrain}from'./forest-terrain.js?v=216';
+import{installForestFloorRelief}from'./forest-floor-relief.js?v=216';
+import{installExplorationLandmarks}from'./exploration-landmarks.js?v=216';
+import{installExplorationComposition}from'./exploration-composition.js?v=216';
+import{installForestVista}from'./forest-vista.js?v=216';
+import{installWorldLightShafts,updateWorldLightShafts,installForestMist}from'./world-light-shafts.js?v=216';
+import{mapBrief}from'./expedition-brief.js?v=216';
+import{polishEnvironmentModels}from'./environment-props.js?v=216';
+import{EnvironmentLighting,installDistantLandscape}from'./environment-lighting.js?v=216';
+import{MirageCombat}from'./mirage-combat.js?v=216';
+import{MirageVFX}from'./mirage-vfx.js?v=216';
+import{mirageSound}from'./mirage-audio.js?v=216';
+import{herbalDelay,herbalPoint,herbalContact,herbalFront,whipTipMultiplier,HerbalWaves}from'./herbal-weapons.js?v=216';
+import{PoisonCombat}from'./poison-combat.js?v=216';
+import{PoisonVFX}from'./poison-vfx.js?v=216';
+import{poisonSound}from'./poison-audio.js?v=216';
+import {HeroPreview} from './hero-preview.js?v=216';
+import {knownMapPoints,mapWaypoint,waypointHint,drawMapObstacles} from './map-navigation.js?v=216';
+import {createExploration,EXPLORATION_SIZE} from './map-exploration.js?v=216';
+import{REGIONS,biomeAt,biomeWeights,biomeColor,CONFLUENCE_TEXT}from'./confluence.js?v=216';
+import{observePlayer}from'./target-awareness.js?v=216';
+import{TERRAIN_TIPS,onIce,iceMotion,damageTerrain,updateTactics,terrainMesh}from'./map-tactics.js?v=216';
+import{advanceRoaming,roamingHint,courierDirection,campRewardChoices,campRewardPool,roamingReward}from'./roaming-events.js?v=216';
+import{discoveryInfo,discoveryVariants,discoveryThreatened,advanceDiscovery,discoveryHint,animateDiscoveries}from'./map-discoveries.js?v=216';
+import{recordEnemyHit,EnemyDeaths}from'./enemy-feedback.js?v=216';
+import{sandWeather}from'./sand-weather.js?v=216';
+import{HERO_DODGES,HERO_ABILITY_TEXT,dodgeTravel}from'./hero-dodge.js?v=216';
+import{LINGYA_HOP_DURATION,lingyaHopScale,planLingyaHop,steerLingyaHop}from'./lingya-motion.js?v=216';
+import{BeastCompanion,PET_TIMING,sideHopTravel}from'./beast-companion.js?v=216';
+import{makeBadger,animateBadger}from'./beast-model.js?v=216';
+import{updateTide,harpoonHit,tideDashTravel,HARPOON_ATTACKS}from'./coast.js?v=216';
+import{tickBoss}from'./boss-combat.js?v=216';
+import{inMeleeArc,meleeDamageScale}from'./melee.js?v=216';
+import{discoverSite}from'./site-discovery.js?v=216';
+import{MAP_EVENTS,createMapEvent,acceptForestTrial,advanceMapEvent,eventProgress}from'./map-events.js?v=216';
+import{MAP_HALF as DEFAULT_HALF}from'./map-layout.js?v=216';
+import{terrainAt,updateWaterLighting}from'./water.js?v=216';
+import{crossedSwimPhase}from'./swim-motion.js?v=216';
+import{FIELD_SUPPLIES,equipFieldSupply,fieldSupplyEvent,fieldSupplyLabel,RELICS,relicChoices,equipRelic,relicEvent,incomingRelicDamage,readJournal,writeJournal,recordDiscovery,recordVictory}from'./expedition.js?v=216';
+import{EXPEDITION_BOSS_TIME,encounterPhase,enemyGrowth,encounterRole,HUNT_SQUAD,huntFormation,nextHuntFormation,enemyRecovery,HUNT_BOONS,takeHuntBoon,enemyApproach,separation,attackSlotAvailable}from'./encounters.js?v=216';
+import{setupMobileDisplay}from'./mobile-display.js?v=216';
+import{weaponCuePhases,mirageShotDelay}from'./weapon-performance.js?v=216';
+import{ENEMY_VOICES}from'./enemy-audio.js?v=216';
+import{ENEMY_MOTION,gaitPace,advanceEnemyLocomotion}from'./enemy-motion.js?v=216';
+import{MAP_ROSTERS,REGIONAL_ENEMIES,regionalEnemy}from'./map-enemies.js?v=216';
+import{HeroSkills}from'./hero-skills.js?v=216';
+import{EXTRA_BY_ID,skillPairState,skillPairHint}from'./skill-catalog.js?v=216';
+import{SCOUT_ROLL_DURATION,rollTravel}from'./dodge-motion.js?v=216';
+import{adventureDodgePose}from'./adventure-dodge.js?v=216';
+import{RenderBudget}from'./render-budget.js?v=216';
+import{RENDER_QUALITY_OPTIONS,readRenderQuality,saveRenderQuality}from'./render-quality.js?v=216';
+import{EnvironmentReflections}from'./environment-reflections.js?v=216';
+import{snapShadowFocus}from'./shadow-stability.js?v=216';
+import{groundCue,disposeCue,fitGroundCue,fitGroundSurface,disposeGroundSurface}from'./ground-cues.js?v=216';
+import{weaponRouteEffect,WEAPON_ROUTE_LOOKS}from'./weapon-route-vfx.js?v=216';
+import{SkillVFX}from'./skill-vfx.js?v=216';
+import{loadHeroAssets,disposeHero}from'./skinned-hero.js?v=216';
+import{GameAudio,SFX_STYLES}from'./audio.js?v=216';
+import{ENEMY_GUIDE,CIRCLE_GUIDE}from'./battle-guide.js?v=216';
 import * as T from './vendor/three.module.js';
-import{MAPS,WEAPONS,ENEMIES,HERO_LOADOUTS,heroHealth,weaponFor,experienceNeeded,grantExperience,chooseUpgrades,takeUpgrade,weaponStats,weaponReachText,WEAPON_PATHS,WEAPON_PATH_PLAYS,harpoonEdgeMultiplier,segmentDistance,crossbowImpact,advanceCrossbowHunt,CROSSBOW_HUNT,forestGrowthChoices,registerShadowHit,UPGRADES}from'./rules.js?v=212';
-import{actor,animateActor,animateWorld,buildWorld,clearAt,moveActor,followTerrain,supportHeight,mesh,mat}from'./world.js?v=212';
+import{MAPS,WEAPONS,ENEMIES,HERO_LOADOUTS,heroHealth,weaponFor,experienceNeeded,grantExperience,chooseUpgrades,takeUpgrade,weaponStats,weaponReachText,WEAPON_PATHS,WEAPON_PATH_PLAYS,harpoonEdgeMultiplier,segmentDistance,crossbowImpact,advanceCrossbowHunt,CROSSBOW_HUNT,forestGrowthChoices,registerShadowHit,UPGRADES}from'./rules.js?v=216';
+import{actor,animateActor,animateWorld,buildWorld,clearAt,moveActor,followTerrain,supportHeight,mesh,mat}from'./world.js?v=216';
 const $=s=>document.querySelector(s),touch=matchMedia('(pointer:coarse)').matches;
 const loadingScreen=createLoadingScreen();
 let preparing=true,sceneryTime=0;
@@ -99,8 +103,8 @@ document.body.classList.toggle('touch',touch);if(touch)$('#map>small').textConte
 const canvas=$('#world');let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});}catch(e){$('#error').hidden=false;$('#error').textContent='无法启动 3D 画面。请使用支持 WebGL 的较新浏览器，并开启硬件加速。';throw e;}
 const heroPreview=new HeroPreview(renderer,$('#hero-preview'));
-const renderBudget=new RenderBudget({mobile:touch});let renderWidth=0,renderHeight=0,renderDpr=0,shadowClock=0,skillsHTML=null;
-renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
+const renderBudget=new RenderBudget({mobile:touch,mode:readRenderQuality()});let renderWidth=0,renderHeight=0,renderDpr=0,shadowClock=0,skillsHTML=null;
+renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
 const cinema=new CinematicRenderer(renderer,{mobile:touch});
 window.addEventListener('pagehide',e=>{if(!e.persisted)cinema.dispose();});
 // Finish distant landforms inside the haze: the lightest biome fog is already
@@ -108,7 +112,7 @@ window.addEventListener('pagehide',e=>{if(!e.persisted)cinema.dispose();});
 const scene=new T.Scene(),camera=new T.PerspectiveCamera(40,innerWidth/innerHeight,.1,320),hemisphere=new T.HemisphereLight(0xd8e6f0,0x293c30,1.35);scene.add(hemisphere,camera);
 const adventureCamera=new AdventureCamera(camera),firstPerson=new FirstPersonView(camera),atmosphere=new AdventureAtmosphere(scene);
 let eyeHeight=1.55;
-try{if(localStorage.getItem('forest3d-next-view')==='first')adventureCamera.setMode('first');}catch{}
+try{if(localStorage.getItem('forest3d-reborn-view')==='first')adventureCamera.setMode('first');}catch{}
 window.addEventListener('pagehide',e=>{if(!e.persisted){firstPerson.dispose();atmosphere.dispose();disposeGroundSurface(contactShadow);}});
 const vfx=new SkillVFX(scene,{mobile:touch,groundHeight:groundAt});
 const environmentImpacts=new EnvironmentImpacts(scene,vfx,{mobile:touch});
@@ -116,31 +120,33 @@ window.addEventListener('pagehide',e=>{if(!e.persisted)environmentImpacts.dispos
 const poisonVFX=new PoisonVFX(scene,vfx);
 const mirageVFX=new MirageVFX(scene,vfx);
 const enemyDeaths=new EnemyDeaths(scene,touch?8:12);
-const sun=new T.DirectionalLight(0xffe6c2,3.6);sun.position.set(15,30,12);sun.castShadow=true;sun.shadow.mapSize.set(touch?1024:1536,touch?1024:1536);Object.assign(sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,near:.5,far:80});sun.shadow.bias=-.001;sun.shadow.normalBias=.025;scene.add(sun,sun.target);
+const sun=new T.DirectionalLight(0xffe6c2,3.6);sun.position.set(15,30,12);sun.castShadow=true;sun.shadow.mapSize.set(touch?1024:1536,touch?1024:1536);Object.assign(sun.shadow.camera,{left:-28,right:28,top:28,bottom:-28,near:.5,far:80});sun.shadow.bias=-.00025;sun.shadow.normalBias=.018;scene.add(sun,sun.target);
 const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;const glowCtx=glowCanvas.getContext('2d'),gradient=glowCtx.createRadialGradient(32,32,0,32,32,32);gradient.addColorStop(0,'rgba(255,255,255,.8)');gradient.addColorStop(.3,'rgba(255,255,255,.35)');gradient.addColorStop(1,'rgba(255,255,255,0)');glowCtx.fillStyle=gradient;glowCtx.fillRect(0,0,64,64);const glowTexture=new T.CanvasTexture(glowCanvas),glowMaterials=new Map();
 function glow(color,size){if(!glowMaterials.has(color))glowMaterials.set(color,new T.SpriteMaterial({map:glowTexture,color,transparent:true,opacity:.6,depthWrite:false,blending:T.AdditiveBlending}));const s=new T.Sprite(glowMaterials.get(color));s.scale.set(size,size,1);return s;}
 const contactShadow=new T.Mesh(new T.PlaneGeometry(1.8,1.35),new T.MeshBasicMaterial({color:0x0a1921,map:glowTexture,transparent:true,opacity:.46,depthWrite:false}));contactShadow.rotation.x=-Math.PI/2;scene.add(contactShadow);
 const rim=new T.DirectionalLight(0x93cfd9,1.3);rim.position.set(-10,10,-15);scene.add(rim);
 for(const light of[hemisphere,sun,rim])light.layers.enable(1);
 const environmentLighting=new EnvironmentLighting(scene,renderer,hemisphere,sun,rim);
-const surfaceReady=Promise.all([loadSurfaceTextures(),loadFernTextures(),loadTreeTextures()]).then(results=>results.every(Boolean));
+const reflections=new EnvironmentReflections(renderer,scene,{mobile:touch});
+window.addEventListener('pagehide',e=>{if(!e.persisted)reflections.dispose();});
+const surfaceReady=Promise.all([loadSurfaceTextures(),loadFernTextures(),loadTreeTextures(),loadEnvironmentAssets(),reflections.load()]).then(results=>results.every(Boolean));
 let world,hero,heroId='silver',mapId='forest',weaponIndex=0,state='menu',time=0,kills=0,player,enemyId=0,enemies=[],bullets=[],orbs=[],effects=[],zones=[],fields=[],riftStrikes=[],spawnTimer=2,boss=null,bossRun=createBossRun(),toastTimer=0,shake=0,simTimer=0;
 let battlePhase=encounterPhase(0),phaseKey=null,lastAssault=-1,hunt=null,plannedHunt=null,lastHuntFormations={},openingPatrol=0,reliefUntil=0,autoTargetLock=null;
 let hitConfirmUntil=0,touchCrouch=false;
 let viewUIKey='',freeMousePoint=null,mouseLockRequest=null,mouseWasLocked=false,mouseReleasedAt=-Infinity;
 let storage;try{storage=localStorage;}catch{}
-let firstMouseHidden=true;try{firstMouseHidden=storage?.getItem('forest3d-next-first-mouse-hidden')!=='false';}catch{}
+let firstMouseHidden=true;try{firstMouseHidden=storage?.getItem('forest3d-reborn-first-mouse-hidden')!=='false';}catch{}
 const journal=readJournal(storage);let journalSaved=true,relicBurst=false;
-let mapVisibility='explore';try{if(localStorage.getItem('forest-echoes-next-map-visibility')==='visible')mapVisibility='visible';}catch{}
-const attackModeKey=touch?'forest-echoes-next-mobile-attack-mode':'forest-echoes-next-attack-mode';
+let mapVisibility='explore';try{if(localStorage.getItem('forest-echoes-reborn-map-visibility')==='visible')mapVisibility='visible';}catch{}
+const attackModeKey=touch?'forest-echoes-reborn-mobile-attack-mode':'forest-echoes-reborn-attack-mode';
 let attackMode=touch?'auto':'manual';try{const saved=localStorage.getItem(attackModeKey);if(saved==='auto'||saved==='manual')attackMode=saved;}catch{}
 const keys=new Set(),stick={x:0,z:0,id:null},aimStick={id:null,x:0,y:0},lookPointer={id:null,x:0,y:0},aimInput={held:false,angle:0,hasAim:false},aimRay=new T.Ray(),groundPlane=new T.Plane(new T.Vector3(0,1,0),0),temp=new T.Vector3();let last=performance.now(),uiTime=0;
 const introduced=new Set(),introductions=[];let encounterTime=0,nextIntroductionAt=8,currentIntroduction=null,nextToastAt=0,nextUpgradeAt=0;
-try{const saved=JSON.parse(storage?.getItem('forest3d-next-known-notices')||'[]');if(Array.isArray(saved))for(const key of saved.slice(0,256))if(typeof key==='string'&&key.length<100)introduced.add(key);}catch{}
+try{const saved=JSON.parse(storage?.getItem('forest3d-reborn-known-notices')||'[]');if(Array.isArray(saved))for(const key of saved.slice(0,256))if(typeof key==='string'&&key.length<100)introduced.add(key);}catch{}
 // Discovery is independent of the notification queue: busy fights must not lose guide entries.
 const discoveredEnemies=new Set([...introduced].filter(key=>key.startsWith('enemy:')).map(key=>key.slice(6)).filter(kind=>Object.hasOwn(ENEMY_GUIDE,kind)));
-try{const saved=JSON.parse(storage?.getItem('forest3d-next-discovered-enemies')||'[]');if(Array.isArray(saved))for(const kind of saved)if(typeof kind==='string'&&Object.hasOwn(ENEMY_GUIDE,kind))discoveredEnemies.add(kind);}catch{}
-function discoverEnemy(kind){if(discoveredEnemies.has(kind))return false;discoveredEnemies.add(kind);try{storage?.setItem('forest3d-next-discovered-enemies',JSON.stringify([...discoveredEnemies]));}catch{}return true;}
+try{const saved=JSON.parse(storage?.getItem('forest3d-reborn-discovered-enemies')||'[]');if(Array.isArray(saved))for(const kind of saved)if(typeof kind==='string'&&Object.hasOwn(ENEMY_GUIDE,kind))discoveredEnemies.add(kind);}catch{}
+function discoverEnemy(kind){if(discoveredEnemies.has(kind))return false;discoveredEnemies.add(kind);try{storage?.setItem('forest3d-reborn-discovered-enemies',JSON.stringify([...discoveredEnemies]));}catch{}return true;}
 const sound=new GameAudio();
 const heroSkills=new HeroSkills({companion:()=>companion,player:()=>player,active:()=>state==='playing',aim:()=>aimInput.hasAim?aimInput.angle:hero.rotation.y,foes:()=>enemies.filter(e=>e.alive).concat(boss?.alive?[boss]:[]),blocked:(ax,az,bx,bz)=>Math.abs(bx)>mapHalf()-1||Math.abs(bz)>mapHalf()-1||world.obstacles.some(o=>segmentDistance(o.x,o.z,ax,az,bx,bz)<o.r+.1),damage:hurtEnemy,knock:(e,amount)=>{const d=Math.hypot(e.x-player.x,e.z-player.z)||1;moveActor(world,e,(e.x-player.x)/d*amount,(e.z-player.z)/d*amount,e.size*.6);e.mesh.position.set(e.x,e.y||0,e.z);e.stagger=Math.max(e.stagger||0,.18);},fx:e=>{vfx.skill(e);sound.skill(e.kind);}});
 const poison=new PoisonCombat({groundHeight:groundAt,player:()=>player,active:()=>state==='playing',foes:()=>[...enemies,...(boss?.alive?[boss]:[])],blocked:(ax,az,bx,bz)=>world.obstacles.some(o=>segmentDistance(o.x,o.z,ax,az,bx,bz)<o.r+.05),damage:hurtEnemy,release:pod=>{applyFieldShot(pod.w,pod.angle);hero.updateMatrixWorld(true);const hand=hero.userData.support?.hand;const p=hand?.getWorldPosition(new T.Vector3());return p&&clearAt(world,p.x,p.z,.1)?p:player;},impactTerrain:(x,z,r,n)=>{for(const o of world.breakables||[])if(o.state==='standing'&&Math.hypot(o.x-x,o.z-z)<r+o.r){const y=groundAt(x,z)+.45;environmentImpacts.hit({id:'sporelantern'},environmentImpacts.contact(o,{x,y,z},{x:o.x,y,z:o.z},.1));terrainHit(o,n);}},fx:e=>{poisonVFX.event(e);if(e.kind==='poisonLand')environmentImpacts.ground({id:'sporelantern'},world,e.x,e.z);if(e.w&&(e.kind==='poisonLand'&&e.w.stillRank||e.kind==='poisonMove'&&e.w.pathId==='sporelantern_roam'))weaponRouteEffect(vfx,e.w,'hit',e.x,e.z,e.angle||0,{radius:e.r});if(e.kind==='poisonThrow')sound.shot('sporelantern');else poisonSound(sound,e.kind);}});
@@ -171,9 +177,9 @@ function setControlScale(value,persist=true){
  const percent=Number.isFinite(value)?Math.max(75,Math.min(135,Math.round(value/5)*5)):100;
  releaseStick();clearAttack();document.body.style.setProperty('--touch-scale',String(percent/100));
  $('#control-scale').value=percent;$('#control-scale-value').textContent=percent+'%';
- if(persist)try{localStorage.setItem('forest3d-next-touch-scale',String(percent));}catch{}
+ if(persist)try{localStorage.setItem('forest3d-reborn-touch-scale',String(percent));}catch{}
 }
-let storedControlScale=100;try{const saved=localStorage.getItem('forest3d-next-touch-scale');if(saved!==null)storedControlScale=Number(saved);}catch{}
+let storedControlScale=100;try{const saved=localStorage.getItem('forest3d-reborn-touch-scale');if(saved!==null)storedControlScale=Number(saved);}catch{}
 setControlScale(storedControlScale,false);
 $('#control-scale').addEventListener('input',e=>setControlScale(Number(e.target.value)));
 $('#control-scale-reset').onclick=()=>setControlScale(100);
@@ -185,7 +191,7 @@ function showNextIntroduction(){
  if(nearbyHazard()||enemies.some(e=>e.alive&&Math.hypot(e.x-player.x,e.z-player.z)<6))return;
  while(introductions.length&&time-introductions[0].queuedAt>30)introductions.shift();
  const item=introductions.shift();if(!item)return;
- currentIntroduction=item;introduced.add(item.key);try{storage?.setItem('forest3d-next-known-notices',JSON.stringify([...introduced].slice(-256)));}catch{}
+ currentIntroduction=item;introduced.add(item.key);try{storage?.setItem('forest3d-reborn-known-notices',JSON.stringify([...introduced].slice(-256)));}catch{}
  const card=$('#encounter'),kind=item.key.startsWith('enemy:')?item.key.slice(6):null,info=ENEMY_GUIDE[kind],portrait=card.querySelector('img');portrait.hidden=touch||!info;card.classList.toggle('has-portrait',!touch&&!!info);
  if(info){portrait.src=info.image+'?v=195';portrait.alt=info.name+' · 游戏内外形';}else portrait.removeAttribute('src');
  card.querySelector('strong').textContent=touch&&info?'新发现 · '+info.name:item.title;card.querySelector('span').textContent=touch&&info?'已记入暂停菜单图鉴':info?info.tip:item.text;card.hidden=false;encounterTime=touch?1.8:4;syncMobileNotices();
@@ -193,7 +199,7 @@ function showNextIntroduction(){
 function introduce(key,title,text){
  if(introduced.has(key)||introductions.some(item=>item.key===key))return;
  // Mobile discoveries are remembered even when a banner would interrupt a fight.
- if(touch){introduced.add(key);try{storage?.setItem('forest3d-next-known-notices',JSON.stringify([...introduced].slice(-256)));}catch{}
+ if(touch){introduced.add(key);try{storage?.setItem('forest3d-reborn-known-notices',JSON.stringify([...introduced].slice(-256)));}catch{}
   if(encounterTime>0||time>8&&time<nextIntroductionAt)return;
  }
  if(introductions.length>=(touch?1:3))return;
@@ -257,7 +263,7 @@ function replaceMenuHero(){
 function* buildSteps(){
  renderer.shadowMap.needsUpdate=true;renderBudget.reset();clearObjects();firstPerson.clear();
  releaseHero();
- if(world){scene.remove(world.group);world.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();disposeCue(o);if(o.userData.ownedGeometry)o.geometry.dispose();});world=null;}
+ if(world){world.environmentAssets?.dispose();scene.remove(world.group);world.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();disposeCue(o);if(o.userData.ownedGeometry)o.geometry.dispose();});world=null;}
  yield '整理场景';
 world=buildWorld(mapId,Math.floor(Math.random()*1e8));
  yield '生成地图轮廓';
@@ -295,7 +301,7 @@ installEnvironmentGrounding(world);
  yield '衔接景物与地面';
 installForestFloorRelief(world,mapId);
  yield '衔接林地树根';
-world.group.traverse(o=>{if(o.userData.groundCue)fitGroundCue(o,world.groundHeightAt);});world.overhead=createOverheadQuery(world);installAdventureCampfire(world,vfx.flameTexture);world.exploration=createExploration(mapHalf(),mapVisibility);world.exploration.reveal(world.spawn.x,world.spawn.z);scene.add(world.group);scene.background=new T.Color(world.theme.fog);scene.fog=new T.FogExp2(world.theme.fog,.014);environmentLighting.timeOffset=0;environmentLighting.update(mapId,world.regions?biomeWeights(world.spawn.x,world.spawn.z):null,0,0);
+world.group.traverse(o=>{if(o.userData.groundCue)fitGroundCue(o,world.groundHeightAt);});world.overhead=createOverheadQuery(world);installEnvironmentAssets(world);installAdventureCampfire(world,vfx.flameTexture);world.exploration=createExploration(mapHalf(),mapVisibility);world.exploration.reveal(world.spawn.x,world.spawn.z);scene.add(world.group);scene.background=new T.Color(world.theme.fog);scene.fog=new T.FogExp2(world.theme.fog,.014);environmentLighting.timeOffset=0;environmentLighting.update(mapId,world.regions?biomeWeights(world.spawn.x,world.spawn.z):null,0,0);reflections.update(mapId,world.regions?biomeWeights(world.spawn.x,world.spawn.z):null,environmentLighting.day,0);
  rebuildHero();yield '准备冒险者';
 }
 function build(){for(const stage of buildSteps()){} }
@@ -309,7 +315,7 @@ function setMapVisibility(mode){
  mapVisibility=mode;
  for(const b of document.querySelectorAll('[data-map-visibility]'))b.setAttribute('aria-pressed',String(b.dataset.mapVisibility===mode));
  $('#map-visibility-help').textContent=mode==='explore'?'小地图从黑暗中逐步揭开，走过的区域保留；每局重新探索。':'小地图始终显示完整地形；探索事件仍需靠近才会发现。';
- try{localStorage.setItem('forest-echoes-next-map-visibility',mode);}catch{}
+ try{localStorage.setItem('forest-echoes-reborn-map-visibility',mode);}catch{}
 }
 for(const b of document.querySelectorAll('[data-map-visibility]'))b.onclick=()=>setMapVisibility(b.dataset.mapVisibility);
 function drawExplorationFog(c){
@@ -343,6 +349,26 @@ const pauseControls=touch?['view-toggle','landscape','sound','audio-settings','c
  const node=$('#'+id),home=document.createComment(id+' home');node.before(home);return{node,home};
 }):[];
 function restorePauseControls(){for(const{node,home}of pauseControls)if(node.parentNode!==home.parentNode){home.after(node);if(node.tagName==='DETAILS')node.open=false;}}
+function applyRenderQuality(value){
+ if(renderBudget.setMode(value)){
+  saveRenderQuality(renderBudget.mode);resizeRendering();
+ }
+  const resolution=touch?(renderBudget.mode==='mobile'?768:1024):renderBudget.mode==='high'?2048:renderBudget.mode==='auto'?1536:renderBudget.mode==='mobile'?768:1024;
+  if(sun.shadow.mapSize.x!==resolution){sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.mapSize.set(resolution,resolution);renderer.shadowMap.needsUpdate=true;}
+ for(const select of document.querySelectorAll('[data-render-quality]'))select.value=renderBudget.mode;
+ const note=$('#render-quality-note');if(note)note.textContent=RENDER_QUALITY_OPTIONS.find(o=>o.id===renderBudget.mode).description;
+}
+function bindRenderQuality(select){
+ select.innerHTML=RENDER_QUALITY_OPTIONS.map(o=>`<option value="${o.id}">${o.label}</option>`).join('');select.value=renderBudget.mode;select.onchange=()=>applyRenderQuality(select.value);
+}
+function showQualitySettings(){
+ dialog('画面设置','画质自动保存；所有档位保留相同角色、怪物和战斗内容。',[['返回暂停',showPauseDialog],['继续远征',resume]]);
+ const label=document.createElement('label');label.textContent='画质档位';label.htmlFor='pause-render-quality';
+ const select=document.createElement('select');select.id='pause-render-quality';select.dataset.renderQuality='';bindRenderQuality(select);
+ const panel=document.createElement('div');panel.className='quality-dialog';panel.append(label,select);$('#dialog-content').insertBefore(panel,$('#dialog-content .dialog-actions'));
+}
+bindRenderQuality($('#render-quality'));applyRenderQuality(renderBudget.mode);
+$('#render-quality-note').textContent=RENDER_QUALITY_OPTIONS.find(o=>o.id===renderBudget.mode).description;
 function showMobileSettings(){
  if(!touch||state!=='paused')return;
  dialog('设置','战斗已暂停。设置自动保存，返回后继续本局。',[['返回暂停',showPauseDialog],['继续远征',resume]]);
@@ -352,7 +378,7 @@ function showMobileSettings(){
  $('#dialog-content').insertBefore(panel,$('#dialog-content .dialog-actions'));syncAudioUI();
 }
 function dialog(title,body,buttons=[]){restorePauseControls();const content=$('#dialog-content');content.innerHTML='<h2>'+title+'</h2><p>'+body+'</p>';syncViewUI();if(state!=='playing'&&document.pointerLockElement===canvas)document.exitPointerLock();const actions=document.createElement('div');actions.className='dialog-actions';for(const [text,fn]of buttons){const b=document.createElement('button');b.textContent=text;b.onclick=fn;actions.append(b);}content.append(actions);if(!$('#dialog').open)$('#dialog').showModal();}
-function showPauseDialog(){dialog('在林间歇一会儿',touch?'战斗已暂停，生命、技能与探索进度已保留。':'当前生命、技能与探索进度已保留。攻击方式：'+(attackMode==='auto'?(touch?'自动瞄准，按住攻击键出手':'自动瞄准并攻击'):'手动瞄准并攻击')+'。<br>'+weaponReachText(weaponStats(player))+'<br>空格跳跃 · Ctrl 下蹲 · Shift 闪避（手机使用对应按钮）。跳过矮石、倒木、低栏与低位震地，也能落在矮物顶部；高墙和树干仍会阻挡。下蹲躲沙卫高位刺击，毒雾和高大突刺仍危险。<br>自动瞄准寻找视野内目标；已发射攻击按实际路径与射程结算。',[['继续远征',resume],...(touch?[['设置',showMobileSettings],['图鉴与介绍',showBattleGuide]]:[]),...(!touch&&adventureCamera.mode==='first'?[[firstMouseHidden?'战斗鼠标：隐藏 · 点击改为显示':'战斗鼠标：显示 · 点击改为隐藏',()=>{setFirstMouseHidden(!firstMouseHidden);showPauseDialog();}]]:[]),...(player.pending>0?[["选择成长 · "+player.pending+" 次",()=>{resume();upgrade(true);}]]:[]),['查看探索地图',showExplorationMap],[attackMode==='auto'?'切换为手动瞄准':touch?'切换为自动瞄准':'切换为自动攻击',()=>{setAttackMode(attackMode==='auto'?'manual':'auto');showPauseDialog();}],['结束本局',()=>dialog('结束这次远征？','返回准备界面将结束当前对局。',[['返回暂停',()=>{state='playing';pause();}],['确认结束',menu]])]]);}
+function showPauseDialog(){dialog('在林间歇一会儿',touch?'战斗已暂停，生命、技能与探索进度已保留。':'当前生命、技能与探索进度已保留。攻击方式：'+(attackMode==='auto'?(touch?'自动瞄准，按住攻击键出手':'自动瞄准并攻击'):'手动瞄准并攻击')+'。<br>'+weaponReachText(weaponStats(player))+'<br>空格跳跃 · Ctrl 下蹲 · Shift 闪避（手机使用对应按钮）。跳过矮石、倒木、低栏与低位震地，也能落在矮物顶部；高墙和树干仍会阻挡。下蹲躲沙卫高位刺击，毒雾和高大突刺仍危险。<br>自动瞄准寻找视野内目标；已发射攻击按实际路径与射程结算。',[['继续远征',resume],...(!touch?[['画面设置',showQualitySettings]]:[]),...(touch?[['设置',showMobileSettings],['图鉴与介绍',showBattleGuide]]:[]),...(!touch&&adventureCamera.mode==='first'?[[firstMouseHidden?'战斗鼠标：隐藏 · 点击改为显示':'战斗鼠标：显示 · 点击改为隐藏',()=>{setFirstMouseHidden(!firstMouseHidden);showPauseDialog();}]]:[]),...(player.pending>0?[["选择成长 · "+player.pending+" 次",()=>{resume();upgrade(true);}]]:[]),['查看探索地图',showExplorationMap],[attackMode==='auto'?'切换为手动瞄准':touch?'切换为自动瞄准':'切换为自动攻击',()=>{setAttackMode(attackMode==='auto'?'manual':'auto');showPauseDialog();}],['结束本局',()=>dialog('结束这次远征？','返回准备界面将结束当前对局。',[['返回暂停',()=>{state='playing';pause();}],['确认结束',menu]])]]);}
 function pause(){if(state==='playing'){sound.stopWeapons();sound.stopCreatures();state='paused';keys.clear();releaseStick();clearAttack();showPauseDialog();}else if(state==='paused')resume();}
 function resume(){restorePauseControls();state='playing';$('#dialog').close();syncViewUI();keys.clear();releaseStick();clearAttack();unlockAudio();}
 function menu(){closeMenuDetails();$('#damage-edge').style.opacity=0;restorePauseControls();renderChoices();sound.stopWeapons();sound.stopCreatures();state='menu';$('#dialog').close();$('#menu').hidden=false;$('#hud').hidden=true;$('#touch').hidden=true;$('#encounter').hidden=true;introductions.length=0;encounterTime=0;toastTimer=0;$('#toast').style.opacity=0;syncMobileNotices();document.body.classList.remove('playing');keys.clear();releaseStick();clearAttack();build();}
@@ -366,7 +392,7 @@ $('#sound').onclick=()=>{if(sound.ctx?.state==='running')sound.setMuted(!sound.m
 function upgrade(force=false){if(player.pending<=0||state!=='playing')return;
  if(!force&&(time<nextUpgradeAt||boss?.alive||nearbyHazard()||['warning','assault'].includes(battlePhase.mode)||enemies.some(e=>e.alive&&(e.wind>0||e.pounce>0||Math.hypot(e.x-player.x,e.z-player.z)<7))))return;
 state='upgrade';sound.stopWeapons(true);sound.stopCreatures();keys.clear();releaseStick();clearAttack();
- const opening=!player.upgradeDraft,openingKey='forest-echoes-next-opening:'+heroId+':'+player.weaponId;
+ const opening=!player.upgradeDraft,openingKey='forest-echoes-reborn-opening:'+heroId+':'+player.weaponId;
  if(opening)try{const shown=JSON.parse(storage.getItem(openingKey));if(Array.isArray(shown))player.upgradeDraft={shown:shown.filter(id=>typeof id==='string').slice(0,3),routeMisses:0};}catch{}
  const choices=player.pendingDraft||chooseUpgrades(player);player.pendingDraft=choices;if(!choices.length){player.pending=0;state='playing';return;}
  if(opening)try{storage.setItem(openingKey,JSON.stringify(choices.map(u=>u.id)));}catch{}
@@ -980,7 +1006,8 @@ function updateCamera(dt){const menuMode=state==='menu',pose=viewDodge(),first=a
  if(!first){const hit=world.overhead.firstHit({x:player.x,y:lift+shoulderHeight-Math.min(.55,player.waterDepth||0),z:player.z},camera.position,.25);if(hit)adventureCamera.retract(hit.point);}
  const submerged=heroId==='tide'&&pose?.kind==='dive'?(pose.weight||0)*(first?1:.62):0;cinema.setUnderwater(submerged,time);
  const edge=$('#dodge-view');edge.style.opacity=submerged>0?submerged*.30:first&&pose?pose.edge:0;if(pose)edge.dataset.kind=pose.kind;
- sun.position.copy(environmentLighting.direction).multiplyScalar(38);sun.position.x+=player.x;sun.position.z+=player.z;sun.target.position.set(player.x,0,player.z);const shadowSpan=menuMode?18:28;if(sun.shadow.camera.right!==shadowSpan){Object.assign(sun.shadow.camera,{left:-shadowSpan,right:shadowSpan,top:shadowSpan,bottom:-shadowSpan});sun.shadow.camera.updateProjectionMatrix();renderer.shadowMap.needsUpdate=true;}}
+ updateEnvironmentAssets(world,camera.position,touch);const shadowSpan=menuMode?18:28;if(sun.shadow.camera.right!==shadowSpan){Object.assign(sun.shadow.camera,{left:-shadowSpan,right:shadowSpan,top:shadowSpan,bottom:-shadowSpan});sun.shadow.camera.updateProjectionMatrix();renderer.shadowMap.needsUpdate=true;}
+ sun.target.position.set(player.x,0,player.z);snapShadowFocus(sun.target.position,environmentLighting.direction,sun.shadow.camera,sun.shadow.mapSize);sun.position.copy(sun.target.position).addScaledVector(environmentLighting.direction,38);}
 function resetMouseLook(){freeMousePoint=null;if(state!=='playing'){if(mouseLockRequest)mouseLockRequest.cancelled=true;mouseWasLocked=false;if(document.pointerLockElement===canvas){mouseReleasedAt=performance.now();document.exitPointerLock();}}}
 async function requestMouseLook(event,manual=false){
  if(!event?.isTrusted||touch||state!=='playing'||(!manual&&(adventureCamera.mode!=='first'||!firstMouseHidden))||document.pointerLockElement===canvas||mouseLockRequest)return;
@@ -990,9 +1017,9 @@ async function requestMouseLook(event,manual=false){
  catch{if(!request.cancelled&&state==='playing')toast(adventureCamera.mode==='first'?'鼠标已隐藏；浏览器限制了无边界转向，Esc 可显示鼠标':'浏览器未允许锁定鼠标，按住右键拖动也能转视角',true);}
  finally{if(mouseLockRequest===request)mouseLockRequest=null;}
 }
-function setFirstMouseHidden(hidden){firstMouseHidden=!!hidden;if(!hidden&&mouseLockRequest)mouseLockRequest.cancelled=true;clearAttack();if(!hidden&&document.pointerLockElement===canvas){mouseWasLocked=false;document.exitPointerLock();}try{storage?.setItem('forest3d-next-first-mouse-hidden',String(firstMouseHidden));}catch{}syncViewUI();}
+function setFirstMouseHidden(hidden){firstMouseHidden=!!hidden;if(!hidden&&mouseLockRequest)mouseLockRequest.cancelled=true;clearAttack();if(!hidden&&document.pointerLockElement===canvas){mouseWasLocked=false;document.exitPointerLock();}try{storage?.setItem('forest3d-reborn-first-mouse-hidden',String(firstMouseHidden));}catch{}syncViewUI();}
 function syncViewUI(){const key=firstMouseHidden+':' +adventureCamera.mode+':'+state+':'+(document.pointerLockElement===canvas);if(key===viewUIKey)return;viewUIKey=key;const first=adventureCamera.mode==='first';$('#view-toggle').textContent=first?'视角 · 第一人称':'视角 · 第三人称';$('#view-toggle').setAttribute('aria-label','当前'+(first?'第一人称':'第三人称')+'，点击切换');$('#mouse-look').hidden=touch||state!=='playing';$('#mouse-look').textContent=first?'隐藏鼠标 · Esc 显示':document.pointerLockElement===canvas?'释放鼠标':'锁定鼠标';document.body.dataset.view=adventureCamera.mode;document.body.classList.toggle('first-mouse-hidden',!touch&&first&&firstMouseHidden&&state==='playing');}
-function setView(mode){if(mode!=='first'&&mouseLockRequest&&!mouseLockRequest.manual)mouseLockRequest.cancelled=true;clearAttack();adventureCamera.setMode(mode);if(player)updateCamera(0);syncViewUI();try{localStorage.setItem('forest3d-next-view',mode);}catch{}}
+function setView(mode){if(mode!=='first'&&mouseLockRequest&&!mouseLockRequest.manual)mouseLockRequest.cancelled=true;clearAttack();adventureCamera.setMode(mode);if(player)updateCamera(0);syncViewUI();try{localStorage.setItem('forest3d-reborn-view',mode);}catch{}}
 function rotateView(dx,dy){adventureCamera.rotate(-dx*(touch?.0045:.0028),-dy*(touch?.0045:.0028));updateCamera(0);if(attackMode==='manual')refreshMouseAim();}
 $('#view-toggle').onclick=e=>{setView(adventureCamera.mode==='first'?'third':'first');requestMouseLook(e);};
 $('#mouse-look').onclick=e=>{if(adventureCamera.mode==='first')setFirstMouseHidden(true);if(document.pointerLockElement===canvas){document.exitPointerLock();return;}return requestMouseLook(e,true);};
@@ -1065,7 +1092,7 @@ function moveAimStick(e){if(state!=='playing')return;rotateView(e.clientX-aimSti
 function releaseAimStick(e){if(e&&e.pointerId!==aimStick.id)return;const id=aimStick.id;aimStick.id=null;aimInput.held=false;$('#aim-stick i').style.transform='';$('#aim-stick').classList.remove('is-held');releasePointer($('#aim-stick'),id);}
 $('#aim-stick').addEventListener('pointerdown',e=>{if(state!=='playing'||aimStick.id!==null)return;e.preventDefault();aimStick.id=e.pointerId;aimStick.x=e.clientX;aimStick.y=e.clientY;if(attackMode==='manual')refreshMouseAim();aimInput.held=true;$('#aim-stick').classList.add('is-held');e.currentTarget.setPointerCapture(e.pointerId);moveAimStick(e);});
 $('#aim-stick').addEventListener('pointermove',e=>{if(aimStick.id===e.pointerId)moveAimStick(e);});for(const name of ['pointerup','pointercancel','lostpointercapture'])$('#aim-stick').addEventListener(name,releaseAimStick);
-window.addEventListener('blur',()=>{keys.clear();releaseStick();clearAttack();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});function resizeRendering(){renderWidth=innerWidth;renderHeight=innerHeight;renderDpr=devicePixelRatio;renderer.setPixelRatio(renderPixelRatio(renderWidth,renderHeight,renderDpr,touch,renderBudget.quality));renderer.setSize(renderWidth,renderHeight,false);camera.aspect=renderWidth/Math.max(1,renderHeight);camera.updateProjectionMatrix();renderer.shadowMap.needsUpdate=true;}
+window.addEventListener('blur',()=>{keys.clear();releaseStick();clearAttack();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});function resizeRendering(){renderWidth=innerWidth;renderHeight=innerHeight;renderDpr=devicePixelRatio;renderer.setDrawingBufferSize(renderWidth,renderHeight,renderBudget.pixelRatio(renderWidth,renderHeight,renderDpr));camera.aspect=renderWidth/Math.max(1,renderHeight);camera.updateProjectionMatrix();renderer.shadowMap.needsUpdate=true;}
 function displayChanged(){resizeRendering();renderBudget.reset();keys.clear();releaseStick();clearAttack();}
 setupMobileDisplay({onChange:displayChanged,onUnavailable:()=>{if(state==='playing')pause();if(state==='paused'){const note=document.createElement('p');note.className='orientation-note';note.textContent=$('#orientation-help span').textContent;$('#dialog-content').prepend(note);}}});resizeRendering();
 function closeMenuDetails(){for(const detail of document.querySelectorAll('#menu .menu-details'))detail.open=false;}
@@ -1103,7 +1130,7 @@ async function warmCurrentScene(from,to,{combat=false}={}){
    render:pass=>{
     renderer.setRenderTarget(target);
     if(combat){adventureCamera.setMode(pass===0?'third':'first');adventureCamera._ready=false;updateCamera(0);firstPerson.update(0,1/60,{visible:pass!==0,yaw:adventureCamera.yaw,pitch:adventureCamera.pitch});}
-    cinema.render(renderWorld,renderBudget.quality);
+    cinema.render(renderWorld,renderBudget.postQuality);
    }});
  }finally{
   cleanup();renderer.setRenderTarget(target);adventureCamera.setMode(mode);adventureCamera._ready=false;
@@ -1138,7 +1165,7 @@ async function prepareMenuHeroes(from,to){
       renderer.setRenderTarget(pass===0&&cinema.enabled?cinema.sceneTarget:target);
       return heroPreview.render(scene,sample,pet,(scene,camera)=>renderer.compileAsync(scene,camera));
      },
-     render:pass=>{renderer.setRenderTarget(target);const draw=()=>heroPreview.render(scene,sample,pet);if(pass===0)cinema.render(draw,renderBudget.quality);else draw();}});
+     render:pass=>{renderer.setRenderTarget(target);const draw=()=>heroPreview.render(scene,sample,pet);if(pass===0)cinema.render(draw,renderBudget.postQuality);else draw();}});
    }finally{sample.visible=sampleVisible;if(sample!==hero)scene.remove(sample);if(pet)scene.remove(pet);}
   }
  }finally{
@@ -1181,6 +1208,6 @@ function frame(now){
  const active=state==='playing'||state==='menu';
  if(document.hidden){last=now;renderBudget.sample(0,false);requestAnimationFrame(frame);return;}
  if(!active&&now-last<1000/30-.5){requestAnimationFrame(frame);return;}
- const frameSeconds=(now-last)/1000,dt=Math.max(0,Math.min(.04,frameSeconds));last=now;if(renderWidth!==innerWidth||renderHeight!==innerHeight||renderDpr!==devicePixelRatio){resizeRendering();renderBudget.reset();}else if(renderBudget.sample(frameSeconds,active))resizeRendering();if(active){shadowClock+=dt;const shadowInterval=state==='menu'||touch||renderBudget.quality<.8?1/20:1/30;if(shadowClock>=shadowInterval){renderer.shadowMap.needsUpdate=true;shadowClock%=shadowInterval;}}if(state==='playing'||state==='menu'){sceneryTime+=dt;animateWorld(world,sceneryTime,player.x,player.z);}sound.update(dt,{map:world.activeBiome||localBiome(),seamless:!!world.regions,mode:state,boss:!!boss?.alive,pressure:state==='playing'?Math.max(world.roaming?.some(s=>s.state==='running')?.5:0,localBiome()==='sand'&&world.sandstorm?.active ? .42 : localBiome()==='coast'&&world.tide?.high ? .30 : 0,battlePhase.mood,Math.min(1,enemies.filter(e=>e.alive&&Math.hypot(e.x-player.x,e.z-player.z)<12).length/12)):0});if(state==='playing'){update(dt);updateEffects(dt);}else if(state==='menu'){if(companionMesh){companionMesh.rotation.y=heroPreview.landscapeYaw-.2;animateBadger(companionMesh,now/1000,0);}animateActor(hero,now/1000,0);hero.rotation.y=heroPreview.landscapeYaw+heroPreview.yaw+Math.sin(now/3000)*.07;world.light.intensity=9+Math.sin(now/100)*1.5;}for(let i=0;i<world.motes.length;i++){const m=world.motes[i];m.position.y+=Math.sin(now/1200+i)*dt*.15;m.scale.setScalar(.5+Math.sin(now/550+i)*.3);}updateAdventureCampfire(world,sceneryTime);animateAdventureGroundDetail(sceneryTime);
- if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0){$('#toast').style.opacity=0;syncMobileNotices();}}if(state==='playing'){if(encounterTime>0){encounterTime-=dt;if(encounterTime<=0){$('#encounter').hidden=true;currentIntroduction=null;nextIntroductionAt=time+(touch?35:20);syncMobileNotices();}}else showNextIntroduction();}shake=Math.max(0,shake-dt);if(active){environmentLighting.update(mapId,world.regions?biomeWeights(player.x,player.z):null,dt,state==='menu'?0:time);updateWaterLighting(mapId,environmentLighting);updateWorldLightShafts(world,sceneryTime,environmentLighting);if(world.forestMist)world.forestMist.visible=renderBudget.quality>=.8;}updateCamera(dt);uiTime+=dt;if(uiTime>.1&&state!=='menu'){uiTime=0;updateHUD();}contactShadow.position.set(player.x,(player.groundHeight||0)+.018,player.z);if(adventureCamera.mode!=='first')fitGroundSurface(contactShadow,world.groundHeightAt,{centerHeight:true});contactShadow.visible=(player.waterDepth||0)<.08;contactShadow.material.opacity=(heroId==='wraith'?.24:.52)*(heroId==='tide'?1-(viewDodge()?.weight||0):heroId==='mirage'?1-(hero.userData.mirageFade||0):1);firstPerson.update(time,active?dt:0,{moving:player.dashTime>0||airborne(player)?0:Math.min(1,Math.hypot(player.vx||0,player.vz||0)/6.5),strafe:player.dashTime>0?0:(-(player.vx||0)*Math.cos(adventureCamera.yaw)+(player.vz||0)*Math.sin(adventureCamera.yaw))/6.5,yaw:adventureCamera.yaw,pitch:adventureCamera.pitch,attack:hero.userData.shoot,dodgePose:viewDodge(),visible:state!=='menu'&&adventureCamera.mode==='first'});if(state==='playing'&&dt>0)vfx.trackMelee(player.dashTime>0?null:adventureCamera.mode==='first'?firstPerson.model:hero.userData.gun,player.weaponId,hero.userData.shotSerial,hero.userData.attackAge,hero.userData.reloadDuration);else if(state!=='paused')vfx.meleeEdge=null;atmosphere.update(sceneryTime,camera,{world,mapId:world.activeBiome||localBiome(),visible:state!=='menu',skyColor:hemisphere.color,fogColor:scene.fog.color,sunColor:sun.color,sunDirection:environmentLighting.direction,sunStrength:Math.min(1,sun.intensity/3.25),skyStrength:.55+.45*environmentLighting.day});$('#crosshair').hidden=state!=='playing';$('#crosshair').classList.toggle('confirmed',time<hitConfirmUntil);if(state!=='playing'&&document.pointerLockElement===canvas)document.exitPointerLock();syncViewUI();cinema.render(renderWorld,renderBudget.quality);requestAnimationFrame(frame);}requestAnimationFrame(frame);
-window.game3d={surfaceReady,get environmentLighting(){return environmentLighting;},get adventureCamera(){return adventureCamera;},get firstPerson(){return firstPerson;},get atmosphere(){return atmosphere;},setView,get cinema(){return cinema;},get environmentImpacts(){return environmentImpacts;},get mirage(){return mirage;},get mirageVFX(){return mirageVFX;},get herbalWaves(){return herbalWaves;},get briarPods(){return briarPods;},get poison(){return poison;},get poisonVFX(){return poisonVFX;},get companion(){return companion;},get companionMesh(){return companionMesh;},get encounter(){return{...battlePhase,hunt:hunt?{cycle:hunt.cycle,name:hunt.name,remaining:hunt.members.filter(e=>e.alive).length,rewarded:hunt.rewarded}:null};},get orbs(){return orbs;},get heroSkills(){return heroSkills;},get renderQuality(){return renderBudget.quality;},get audio(){return sound;},get hero(){return hero;},get state(){return state;},get player(){return player;},get enemies(){return enemies;},get boss(){return boss;},get bossRun(){return {...bossRun};},get world(){return world;},get time(){return time;},get renderer(){return renderer;},get camera(){return camera;},get controls(){return aimInput;},get vfx(){return vfx;},get bullets(){return bullets;},get fields(){return fields;},get riftStrikes(){return riftStrikes;},get zones(){return zones;},start,prepareStart,pause,resume,menu,dash,jump,spawn,spawnBoss,step(dt){if(state==='playing')update(dt);},grant(n){collectExperience(n);upgrade();},damage:hitPlayer,hurtEnemy,select(hero,map,index){heroId=Object.hasOwn(HERO_LOADOUTS,hero)?hero:'silver';mapId=Object.hasOwn(MAPS,map)?map:'forest';weaponIndex=Number.isInteger(index)&&index>=0&&index<HERO_LOADOUTS[heroId].length?index:0;renderChoices();build();}};
+ const frameSeconds=(now-last)/1000,dt=Math.max(0,Math.min(.04,frameSeconds));last=now;if(renderWidth!==innerWidth||renderHeight!==innerHeight||renderDpr!==devicePixelRatio){resizeRendering();renderBudget.reset();}else if(renderBudget.sample(frameSeconds,active))resizeRendering();if(active){shadowClock+=dt;const shadowInterval=state==='menu'?1/20:1/renderBudget.shadowHz;if(shadowClock>=shadowInterval){renderer.shadowMap.needsUpdate=true;shadowClock%=shadowInterval;}}if(state==='playing'||state==='menu'){sceneryTime+=dt;animateWorld(world,sceneryTime,player.x,player.z);}sound.update(dt,{map:world.activeBiome||localBiome(),seamless:!!world.regions,mode:state,boss:!!boss?.alive,pressure:state==='playing'?Math.max(world.roaming?.some(s=>s.state==='running')?.5:0,localBiome()==='sand'&&world.sandstorm?.active ? .42 : localBiome()==='coast'&&world.tide?.high ? .30 : 0,battlePhase.mood,Math.min(1,enemies.filter(e=>e.alive&&Math.hypot(e.x-player.x,e.z-player.z)<12).length/12)):0});if(state==='playing'){update(dt);updateEffects(dt);}else if(state==='menu'){if(companionMesh){companionMesh.rotation.y=heroPreview.landscapeYaw-.2;animateBadger(companionMesh,now/1000,0);}animateActor(hero,now/1000,0);hero.rotation.y=heroPreview.landscapeYaw+heroPreview.yaw+Math.sin(now/3000)*.07;world.light.intensity=9+Math.sin(now/100)*1.5;}for(let i=0;i<world.motes.length;i++){const m=world.motes[i];m.position.y+=Math.sin(now/1200+i)*dt*.15;m.scale.setScalar(.5+Math.sin(now/550+i)*.3);}updateAdventureCampfire(world,sceneryTime);animateAdventureGroundDetail(sceneryTime);
+ if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0){$('#toast').style.opacity=0;syncMobileNotices();}}if(state==='playing'){if(encounterTime>0){encounterTime-=dt;if(encounterTime<=0){$('#encounter').hidden=true;currentIntroduction=null;nextIntroductionAt=time+(touch?35:20);syncMobileNotices();}}else showNextIntroduction();}shake=Math.max(0,shake-dt);if(active){environmentLighting.update(mapId,world.regions?biomeWeights(player.x,player.z):null,dt,state==='menu'?0:time);reflections.update(mapId,world.regions?biomeWeights(player.x,player.z):null,environmentLighting.day,dt);updateWaterLighting(mapId,environmentLighting);updateWorldLightShafts(world,sceneryTime,environmentLighting);if(world.forestMist)world.forestMist.visible=renderBudget.quality>=.8;}updateCamera(dt);uiTime+=dt;if(uiTime>.1&&state!=='menu'){uiTime=0;updateHUD();}contactShadow.position.set(player.x,(player.groundHeight||0)+.018,player.z);if(adventureCamera.mode!=='first')fitGroundSurface(contactShadow,world.groundHeightAt,{centerHeight:true});contactShadow.visible=(player.waterDepth||0)<.08;contactShadow.material.opacity=(heroId==='wraith'?.24:.52)*(heroId==='tide'?1-(viewDodge()?.weight||0):heroId==='mirage'?1-(hero.userData.mirageFade||0):1);firstPerson.update(time,active?dt:0,{moving:player.dashTime>0||airborne(player)?0:Math.min(1,Math.hypot(player.vx||0,player.vz||0)/6.5),strafe:player.dashTime>0?0:(-(player.vx||0)*Math.cos(adventureCamera.yaw)+(player.vz||0)*Math.sin(adventureCamera.yaw))/6.5,yaw:adventureCamera.yaw,pitch:adventureCamera.pitch,attack:hero.userData.shoot,dodgePose:viewDodge(),visible:state!=='menu'&&adventureCamera.mode==='first'});if(state==='playing'&&dt>0)vfx.trackMelee(player.dashTime>0?null:adventureCamera.mode==='first'?firstPerson.model:hero.userData.gun,player.weaponId,hero.userData.shotSerial,hero.userData.attackAge,hero.userData.reloadDuration);else if(state!=='paused')vfx.meleeEdge=null;atmosphere.update(sceneryTime,camera,{world,mapId:world.activeBiome||localBiome(),visible:state!=='menu',skyColor:hemisphere.color,fogColor:scene.fog.color,sunColor:sun.color,sunDirection:environmentLighting.direction,sunStrength:Math.min(1,sun.intensity/3.25),skyStrength:.55+.45*environmentLighting.day});$('#crosshair').hidden=state!=='playing';$('#crosshair').classList.toggle('confirmed',time<hitConfirmUntil);if(state!=='playing'&&document.pointerLockElement===canvas)document.exitPointerLock();syncViewUI();cinema.render(renderWorld,renderBudget.postQuality);requestAnimationFrame(frame);}requestAnimationFrame(frame);
+window.game3d={surfaceReady,get environmentLighting(){return environmentLighting;},get adventureCamera(){return adventureCamera;},get firstPerson(){return firstPerson;},get atmosphere(){return atmosphere;},setView,get cinema(){return cinema;},get environmentImpacts(){return environmentImpacts;},get mirage(){return mirage;},get mirageVFX(){return mirageVFX;},get herbalWaves(){return herbalWaves;},get briarPods(){return briarPods;},get poison(){return poison;},get poisonVFX(){return poisonVFX;},get companion(){return companion;},get companionMesh(){return companionMesh;},get encounter(){return{...battlePhase,hunt:hunt?{cycle:hunt.cycle,name:hunt.name,remaining:hunt.members.filter(e=>e.alive).length,rewarded:hunt.rewarded}:null};},get orbs(){return orbs;},get heroSkills(){return heroSkills;},get renderQuality(){return renderBudget.quality;},get renderQualityMode(){return renderBudget.mode;},get reflections(){return reflections;},get audio(){return sound;},get hero(){return hero;},get state(){return state;},get player(){return player;},get enemies(){return enemies;},get boss(){return boss;},get bossRun(){return {...bossRun};},get world(){return world;},get time(){return time;},get renderer(){return renderer;},get camera(){return camera;},get controls(){return aimInput;},get vfx(){return vfx;},get bullets(){return bullets;},get fields(){return fields;},get riftStrikes(){return riftStrikes;},get zones(){return zones;},start,prepareStart,pause,resume,menu,dash,jump,spawn,spawnBoss,step(dt){if(state==='playing')update(dt);},grant(n){collectExperience(n);upgrade();},damage:hitPlayer,hurtEnemy,select(hero,map,index){heroId=Object.hasOwn(HERO_LOADOUTS,hero)?hero:'silver';mapId=Object.hasOwn(MAPS,map)?map:'forest';weaponIndex=Number.isInteger(index)&&index>=0&&index<HERO_LOADOUTS[heroId].length?index:0;renderChoices();build();}};

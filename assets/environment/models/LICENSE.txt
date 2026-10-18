@@ -1,0 +1,9 @@
+Poly Haven environment meshes, CC0 1.0 Universal.
+
+Rock 07 and Rock 09 by Jenelle van Heerden.
+Tree Stump 02 by Rob Tuytel.
+Official policy: https://polyhaven.com/license
+Verified: 2026-10-18
+
+Specific source links, original file checksums and adaptation steps are recorded in sources.json.
+This project's normalized 512px / LOD derivatives remain CC0.

@@ -1,6 +1,7 @@
 import {readFile,writeFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {CHARACTER_ASSETS as assets} from '../character-assets.js';
+import {HERO_REFINEMENTS} from '../hero-refinement-assets.js';
 const root=new URL('../',import.meta.url),read=path=>readFile(new URL(path,root));
 let html=(await read('index.html')).toString();
 const version=html.match(/main\.js\?v=(\d+)/)?.[1],checking=process.argv.includes('--check'),rootScripts=(await readdir(root)).filter(f=>f.endsWith('.js')&&f!=='sw.js');
@@ -23,6 +24,9 @@ if(process.argv.includes('--check')){
 const files=['index.html','play.html','style.css','manifest.webmanifest','THIRD_PARTY_ASSETS.md','START_OFFLINE.cmd','start-offline.py','start-offline.mjs','OFFLINE_README.txt'];
 files.push(...rootScripts);
 for(const dir of ['vendor','assets/bestiary','assets/icons','assets/audio','assets/environment'])for(const f of await readdir(new URL(dir+'/',root)))if(/\.(js|png|jpg|ogg|mp3)$/.test(f))files.push(dir+'/'+f);
+// Ship only prepared model derivatives and their provenance. Source downloads,
+// Blender projects and future unselected models must not inflate offline exports.
+files.push(...['weathered-rock-a.glb','weathered-rock-b.glb','old-stump.glb','sources.json','LICENSE.txt','CC0-1.0.txt'].map(f=>'assets/environment/models/'+f));
 const characterFiles=[...assets.textures,assets.motion.file,assets.motionFallback.file];
 for(const [name,model] of Object.entries(assets.models)){
  characterFiles.push(model.file,name+'.gltf');
@@ -30,6 +34,9 @@ for(const [name,model] of Object.entries(assets.models)){
  for(const item of [...gltf.buffers||[],...gltf.images||[]])if(item.uri&&!item.uri.startsWith('data:'))characterFiles.push(item.uri);
 }
 files.push(...new Set(characterFiles.map(f=>'assets/characters/'+f)));
+files.push(...HERO_REFINEMENTS.files.map(entry=>entry.file));
+files.push(...(HERO_REFINEMENTS.provenance||['assets/characters/rebuilt-v215/sources.json','assets/characters/rebuilt-v215/LICENSE.txt']));
+files.push(...['forest-1k.hdr','sky-1k.hdr','sources.json'].map(f=>'assets/environment/lighting/'+f));
 files.sort();const hash=createHash('sha256');let bytes=0;
 // Git normalizes text on Pages/Linux; the package must also be reproducible on Windows.
 const normalize=text=>text.replace(/\r\n/g,'\n');

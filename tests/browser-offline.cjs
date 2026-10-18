@@ -13,7 +13,7 @@ const saved=p=>p.waitForFunction(()=>document.querySelector('#offline-status').t
   await p.reload({waitUntil:'domcontentloaded'});await ready(p);await p.waitForFunction(()=>document.querySelector('#offline-status').textContent.includes('不完整'));
   await p.locator('#offline-panel summary').click();await p.locator('#offline-download').click();await saved(p);
   await p.screenshot({path:output+`/v78-offline-ready-${width}.png`});
-  await p.evaluate(async()=>{await caches.delete('forest3d-character-assets-v1');localStorage.setItem('forest3d-offline-test','preserved');});
+  await p.evaluate(async()=>{await caches.delete('forest3d-reborn-character-assets-v1');localStorage.setItem('forest3d-offline-test','preserved');});
   await context.close();context=null;
   // A new browser process, no HTTP memory cache, and networking disabled before navigation.
   context=await chromium.launchPersistentContext(profile,{...options,offline:true});

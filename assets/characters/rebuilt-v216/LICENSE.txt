@@ -1,0 +1,20 @@
+Upstream character artwork: Quaternius
+Universal Base Characters / Modular Character Outfits - Fantasy
+Free Standard editions, originally supplied under CC0 1.0 Universal:
+https://creativecommons.org/publicdomain/zero/1.0/
+https://quaternius.com/packs/universalbasecharacters.html
+https://quaternius.com/packs/modularcharacteroutfitsfantasy.html
+
+The original author notices remain in assets/characters/:
+universal-base-characters-LICENSE.txt
+modular-character-outfits-fantasy-LICENSE.txt
+
+v216 locally adapts the existing free character surfaces in Blender 4.5.9 LTS.
+The local project face, mask and clothing edits are not official Quaternius
+characters or animations. No new external character, paid Source edition,
+unverified download, texture or replacement skeleton is included in v216.
+Hair_Buzzed and Hair_Beard were adopted in v215 and are not claimed new again.
+
+See sources.json for the deterministic selection, exact delivered hashes,
+authoring scripts, retained v215 outfits and local mesh operations. Both versions
+retain the original game skeleton, attachments and animation ownership.

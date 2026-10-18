@@ -14,6 +14,9 @@ test('offline build aligns static/lazy module and HTML versions before hashing; 
   'style.css':'body{}','manifest.webmanifest':'{}','THIRD_PARTY_ASSETS.md':'test',
   'START_OFFLINE.cmd':'test','start-offline.py':'test','start-offline.mjs':'test','OFFLINE_README.txt':'test',
   'character-assets.js':'export const CHARACTER_ASSETS={textures:[],models:{},motion:{file:"motion.json"},motionFallback:{file:"motion.json"}};',
+  'hero-refinement-assets.js':'export const HERO_REFINEMENTS={files:[]};',
+  'assets/characters/rebuilt-v215/sources.json':'{}',
+  'assets/characters/rebuilt-v215/LICENSE.txt':'CC0',
   'main.js':"import './dep.js?v=9';export const later=()=>import('./lazy.js?v=77&mode=test');const external='https://example.test/file.js?v=4';",
   'dep.js':"export{value}from'./lazy.js?v=31';",'lazy.js':'export const value=1;',
   'offline.js':"const RELEASE=new URL(import.meta.url).searchParams.get('v');import('./lazy.js?v='+RELEASE);",
@@ -21,6 +24,12 @@ test('offline build aligns static/lazy module and HTML versions before hashing; 
   'scripts/build-offline.mjs':await read('scripts/build-offline.mjs'),
   'scripts/offline-worker.txt':await read('scripts/offline-worker.txt')
  };
+ // The builder's explicit environment bundle is required even in this isolated
+ // version-alignment fixture. Preserve binary GLBs as bytes, not UTF-8 strings.
+ for(const name of ['weathered-rock-a.glb','weathered-rock-b.glb','old-stump.glb','sources.json','LICENSE.txt','CC0-1.0.txt']){
+  const path='assets/environment/models/'+name;files[path]=await readFile(new URL(path,root));
+ }
+ for(const name of ['forest-1k.hdr','sky-1k.hdr','sources.json']){const path='assets/environment/lighting/'+name;files[path]=await readFile(new URL(path,root));}
  const run=async(check=false)=>{const args=process.argv;process.argv=[process.execPath,'build-offline.mjs',...(check?['--check']:[])];try{await import(pathToFileURL(join(dir,'scripts/build-offline.mjs')).href+'?run='+Math.random());}finally{process.argv=args;}};
  try{
   for(const folder of['vendor','assets/bestiary','assets/icons','assets/audio','assets/environment'])await mkdir(join(dir,folder),{recursive:true});

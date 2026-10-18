@@ -1,30 +1,31 @@
-import {createShadowAura,updateShadowAura,disposeShadowAura} from './shadow-aura.js?v=212';
-import {shadowOutfit,shadowAccessories,finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=212';
-import {shadowFocus} from './shadow-gear.js?v=212';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT,primaryGripFrame,fitWeaponToPalm,createHandGrips,restoreGripWrists,captureGripWrists,aimGrip,supportGripTarget,aimSupportGrip,aimShadeGuide,poseGripFingers} from './weapon-grips.js?v=212';
-import {refineLingyaFace} from './lingya-face.js?v=212';
-import {createLingyaHair,animateLingyaHair} from './lingya-hair.js?v=212';
-import {finishHeroSurface,smoothSeams,prepareSilverHair,animateSilverHair} from './hero-finish.js?v=212';
-import {rebuildRanger} from './ranger-rebuild.js?v=212';
-import {rebuildShadowTide} from './shadow-tide-rebuild.js?v=212';
-import {rebuildWildMist} from './wild-mist-rebuild.js?v=212';
-import {applyHeroIdentity,settleHeroIdentity} from './hero-identity.js?v=212';
-import{WULING_PALETTE,wulingOutfit,wulingAccessories,wulingMask,sporeLantern,sporeSatchel,sporePod}from'./wuling-appearance.js?v=212';
-import{MIRAGE_PALETTE,mirageOutfit,mirageHair,prepareMirageHair,animateMirageHair,mirageMask,mirageAccessories,miragePetalTails,miasmaLantern}from'./mirage-appearance.js?v=212';
-import{newHeroAttack,heroCarryPose,committedWeaponYaw}from'./new-hero-motion.js?v=212';
-import{heroDodgePose}from'./hero-dodge.js?v=212';
-import{lingyaHopPose}from'./lingya-motion.js?v=212';
-import{lingyaOutfit,lingyaAccessories,lingyaLegs}from'./lingya-appearance.js?v=212';
-import{makeSlingshot,poseSlingshot}from'./slingshot-model.js?v=212';
-import{makeHarpoon}from'./coast-models.js?v=212';
-import{weaponGesture,shotStarted,scythePose,crossbowMechanism,slingshotMechanism,herbalPose}from'./weapon-performance.js?v=212';
-import{isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon,disposeHerbalWeapon}from'./herbal-weapon-models.js?v=212';
-import{rollProgress,rollWeight}from'./dodge-motion.js?v=212';
+import {createShadowAura,updateShadowAura,disposeShadowAura} from './shadow-aura.js?v=216';
+import {shadowOutfit,shadowAccessories,finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=216';
+import {shadowFocus} from './shadow-gear.js?v=216';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT,primaryGripFrame,fitWeaponToPalm,createHandGrips,restoreGripWrists,captureGripWrists,aimGrip,supportGripTarget,aimSupportGrip,aimShadeGuide,poseGripFingers} from './weapon-grips.js?v=216';
+import {refineLingyaFace} from './lingya-face.js?v=216';
+import {createLingyaHair,animateLingyaHair} from './lingya-hair.js?v=216';
+import {finishHeroSurface,smoothSeams,prepareSilverHair,animateSilverHair} from './hero-finish.js?v=216';
+import {rebuildRanger} from './ranger-rebuild.js?v=216';
+import {rebuildShadowTide} from './shadow-tide-rebuild.js?v=216';
+import {rebuildWildMist} from './wild-mist-rebuild.js?v=216';
+import {applyHeroIdentity,settleHeroIdentity} from './hero-identity.js?v=216';
+import{WULING_PALETTE,wulingOutfit,wulingAccessories,wulingMask,sporeLantern,sporeSatchel,sporePod}from'./wuling-appearance.js?v=216';
+import{MIRAGE_PALETTE,mirageOutfit,mirageHair,prepareMirageHair,animateMirageHair,mirageMask,mirageAccessories,miragePetalTails,miasmaLantern}from'./mirage-appearance.js?v=216';
+import{newHeroAttack,heroCarryPose,committedWeaponYaw}from'./new-hero-motion.js?v=216';
+import{heroDodgePose}from'./hero-dodge.js?v=216';
+import{lingyaHopPose}from'./lingya-motion.js?v=216';
+import{lingyaOutfit,lingyaAccessories,lingyaLegs}from'./lingya-appearance.js?v=216';
+import{makeSlingshot,poseSlingshot}from'./slingshot-model.js?v=216';
+import{makeHarpoon}from'./coast-models.js?v=216';
+import{weaponGesture,shotStarted,scythePose,crossbowMechanism,slingshotMechanism,herbalPose}from'./weapon-performance.js?v=216';
+import{isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon,disposeHerbalWeapon}from'./herbal-weapon-models.js?v=216';
+import{rollProgress,rollWeight}from'./dodge-motion.js?v=216';
 import * as T from './vendor/three.module.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {loadCharacterData} from './character-loader.js?v=212';
-import {makeHero as makePrototype,poseCrossbow} from './hero-model.js?v=212';
-import {restSurface} from './hero-rest-surface.js?v=212';
+import {loadCharacterData} from './character-loader.js?v=216';
+import {makeHero as makePrototype,poseCrossbow} from './hero-model.js?v=216';
+import {restSurface} from './hero-rest-surface.js?v=216';
+import {loadHeroRefinements,refineHeroTemplate,refineHeroPart} from './hero-refinements.js?v=216';
 
 const templates=new Map(),clips=new Map();
 let lingyaFace;
@@ -38,6 +39,7 @@ function cachedFaceMask(model,kind){
   if(!source){
     const sample=restSurface(skin.geometry);
     source=kind==='wuling'?wulingMask(model,sample):kind==='mirage'?mirageMask(model,sample):faceMask(model,kind,sample);
+    refineHeroPart(source,kind,{owned:true});
     masks.set(kind,source);
   }
   // Templates never enter a live actor's owned list. Each actor still owns its
@@ -120,8 +122,8 @@ function bindParts(root,extra,onlyHead=false,kind=''){
 }
 export async function loadHeroAssets(onProgress=()=>{}){
   if(loaded)return;
-  const {models:assets,clips:bakedClips}=await loadCharacterData(onProgress);
-  lingyaFace=assets['lingya-face'].scene;lingyaFace.getObjectByName('Lingya-eyes_viewport').add(lingyaFace.getObjectByName('Lingya-eye_dots'));refineLingyaFace(lingyaFace);lingyaFace.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  const [{models:assets,clips:bakedClips}]=await Promise.all([loadCharacterData(onProgress),loadHeroRefinements()]);
+  lingyaFace=assets['lingya-face'].scene;refineHeroTemplate(lingyaFace,'lingya');lingyaFace.getObjectByName('Lingya-eyes_viewport').add(lingyaFace.getObjectByName('Lingya-eye_dots'));refineLingyaFace(lingyaFace);lingyaFace.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
   const shadow=clone(assets['scout-outfit'].scene),shadowBase=clone(assets['scout-base'].scene);
   const mirage=clone(assets['silver-outfit'].scene),mirageBase=clone(assets['silver-base'].scene),mirageLocks=clone(assets['silver-hair'].scene);
   const wuling=clone(assets['silver-outfit'].scene),wulingBase=clone(assets['silver-base'].scene),wulingHair=clone(assets['silver-hair'].scene);
@@ -167,6 +169,7 @@ float weave=dot(diffuseColor.rgb,vec3(.21,.72,.07));diffuseColor.rgb=vec3(${tint
     rebuildRanger(root,kind);
     rebuildShadowTide(root,kind);
     rebuildWildMist(root,kind);
+    refineHeroTemplate(root,kind);
     applyHeroIdentity(root,kind);
     finishHeroSurface(root,kind);
   }

@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {weaponInlay,nameWeapon} from './weapon-identity.js?v=212';
+import {weaponInlay,nameWeapon} from './weapon-identity.js?v=216';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {SHADOW_PALETTE as SHADOW} from './shadow-appearance.js?v=212';
+import {SHADOW_PALETTE as SHADOW} from './shadow-appearance.js?v=216';
 
 const geometry=new Map(),materials=new Map(),pageInk=new Map();
 function part(parent,key,create,color,position=[0,0,0],scale=[1,1,1],glow=false){
@@ -130,7 +130,20 @@ export function shadowFocus(id){
    const collar=part(g,'scythe-collar',()=>new T.CylinderGeometry(.037,.040,.048,12),SHADOW.metal,[Math.max(0,y-.05)*.025/.67,y,.02]);collar.name='SM_Scythe_SteelCollar_'+i;collar.material.roughness=.37;collar.material.metalness=.64;
   }
   const socket=part(g,'scythe-socket',scytheSocket,SHADOW.fold,[.025,.69,.02]);socket.name='SM_Scythe_BladeSocket_A';finish(socket,'scythe-socket',{roughness:.34,metalness:.72});
-  const blade=part(g,'war-scythe',warScytheBlade,0xffffff,[.015,.70,.02]);blade.name='SM_Scythe_ForgedBlade_A';blade.material.vertexColors=true;blade.material.roughness=.34;blade.material.metalness=.72;
+  const blade=part(g,'war-scythe',warScytheBlade,0xffffff,[.015,.70,.02]);blade.name='SM_Scythe_ForgedBlade_A';
+  finish(blade,'scythe-forged-steel',{vertexColors:true,roughness:.42,metalness:.76});
+  if(!blade.material.userData.forgedSurface){
+   const material=blade.material;material.userData.forgedSurface=true;
+   material.onBeforeCompile=shader=>{
+    shader.vertexShader='varying vec3 vForgedPoint;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvForgedPoint=position;');
+    shader.fragmentShader='varying vec3 vForgedPoint;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+     float forgedEdge=smoothstep(.07,.45,max(diffuseColor.r,max(diffuseColor.g,diffuseColor.b)));
+     float forgedGrain=sin(vForgedPoint.x*210.0+vForgedPoint.y*47.0)*sin(vForgedPoint.y*380.0);
+     roughnessFactor=mix(.51,.24,forgedEdge)+forgedGrain*.018;`);
+   };material.customProgramCacheKey=()=> 'shadow-forged-steel-v216';
+  }
   const brace=line(g,SHADOW.metal,[[.025,.60,.02],[.065,.70,.02],[.20,.79,.025]],.016);brace.name='SM_Scythe_SocketBrace_A';brace.material.roughness=.4;brace.material.metalness=.62;
   for(const side of[-1,1]){
    const pin=part(g,'scythe-pin',()=>new T.SphereGeometry(.018,10,6),SHADOW.soul,[.060,.72,.02+side*.045],[1,1,.45]);pin.name='SM_Scythe_Rivet_'+side;pin.material.roughness=.31;pin.material.metalness=.76;

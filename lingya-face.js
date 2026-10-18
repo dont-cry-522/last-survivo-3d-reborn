@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {smoothSeams} from './hero-finish.js?v=212';
+import {smoothSeams} from './hero-finish.js?v=216';
 
 export const lingyaHeadY=y=>y-.029*T.MathUtils.smoothstep(y,1.44,1.59);
 
@@ -42,7 +42,39 @@ export function refineLingyaFace(root){
    g.setAttribute('color',new T.BufferAttribute(colours,3));
   }
   g.computeBoundingBox();g.computeBoundingSphere();mesh.geometry=g;
-  const polish=m=>{const next=m.clone();if(m.name==='Lingya_eye_brown'){next.color.set(0xe7ded0);next.roughness=.58;next.normalMap=null;}if(m.name==='Lingya_eye_white'){next.color.multiplyScalar(.91);next.roughness=.62;}if(m.name==='Lingya_eye_iris'){next.color.set(0xffffff);next.vertexColors=true;next.roughness=.46;}if(m.name==='Lingya_face_skin')next.roughness=.87;return next;};
+  const polish=m=>{const next=m.clone();
+   if(m.name==='Lingya_eye_brown'){
+    // The live mesh is the original eye surface, not the unused eye_iris slot.
+    // Paint its iris in rest coordinates; the existing Blink still closes it.
+    const p=g.attributes.position;let lo=Infinity,hi=0,ylo=Infinity,yhi=-Infinity;
+    for(let i=0;i<p.count;i++){lo=Math.min(lo,Math.abs(p.getX(i)));hi=Math.max(hi,Math.abs(p.getX(i)));ylo=Math.min(ylo,p.getY(i));yhi=Math.max(yhi,p.getY(i));}
+    const cx=(lo+hi)/2,cy=(ylo+yhi)/2;
+    // Keep the authored eye texture for iris pigment/detail, and preserve its
+    // shared immutable ownership. Only the material is specific to this face.
+    next.color.set(0xffffff);next.normalMap=null;next.roughness=.24;next.metalness=0;
+    next.onBeforeCompile=shader=>{
+     shader.vertexShader='varying vec3 vLingyaEyeRest;\n'+shader.vertexShader;
+     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvLingyaEyeRest=position;');
+     shader.fragmentShader='varying vec3 vLingyaEyeRest;\n'+shader.fragmentShader;
+     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      vec2 eye=vec2(abs(vLingyaEyeRest.x)-${cx.toFixed(7)},vLingyaEyeRest.y-${cy.toFixed(7)});
+      float r=length(eye),iris=1.0-smoothstep(.0061,.0069,r),pupil=1.0-smoothstep(.00255,.0030,r);
+      float rays=sin(atan(eye.y,eye.x)*37.0+r*3200.0)*.5+.5;
+      vec3 irisColor=mix(vec3(.085,.039,.018),vec3(.30,.165,.062),smoothstep(.0030,.0054,r)*(.72+.28*rays));
+      irisColor=mix(irisColor,vec3(.033,.019,.011),smoothstep(.0056,.0069,r));
+      irisColor=mix(irisColor,diffuseColor.rgb,.18);
+      vec3 eyeColor=mix(vec3(.79,.77,.70),irisColor,iris);
+      eyeColor=mix(eyeColor,vec3(.008,.006,.004),pupil);
+      float glint=(1.0-smoothstep(.0004,.00085,length(eye-vec2(-.0019,.0022))))*iris;
+      diffuseColor.rgb=mix(eyeColor,vec3(.90,.87,.79),glint*.82);`);
+    };next.customProgramCacheKey=()=>`lingya-natural-iris-v216-${cx.toFixed(7)}-${cy.toFixed(7)}`;
+   }
+   if(m.name==='Lingya_eye_white'){next.color.multiplyScalar(.91);next.roughness=.62;}
+   if(m.name==='Lingya_eye_iris'){next.color.set(0xffffff);next.vertexColors=true;next.roughness=.46;}
+   if(m.name==='Lingya_face_brow'){next.color.set(0x574335);next.roughness=.85;}
+   if(m.name==='Lingya_face_skin')next.roughness=.78;
+   return next;
+  };
   mesh.material=Array.isArray(mesh.material)?mesh.material.map(polish):polish(mesh.material);
  });
  root.userData.lingyaFaceRefined=true;return root;

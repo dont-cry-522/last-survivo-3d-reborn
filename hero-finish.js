@@ -1,5 +1,39 @@
 import * as T from './vendor/three.module.js';
 
+// Surface response, not a new palette. Keep each outfit's authored colour,
+// textures and material hooks; a coat, waxed vest and eyes must not all share
+// the same chalky response to the local environment map.
+const clothFinish={scout:[.86,.08],silver:[.80,.12],wraith:[.88,.10],tide:[.78,.08],lingya:[.90,.14],wuling:[.88,.10],mirage:[.82,.16]};
+export function finishCharacterMaterial(mesh,kind){
+ const source=mesh.material,name=source.name||'',part=mesh.userData.wildMistPart;
+ if(!source.isMeshStandardMaterial)return;
+ if(mesh.name==='Eyes'){
+  source.metalness=0;source.roughness=.23;source.metalnessMap=null;
+  return;
+ }
+ if(mesh.userData.hairstyle){
+  source.metalness=0;source.metalnessMap=null;
+  source.roughness=kind==='tide'?.55:kind==='scout'?.66:.57;
+  return;
+ }
+ const fabric=part?['robe','hood','sleeves'].includes(part):
+  /WovenCloth|SoftHood/.test(name)||(/^M_Hero_/.test(name)&&/Body|Sleeves|Trousers|Lapel|Yoke|Scarf/.test(mesh.name));
+ if(fabric&&clothFinish[kind]){
+  const [roughness,sheen]=clothFinish[kind],material=new T.MeshPhysicalMaterial();
+  // StandardMaterial.copy retains the complete existing PBR state. Physical
+  // defaults remain intact; copying Standard into Physical.copy would try to
+  // read clearcoat fields that do not exist on the source.
+  T.MeshStandardMaterial.prototype.copy.call(material,source);
+  material.defines={...source.defines,STANDARD:'',PHYSICAL:''};
+  material.onBeforeCompile=source.onBeforeCompile;material.customProgramCacheKey=source.customProgramCacheKey;
+  material.roughness=roughness;material.metalness=0;material.sheen=sheen;
+  material.sheenColor.set(0xe2ddd4);material.sheenRoughness=.85;
+  mesh.material=material;source.dispose();
+ }else if(/WovenLeatherVest/.test(mesh.name)){
+  source.roughness=.70;source.metalness=0;
+ }
+}
+
 // Average normals at duplicated UV vertices, retaining UVs and skin weights.
 export function smoothSeams(geometry){
  const p=geometry.attributes.position,n=geometry.attributes.normal,groups=new Map();
@@ -22,7 +56,10 @@ export function finishHeroSurface(root,kind){
   const garment=/Ranger|Peasant/.test(name),softCloth=garment&&/Body|Legs|Hood/.test(o.name);
   if(skin||hair||softCloth)smoothSeams(o.geometry);
   const m=o.material;
-  if(m.normalScale)m.normalScale.multiplyScalar(skin?.65:hair?.55:/Belt|Bracer|Feet/.test(o.name)?.65:.48);
+  // The source hero normal map was sculpted for an angular comic face. Keep
+  // its pores at low amplitude so the rebuilt eyelids/nose define the form.
+  if(m.normalScale)m.normalScale.multiplyScalar(skin?.14:hair?.55:/Belt|Bracer|Feet/.test(o.name)?.65:.48);
+  if(skin){m.roughness=.72;m.metalness=0;}
   if(kind==='scout'&&name.includes('Ranger')){
    m.color.set(0xc4cbbb);m.roughness=.83;m.metalness=/Pauldron|Bracer/.test(o.name)?.20:.04;
   }
@@ -44,6 +81,7 @@ export function finishHeroSurface(root,kind){
    };
    m.customProgramCacheKey=()=>program+'-tailored-surface-'+(leather?'leather':'cloth');
   }
+  finishCharacterMaterial(o,kind);
  });
 }
 

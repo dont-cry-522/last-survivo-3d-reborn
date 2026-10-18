@@ -1,0 +1,21 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>獾兽模型实装检查</title>
+<style>body{margin:0;background:#203029;color:#e5e7d9;font:15px system-ui}header{padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select{font:inherit;padding:7px;background:#40584c;color:inherit;border:1px solid #8b9e89;border-radius:5px}#view{height:calc(100vh - 140px);min-height:300px}canvas{display:block}pre{margin:8px 12px;white-space:pre-wrap;font-size:12px}</style>
+<header><b>獾兽 · 真实游戏模型</b><select id="mode"><option value="look">待命</option><option value="walk">漫步</option><option value="run">追赶</option><option value="bite">扑咬</option><option value="water">游泳</option><option value="revive">倒地与复起</option></select><select id="camera"><option value="front">正侧面</option><option value="side">侧面</option><option value="back">后侧面</option></select><button id="pause">暂停动作</button><button id="reset">重新生成</button></header>
+<div id="view"></div><pre id="report">正在创建实际模型…</pre><pre id="error"></pre>
+<script type="module">
+import * as T from '../vendor/three.module.js';
+import {makeBadger,animateBadger} from '../beast-model.js?v=212';
+window.addEventListener('error',e=>document.querySelector('#error').textContent+=e.message+'\n');
+const host=document.querySelector('#view'),r=new T.WebGLRenderer({antialias:true}),scene=new T.Scene(),camera=new T.PerspectiveCamera(32,1,.05,100),clock=new T.Clock();
+r.setPixelRatio(Math.min(1.5,devicePixelRatio));r.shadowMap.enabled=true;r.shadowMap.type=T.PCFSoftShadowMap;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1;host.append(r.domElement);
+scene.background=new T.Color(0x3e5147);scene.add(new T.HemisphereLight(0xe1efd8,0x5b513e,2.4));const sun=new T.DirectionalLight(0xffe9c7,3);sun.position.set(-3,5,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=sun.shadow.camera.bottom=-3;sun.shadow.camera.right=sun.shadow.camera.top=3;scene.add(sun,sun.target);
+const floor=new T.Mesh(new T.PlaneGeometry(100,100),new T.MeshStandardMaterial({color:0x6b7657,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+let pet,age=0,paused=false;const reset=()=>{if(pet)scene.remove(pet);pet=makeBadger();scene.add(pet);age=0;};reset();document.querySelector('#mode').onchange=reset;document.querySelector('#reset').onclick=reset;document.querySelector('#pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'继续动作':'暂停动作'};
+function resize(){const w=host.clientWidth,h=host.clientHeight;r.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(host);
+function frame(){requestAnimationFrame(frame);const dt=Math.min(.04,clock.getDelta());if(!paused){age+=dt;const mode=document.querySelector('#mode').value,u=age%3;let state='look',speed=0,progress=0;pet.userData.waterDepth=mode==='water'?1:0;
+ if(mode==='walk'){state='roam';speed=1.15}else if(mode==='run'){state='return';speed=6}else if(mode==='water')speed=1.5;else if(mode==='bite'){state=u<.6?'wind':u<1?'pounce':u<1.6?'recover':'look';progress=state==='wind'?u/.6:state==='pounce'?(u-.6)/.4:state==='recover'?(u-1)/.6:0}else if(mode==='revive')state=u<1.3?'down':'look';
+ pet.position.z+=speed*dt;animateBadger(pet,age,speed,state,progress);}
+ const z=pet.position.z,view=document.querySelector('#camera').value;camera.position.set(view==='side'?3.4:view==='back'?2.4:2.0,1.45,z+(view==='side'?.1:view==='back'?-3:3));camera.lookAt(0,.37,z);sun.position.z=z+4;sun.target.position.z=z;floor.position.z=z;r.render(scene,camera);
+ const meshes=[],materials=new Set();pet.traverse(o=>{if(o.isMesh){meshes.push(o);materials.add(o.material)}});document.querySelector('#report').textContent=JSON.stringify({state:document.querySelector('#mode').value,paused,meshes:meshes.length,triangles:meshes.reduce((n,m)=>n+(m.geometry.index?.count||m.geometry.attributes.position.count)/3,0),materials:materials.size,rendererCalls:r.info.render.calls,rendererTriangles:r.info.render.triangles,errors:document.querySelector('#error').textContent},null,2);
+}resize();frame();
+</script></html>

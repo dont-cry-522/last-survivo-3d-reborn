@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import{mirrorPetalGeometry,nameWeapon,lanternCoreMaterial}from'./weapon-identity.js?v=212';
-import {wulingOutfit,wulingMask} from './wuling-appearance.js?v=212';
+import{mirrorPetalGeometry,nameWeapon,lanternCoreMaterial}from'./weapon-identity.js?v=216';
+import {wulingOutfit,wulingMask} from './wuling-appearance.js?v=216';
 
 // Authored procedural prototype on the existing female rig; no extra model download.
 export const MIRAGE_PALETTE=Object.freeze({cloth:0x1c2030,violet:0x394057,mist:0x8e9eae,ivory:0xe9e3f2,silver:0xa5afbe,glow:0x8f5cff});
@@ -20,8 +20,14 @@ export function mirageOutfit(root){
   if(o.material.name.includes('Regular'))return;
   const color=/Feet|Legs/.test(o.name)?0x181b23:/Bracer|Belt/.test(o.name)?0x303649:/Arms/.test(o.name)?0x353750:0x1e2331;
   const tint=new T.Color(color).toArray().join(',');o.material.roughness=.9;o.material.metalness=/Bracer|Belt/.test(o.name)?.12:.015;
-  o.material.onBeforeCompile=s=>{s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>\nfloat mirageWeave=dot(diffuseColor.rgb,vec3(.21,.72,.07));diffuseColor.rgb=vec3(${tint})*(.82+mirageWeave*.38);`);};
-  o.material.customProgramCacheKey=()=> 'mirage-cloth-'+tint;
+  o.material.onBeforeCompile=s=>{s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+   float mirageWeave=dot(diffuseColor.rgb,vec3(.21,.72,.07));
+   #if defined(USE_COLOR) || defined(USE_COLOR_ALPHA)
+    diffuseColor.rgb=vec3(.82+mirageWeave*.38);
+   #else
+    diffuseColor.rgb=vec3(${tint})*(.82+mirageWeave*.38);
+   #endif`);};
+  o.material.customProgramCacheKey=()=> 'mirage-cloth-v216-'+tint;
  });
 }
 function hairRegions(geometry){
@@ -69,12 +75,15 @@ export function mirageHair(root){
    p.setXYZ(i,...longHairPoint(p.getX(i),p.getY(i),p.getZ(i),regions.getX(i)));
   }
   o.geometry.computeVertexNormals();o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();
-  o.material=o.material.clone();o.material.color.set(0xffffff);o.material.roughness=.75;o.material.normalScale?.setScalar(.2);
+  o.material=o.material.clone();o.material.color.set(0xffffff);o.material.roughness=.63;o.material.normalScale?.setScalar(.17);
   const tint=new T.Color(0xc4b7db).toArray().join(',');o.material.onBeforeCompile=s=>{
    s.vertexShader='varying vec3 vMirageHair;\n'+s.vertexShader;s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvMirageHair=position;');
    s.fragmentShader='varying vec3 vMirageHair;\n'+s.fragmentShader;
    s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>\nfloat mirageStrand=dot(diffuseColor.rgb,vec3(.21,.72,.07));float flow=vMirageHair.x+.022*sin((vMirageHair.y-1.08)*7.0+vMirageHair.x*10.0);float fiber=sin(flow*185.0)*.019+sin(flow*326.0)*.009;diffuseColor.rgb=vec3(${tint})*(.66+mirageStrand*.36+fiber);`);
-  };o.material.customProgramCacheKey=()=> 'mirage-silver-long-hair';
+   s.fragmentShader=s.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+    float strandBands=.5+.5*sin((vMirageHair.x+.014*sin(vMirageHair.y*7.0))*118.0);
+    roughnessFactor=clamp(.57+strandBands*.13,.55,.73);`);
+  };o.material.customProgramCacheKey=()=> 'mirage-silver-long-hair-v216';
  });
 }
 export function prepareMirageHair(model){
@@ -131,7 +140,7 @@ export function mirageMask(model,sample){
  for(const i of edge){pos.push(pos[i*3]*.985,1.65+(pos[i*3+1]-1.65)*.99,pos[i*3+2]-.006);tex.push(tex[i*2],tex[i*2+1]);}
  for(let j=0;j<edge.length;j++){const k=(j+1)%edge.length;indices.push(edge[j],rimStart+j,edge[k],edge[k],rimStart+j,rimStart+k);}
  mask.geometry.setAttribute('position',new T.Float32BufferAttribute(pos,3));mask.geometry.setAttribute('uv',new T.Float32BufferAttribute(tex,2));mask.geometry.setIndex(indices);mask.geometry.deleteAttribute('normal');mask.geometry.computeVertexNormals();mask.geometry.computeBoundingBox();mask.geometry.computeBoundingSphere();
- const m=mask.material;m.color.set(0x301c44);m.roughness=.68;m.metalness=.16;
+ const m=mask.material;m.color.set(0x301c44);m.roughness=.53;m.metalness=.16;m.clearcoat=.34;m.clearcoatRoughness=.27;
  m.onBeforeCompile=s=>{
   s.vertexShader='varying vec2 mirageMaskPoint;varying vec2 mirageMaskUV;\n'+s.vertexShader;
   s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nmirageMaskPoint=position.xy;mirageMaskUV=uv;');
@@ -153,8 +162,11 @@ export function mirageMask(model,sample){
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.24,.18,.32),max(rim*.85,max(eyeRim*.66,flower*.72)));
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.080,.22),stem*.75);
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.0015,.0008,.003),eye);`);
+  s.fragmentShader=s.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+   float miragePolish=sin(mirageMaskPoint.x*1240.0)*sin(mirageMaskPoint.y*960.0);
+   roughnessFactor=clamp(roughnessFactor+miragePolish*.012,.42,.64);`);
  };
- m.customProgramCacheKey=()=> 'mirage-volto-full-mask';return mask;
+ m.customProgramCacheKey=()=> 'mirage-volto-full-mask-v216';return mask;
 }
 export function miasmaLantern(){
  const g=new T.Group();g.name='Mirage_poison_flower_lantern';

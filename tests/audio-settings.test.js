@@ -4,7 +4,7 @@ import {GameAudio,SFX_STYLES} from '../audio.js';
 
 function storage(t,initial){
   const previous=Object.getOwnPropertyDescriptor(globalThis,'localStorage');
-  const data=new Map(initial===undefined?[]:[['forest3d-next-audio',JSON.stringify(initial)]]);
+  const data=new Map(initial===undefined?[]:[['forest3d-reborn-audio',JSON.stringify(initial)]]);
   const writes=[];
   Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{
     getItem:key=>data.get(key)??null,
@@ -48,12 +48,12 @@ test('melee wind cues stop at contact in recorded and generated modes without ex
 
 test('old volume preferences migrate to the current sound without changing saved progress',t=>{
   const h=storage(t,{muted:true,music:.23,sfx:.57}),audio=new GameAudio();
-  h.data.set('forest3d-next-progress','existing progress');h.data.set('forest3d-audio','original game preferences');
+  h.data.set('forest3d-reborn-progress','existing progress');h.data.set('forest3d-audio','original game preferences');
   assert.equal(audio.sfxStyle,'standard');assert.equal(audio.muted,true);
   assert.equal(audio.musicVolume,.23);assert.equal(audio.sfxVolume,.57);assert.equal(h.writes.length,0);
   audio.setSfxStyle('legacy');
-  assert.deepEqual(JSON.parse(h.data.get('forest3d-next-audio')),{muted:true,music:.23,sfx:.57,sfxStyle:'legacy'});
-  assert.equal(h.data.get('forest3d-next-progress'),'existing progress');assert.deepEqual(h.writes,['forest3d-next-audio']);
+  assert.deepEqual(JSON.parse(h.data.get('forest3d-reborn-audio')),{muted:true,music:.23,sfx:.57,sfxStyle:'legacy'});
+  assert.equal(h.data.get('forest3d-reborn-progress'),'existing progress');assert.deepEqual(h.writes,['forest3d-reborn-audio']);
   assert.equal(h.data.get('forest3d-audio'),'original game preferences');
   const reloaded=new GameAudio();assert.equal(reloaded.sfxStyle,'legacy');assert.equal(reloaded.musicVolume,.23);
   reloaded.setVolume('music',.36);assert.equal(new GameAudio().sfxStyle,'legacy');
@@ -63,18 +63,18 @@ test('all four sound versions persist, transient auditions do not, and invalid s
   const h=storage(t);assert.deepEqual(Object.keys(SFX_STYLES).sort(),['legacy','lightAttack','lightImpact','standard'].sort());
   const audio=new GameAudio();
   for(const style of Object.keys(SFX_STYLES)){audio.setSfxStyle(style);assert.equal(new GameAudio().sfxStyle,style);}
-  const saved=h.data.get('forest3d-next-audio'),writes=h.writes.length;
+  const saved=h.data.get('forest3d-reborn-audio'),writes=h.writes.length;
   audio.setSfxStyle('legacy',{persist:false});assert.equal(audio.sfxStyle,'legacy');
-  assert.equal(h.data.get('forest3d-next-audio'),saved);assert.equal(h.writes.length,writes);
+  assert.equal(h.data.get('forest3d-reborn-audio'),saved);assert.equal(h.writes.length,writes);
   for(const invalid of ['removed-version','__proto__','constructor',null,7]){
-    h.data.set('forest3d-next-audio',JSON.stringify({music:.4,sfx:.6,sfxStyle:invalid}));
+    h.data.set('forest3d-reborn-audio',JSON.stringify({music:.4,sfx:.6,sfxStyle:invalid}));
     assert.equal(new GameAudio().sfxStyle,'standard');
     audio.setSfxStyle(invalid,{persist:false});assert.equal(audio.sfxStyle,'standard');
   }
 });
 
 test('blocked storage and malformed preferences never prevent selecting a sound version',t=>{
-  const h=storage(t);h.data.set('forest3d-next-audio','{broken');
+  const h=storage(t);h.data.set('forest3d-reborn-audio','{broken');
   assert.equal(new GameAudio().sfxStyle,'standard');
   globalThis.localStorage.getItem=()=>{throw Error('unavailable');};
   globalThis.localStorage.setItem=()=>{throw Error('quota');};

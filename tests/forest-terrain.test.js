@@ -50,12 +50,27 @@ test('forest approach uses its rendered triangles for bounded valley shoulders w
   assert.equal(w.ground.geometry.index.count/3,144*144*2);assert.equal(w.groundHeightAt(w.spawn.x,w.spawn.z),0);
   for(const o of w.obstacles)for(let i=0;i<8;i++)assert.equal(w.groundHeightAt(o.x+Math.sin(i*Math.PI/4)*o.r,o.z+Math.cos(i*Math.PI/4)*o.r),0,'terrain entered a protected solid');
   for(const q of w.ponds)assert.equal(w.groundHeightAt(q.x,q.z),0,'water floor moved');
-  w.group.updateMatrixWorld(true);const ray=new T.Raycaster(),down=new T.Vector3(0,-1,0),origin=new T.Vector3();let checked=0;
+  w.group.updateMatrixWorld(true);const ray=new T.Raycaster(),down=new T.Vector3(0,-1,0),origin=new T.Vector3(),buckets=new Map(),cells=[];let checked=0;
+  // Native Raycaster scans all 41,472 ground triangles per ray. Check both
+  // triangle interiors in a deterministic spatial/height sample, while the
+  // footprint and slope checks below still visit every protected/grid point.
   for(let z=0;z<t.rows;z++)for(let x=0;x<t.cols;x++){
-   const a=z*(t.cols+1)+x;if(!t.heights[a]&&!t.heights[a+1]&&!t.heights[a+t.cols+1]&&!t.heights[a+t.cols+2])continue;
+   const a=z*(t.cols+1)+x,peak=Math.max(t.heights[a],t.heights[a+1],t.heights[a+t.cols+1],t.heights[a+t.cols+2]);if(!peak)continue;
+   const tileX=Math.floor(x/t.cols*4),tileZ=Math.floor(z/t.rows*4),band=Math.min(3,Math.floor(peak/t.maxHeight*4)),key=tileX+':'+tileZ+':'+band;
+   const cell={x,z,peak,key,band,quadrant:Number(x>=t.cols/2)+2*Number(z>=t.rows/2),order:(Math.imul(x+1,73856093)^Math.imul(z+1,19349663)^seed)>>>0};cells.push(cell);
+   if(!buckets.has(key))buckets.set(key,[]);buckets.get(key).push(cell);
+  }
+  const compare=(a,b)=>a.order-b.order||a.z-b.z||a.x-b.x,selected=new Set();
+  for(const bucket of buckets.values())for(const cell of bucket.sort(compare).slice(0,2))selected.add(cell);
+  for(const cell of cells.sort(compare)){if(selected.size>=64)break;selected.add(cell);}
+  selected.add(cells.reduce((a,b)=>a.peak>b.peak?a:b));
+  assert.equal(new Set([...selected].map(c=>c.key)).size,buckets.size,'ray samples omitted a spatial/height stratum');
+  assert.equal(new Set([...selected].map(c=>c.quadrant)).size,4,'ray samples did not cover both signs of x and z');
+  assert.equal(new Set([...selected].map(c=>c.band)).size,4,'ray samples did not cover foot, lower, upper and crest heights');
+  for(const {x,z}of selected){
    for(const [u,v]of [[.2,.3],[.8,.7]]){const px=-t.width/2+(x+u)*t.width/t.cols,pz=-t.height/2+(z+v)*t.height/t.rows;ray.set(origin.set(px,5,pz),down);const hit=ray.intersectObject(w.ground)[0];assert(hit);assert(Math.abs(hit.point.y+.03-w.groundHeightAt(px,pz))<1e-6,'feet do not follow rendered ground');checked++;}
   }
-  assert(checked>8);for(let z=0;z<=t.rows;z++)for(let x=0;x<=t.cols;x++){const i=z*(t.cols+1)+x;if(x)assert(Math.abs(t.heights[i]-t.heights[i-1])<=t.width/t.cols*.12+1e-7);if(z)assert(Math.abs(t.heights[i]-t.heights[i-t.cols-1])<=t.height/t.rows*.12+1e-7);}
+  assert(checked>=100);for(let z=0;z<=t.rows;z++)for(let x=0;x<=t.cols;x++){const i=z*(t.cols+1)+x;if(x)assert(Math.abs(t.heights[i]-t.heights[i-1])<=t.width/t.cols*.12+1e-7);if(z)assert(Math.abs(t.heights[i]-t.heights[i-t.cols-1])<=t.height/t.rows*.12+1e-7);}
   cleanup(w);
  }
 });
@@ -96,7 +111,7 @@ test('real forest route and soil triangles stay above the floor internally witho
    for(let i=0;i<attr.count;i++){point.fromBufferAttribute(attr,i).applyMatrix4(mesh.matrixWorld);if(point.y<-.06||point.y>.08){flat=false;break;}}
    if(flat){const entry={mesh,geometry,material:mesh.material,color:geometry.attributes.color?.array.slice(),released:0};geometry.addEventListener('dispose',()=>entry.released++);overlays.push(entry);}
   }
-  const children=w.group.children.slice(),t=installForestTerrain(w,'forest');assert(t.overlayTrianglesAdded>=0&&t.overlayTrianglesAdded<=4096);if(seed===522)assert(t.overlayTrianglesAdded>0);
+  const children=w.group.children.slice(),t=installForestTerrain(w,'forest');assert(t.overlayTrianglesAdded>=0&&t.overlayTrianglesAdded<=8192);if(seed===522)assert(t.overlayTrianglesAdded>0);
   assert.deepEqual(w.group.children,children);let checked=0;
   for(const entry of overlays){
    const {mesh,geometry,color}=entry,g=mesh.geometry,attr=g.attributes.position,index=g.index;
@@ -124,7 +139,9 @@ test('all five climates and their joined regions have bounded visible relief whi
   const samples=wet.flatMap(q=>Array.from({length:16},(_,i)=>{assert(q.rx>0&&q.rz>0);const a=i*Math.PI/8,u=Math.cos(a)*q.rx,v=Math.sin(a)*q.rz,c=Math.cos(q.angle||0),s=Math.sin(q.angle||0);return{x:q.x+c*u+s*v,z:q.z-s*u+c*v};}));
   const kinds=samples.map(p=>terrainAt(w,p.x,p.z));
   const t=installForestTerrain(w,id);assert(t,`${id}/${seed} did not install`);assert.equal(gameplay(w),before);const after=[];w.group.traverse(o=>after.push(o));assert.deepEqual(after,children);
-  assert(t.maxHeight>.4&&t.maxHeight<=1.2);assert.equal(t.cols,id==='confluence'?160:144);assert.equal(w.ground.geometry.index.count/3,t.cols*t.rows*2);assert(t.overlayTrianglesAdded<=4096);
+  assert(t.maxHeight>.4&&t.maxHeight<=1.2);assert.equal(t.cols,id==='confluence'?160:144);assert.equal(w.ground.geometry.index.count/3,t.cols*t.rows*2);assert(t.overlayTrianglesAdded<=8192);
+  assert(t.masses.length>0&&t.masses.length<=(id==='confluence'?20:8));
+  assert(t.heights.filter(h=>h>.001).length/t.heights.length>.08,`${id}/${seed}: broad relief still limited to a tiny route patch`);
   for(const biome of id==='confluence'?maps:[id]){
    const region=w.regions?.find(r=>r.id===biome),routes=t.corridors.filter(r=>r.biome===biome);assert(routes.length>=1&&routes.length<=2,`${id}/${seed}/${biome}: corridor count`);
    let peak=0,area=0;
@@ -145,7 +162,7 @@ test('all five climates and their joined regions have bounded visible relief whi
 test('nested regional overlays stay above triangle interiors and release only their owned replacements',()=>{
  let nested=0,refined=0;
  for(const id of ['snow','ash','sand','coast','confluence'])for(const seed of[7,522,43837033]){
-  const w=completeWorld(id,seed),entries=flatOverlays(w),t=installForestTerrain(w,id);assert(t.overlayTrianglesAdded<=4096);
+  const w=completeWorld(id,seed),entries=flatOverlays(w),t=installForestTerrain(w,id);assert(t.overlayTrianglesAdded<=8192);
   for(const entry of entries){
    const mesh=entry.mesh,g=mesh.geometry,attr=g.attributes.position,index=g.index,a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),point=new T.Vector3();let raised=false;
    const count=index?.count??attr.count;

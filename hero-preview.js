@@ -5,7 +5,10 @@ export class HeroPreview {
  constructor(renderer,element){
   this.renderer=renderer;this.element=element;
   this.camera=new T.PerspectiveCamera(35,1,.1,70);
-  this.fill=new T.PointLight(0xe7edf1,3,4.5,2);this.yaw=0;this.landscapeYaw=.66;this.portrait=false;this.clipFrustum=new T.Frustum();this.renderer.localClippingEnabled=true;
+  this.fill=new T.PointLight(0xe7edf1,3,4.5,2);
+  this.edge=new T.PointLight(0xd6e4f1,2.4,4,2);
+  this.fill.name='Light_HeroPreview_SoftFill';this.edge.name='Light_HeroPreview_Rim';
+  this.yaw=0;this.landscapeYaw=.66;this.portrait=false;this.clipFrustum=new T.Frustum();this.renderer.localClippingEnabled=true;
   this.full=document.querySelector('#preview-full');this.detail=document.querySelector('#preview-detail');
   this.full.onclick=()=>this.setPortrait(false);this.detail.onclick=()=>this.setPortrait(true);
   element.addEventListener('pointerdown',e=>{if(e.button!==0)return;this.pointer={id:e.pointerId,x:e.clientX};element.setPointerCapture(e.pointerId);});
@@ -51,19 +54,22 @@ export class HeroPreview {
    // with the hero still centered in the reserved area (including mobile scroll).
    this.camera.setViewOffset(rect.width,rect.height,-rect.left,-rect.top,width,height);
    this.camera.updateMatrixWorld(true);
-   // Keep one local fill: side light shapes the masked heroes; warmer light softens Lingya.
+   // The map's sun remains the key. Two local, unshadowed lights preserve facial
+   // planes and separate dark hair/cloth from the real landscape behind it.
    const kind=hero.userData.kind,cold=kind==='silver'||kind==='wraith',warm=kind==='lingya';
    this.fill.color.set(warm?0xffe8d1:cold?0xe4e9f5:0xe7edf1);
-   this.fill.intensity=kind==='wraith'?1.95:cold?2.45:warm?2.65:2.9;
+   this.fill.intensity=kind==='wraith'?3.0:cold?3.15:warm?3.0:3.2;
    this.fill.position.copy(center).addScaledVector(direction,cold?1.65:1.8).addScaledVector(right,cold?1.05:warm?.42:.6);this.fill.position.y+=cold?.75:warm?.46:.55;scene.add(this.fill);
-   // The framing pass already updated the scene. Only this newly positioned
-   // fill light still needs a matrix; camera updates above remain independent.
-   this.fill.updateMatrixWorld();scene.matrixWorldAutoUpdate=false;
+   this.edge.color.set(cold?0xcbdcf0:warm?0xffdec0:0xdce6e8);
+   this.edge.position.copy(center).addScaledVector(direction,-.9).addScaledVector(right,-1.05);this.edge.position.y+=.9;
+   scene.add(this.edge);
+   // Update only the new lights; do not repeat the full world matrix traversal.
+   this.fill.updateMatrixWorld();this.edge.updateMatrixWorld();scene.matrixWorldAutoUpdate=false;
    return draw(scene,this.camera);
   }finally{
    scene.matrixWorldAutoUpdate=autoMatrix;
    if(fogDensity!==undefined)scene.fog.density=fogDensity;
-   this.fill.removeFromParent();
+   this.fill.removeFromParent();this.edge.removeFromParent();
    for(const [material,planes] of clippedMaterials)material.clippingPlanes=planes;
    if(pet){pet.visible=petVisible;pet.position.copy(petPosition);pet.updateMatrixWorld(true);}
   }

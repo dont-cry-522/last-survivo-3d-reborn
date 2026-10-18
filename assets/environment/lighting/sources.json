@@ -1,0 +1,34 @@
+{
+  "assets": [
+    {
+      "file": "forest-1k.hdr",
+      "source": "https://polyhaven.com/a/nature_reserve_forest",
+      "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/nature_reserve_forest_1k.hdr",
+      "author": "Dimitrios Savva, Jarod Guest",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license",
+      "bytes": 1900770,
+      "sha256": "6c943ddd683de2f3d9aaa62596961dfccdc9cf206adebfc198e70235ae5707cd",
+      "md5": "93c0154883ffed7ff5300692fc7d959d",
+      "processing": "Original local 1K Radiance HDR. Runtime exposure normalization and highlight shoulder, then Three.js PMREM. Reflections only; existing map sky retained."
+    },
+    {
+      "file": "sky-1k.hdr",
+      "source": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy",
+      "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_48d_partly_cloudy_1k.hdr",
+      "author": "Greg Zaal",
+      "license": "CC0-1.0",
+      "licenseURL": "https://polyhaven.com/license",
+      "bytes": 1637206,
+      "sha256": "5477b7dbb2aea4a6947cb36b96339c119f90bf36a03b039af3254b5e6a22896d",
+      "md5": "ee096fe9e26ce29d8f110b5ba0579011",
+      "processing": "Original local 1K Radiance HDR. Runtime exposure normalization and highlight shoulder, then Three.js PMREM. Reflections only; existing map sky retained."
+    }
+  ],
+  "loader": {
+    "file": "vendor/HDRLoader.js",
+    "source": "https://raw.githubusercontent.com/mrdoob/three.js/r180/examples/jsm/loaders/HDRLoader.js",
+    "license": "MIT (vendor/LICENSE)",
+    "modification": "Bare three import changed to ./three.module.js only"
+  }
+}

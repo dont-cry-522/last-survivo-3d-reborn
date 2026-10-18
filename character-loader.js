@@ -1,11 +1,11 @@
 import {LoadingManager,AnimationClip,MathUtils} from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {CHARACTER_ASSETS as assets} from './character-assets.js?v=212';
+import {CHARACTER_ASSETS as assets} from './character-assets.js?v=216';
 
 const base=new URL('./assets/characters/',import.meta.url);
 export async function loadCharacterData(onProgress=()=>{}){
   let cache;
-  try{cache=await globalThis.caches?.open('forest3d-character-assets-v1');}catch{/* Private mode/storage limits must not block play. */}
+  try{cache=await globalThis.caches?.open('forest3d-reborn-character-assets-v1');}catch{/* Private mode/storage limits must not block play. */}
   const compressed=typeof DecompressionStream==='function',blobs=[],textures=new Map();
   const modelNames=Object.keys(assets.models),total=assets.textures.length+modelNames.length+1;let completed=0;
   async function fetchAsset(file){

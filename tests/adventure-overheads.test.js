@@ -36,7 +36,7 @@ test('the real coast warehouse roof stops the formerly clear camera segment',()=
  const start={x:player.x,y:1.15,z:player.z},hit=query.firstHit(start,camera.position),safe=query.firstHit(start,camera.position,.25);
  assert(hit,'the actual roof beyond its narrow support cylinder was missed');
  assert(hit.distance<camera.position.distanceTo(new T.Vector3(start.x,start.y,start.z)));
- close(hit.point.y,3.0123906822047064);close(safe.distance,hit.distance-.25);
+ assert(hit.point.y>3.1&&hit.point.y<4.1,'roof hit must follow the raised pitched roof');close(safe.distance,hit.distance-.25);
  close(new T.Vector3(...Object.values(safe.point)).distanceTo(new T.Vector3(...Object.values(hit.point))),.25);
 });
 

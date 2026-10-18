@@ -17,6 +17,39 @@ import {POISON} from '../poison-config.js';
 function weapon(id){return ['shade','shadowblade','grimoire'].includes(id)?shadowFocus(id):id==='miasmalantern'?miasmaLantern():id==='sporelantern'?sporeLantern():id==='boomerang'?makeSlingshot():id==='harpoon'?makeHarpoon():makeHero(['crossbow','shuriken','dark'].includes(id)?'silver':'scout',id).userData.weapon;}
 const hero=gun=>({visible:false,userData:{gun}});
 
+test('first-person sleeves match outfit sheen while retaining their own palette and only sharing existing surface maps',()=>{
+ const view=new FirstPersonView(new T.PerspectiveCamera());
+ try{for(const kind of ['scout','silver','wraith','tide','lingya','wuling','mirage']){
+  const id=HERO_LOADOUTS[kind][0],actor=hero(weapon(id));actor.userData.kind=kind;view.setHero(actor,id);
+  const pigment=view.arms[0].geometry.attributes.color.array.slice(),color=view.arms[0].material.color.clone(),glove=view.hands[0].material.color.clone();
+  assert(!view.arms[0].material.isMeshPhysicalMaterial,'fallback unnecessarily enables the physical shader');view.clear();
+  const normalMap=new T.Texture(),roughnessMap=new T.Texture(),extraMap=new T.Texture(),source=new T.MeshPhysicalMaterial({color:0xff0000,roughness:.82,normalMap,roughnessMap,map:extraMap,sheen:.12,sheenColor:0xe2ddd4,sheenRoughness:.85,sheenColorMap:extraMap,clearcoat:.7,transparent:true});
+  source.normalScale.set(.31,.42);source.onBeforeCompile=()=>{};source.customProgramCacheKey=()=> 'world-cloth-only';
+  const model=new T.Group(),outfit=new T.Mesh(new T.BoxGeometry(),source);outfit.userData.wildMistPart='sleeves';model.add(outfit);actor.userData.model=model;
+  let sourceDisposed=0,mapDisposed=0,viewDisposed=0;source.addEventListener('dispose',()=>sourceDisposed++);for(const t of [normalMap,roughnessMap,extraMap])t.addEventListener('dispose',()=>mapDisposed++);
+  view.setHero(actor,id);const cloth=view.arms[0].material;cloth.addEventListener('dispose',()=>viewDisposed++);
+  assert.equal(view.arms[1].material,cloth,'each arm created another cloth material');assert(cloth.isMeshPhysicalMaterial);assert.equal(cloth.defines.PHYSICAL,'');
+  assert.equal(cloth.sheen,source.sheen);assert(cloth.sheenColor.equals(source.sheenColor));assert.notEqual(cloth.sheenColor,source.sheenColor);assert.equal(cloth.sheenRoughness,source.sheenRoughness);
+  assert.equal(cloth.normalMap,normalMap);assert.equal(cloth.roughnessMap,roughnessMap);assert(cloth.normalScale.equals(source.normalScale));assert.equal(cloth.roughness,source.roughness);
+  assert.equal(cloth.sheenColorMap,null);assert.equal(cloth.sheenRoughnessMap,null);assert.equal(cloth.map,null);assert.equal(cloth.clearcoat,0);assert.equal(cloth.transmission,0);assert(!cloth.transparent);
+  assert(cloth.color.equals(color));assert(view.hands[0].material.color.equals(glove));assert.deepEqual(view.arms[0].geometry.attributes.color.array,pigment);
+  assert.notEqual(cloth.onBeforeCompile,source.onBeforeCompile);assert.notEqual(cloth.customProgramCacheKey,source.customProgramCacheKey);
+  view.clear();view.clear();assert.equal(viewDisposed,1);assert.equal(sourceDisposed,0);assert.equal(mapDisposed,0);
+  outfit.geometry.dispose();source.dispose();normalMap.dispose();roughnessMap.dispose();extraMap.dispose();
+ }}finally{view.dispose();}
+});
+
+test('first-person equipment receives the existing world shadow without adding shadow casters or mutating originals',()=>{
+ const view=new FirstPersonView(new T.PerspectiveCamera(70,16/9,.1,100));
+ try{for(const id of ['rifle','crossbow','shadowblade','harpoon','boomerang','sporelantern','miasmalantern']){
+  const gun=weapon(id),before=new Map();gun.traverse(o=>{if(o.isMesh)before.set(o,[o.castShadow,o.receiveShadow]);});
+  view.setHero(hero(gun),id);let receivers=0;
+  view.root.traverse(o=>{if(!o.isMesh)return;assert.equal(o.castShadow,false,id+' introduced a first-person self-shadow');assert.equal(o.receiveShadow,true,id+' stays sunlit inside the world shadow');receivers++;});
+  assert(receivers>=4);for(const[o,flags]of before)assert.deepEqual([o.castShadow,o.receiveShadow],flags);
+  view.clear();
+ }}finally{view.dispose();}
+});
+
 test('firearm trigger squeeze leaves the supporting fingers fixed and pauses with the game',()=>{
  const view=new FirstPersonView(new T.PerspectiveCamera(70,16/9,.1,100));
  try{for(const id of ['rifle','shotgun','crossbow']){

@@ -1,10 +1,10 @@
-import{BIOME_THEMES,instrumentSample,scoreBiome,biomeThreat}from'./biome-music.js?v=212';
-import{companionSample}from'./companion-audio.js?v=212';
-import{weaponSample,weaponTakeCount}from'./weapon-audio.js?v=212';
-import{enemySurface}from'./enemy-surfaces.js?v=212';
-import{creatureSample,creatureFoleySample,creatureSpatial,ENEMY_VOICES,CREATURE_FOLEY}from'./enemy-audio.js?v=212';
-import{RecordedMusic}from'./recorded-music.js?v=212';
-import{RecordedEffects}from'./recorded-effects.js?v=212';
+import{BIOME_THEMES,instrumentSample,scoreBiome,biomeThreat}from'./biome-music.js?v=216';
+import{companionSample}from'./companion-audio.js?v=216';
+import{weaponSample,weaponTakeCount}from'./weapon-audio.js?v=216';
+import{enemySurface}from'./enemy-surfaces.js?v=216';
+import{creatureSample,creatureFoleySample,creatureSpatial,ENEMY_VOICES,CREATURE_FOLEY}from'./enemy-audio.js?v=216';
+import{RecordedMusic}from'./recorded-music.js?v=216';
+import{RecordedEffects}from'./recorded-effects.js?v=216';
 // Local licensed recordings, with the original procedural score as a loading/offline fallback.
 const midi=n=>440*2**((n-69)/12);
 // Sound preferences only: attack timing, damage and music keep their existing behavior.
@@ -28,10 +28,10 @@ export class GameAudio{
   constructor(context=null){
     this.ctx=context;this.ready=false;this.muted=false;this.musicVolume=.65;this.sfxVolume=.8;this.sfxStyle='standard';
     this.musicBuffers=new Map();this.musicSources=new Set();this.musicVoices=new Set();this.beat=0;this.next=0;this.map='forest';this.pressure=0;this.mode='menu';this.cooldowns=new Map();this.nodes=0;this.proceduralSources=new Set();this.weaponBuffers=new Map();this.weaponTakes=new Map();this.weaponSources=new Set();this.creatureBuffers=new Map();this.creatureSources=new Set();
-    try{const v=JSON.parse(localStorage.getItem('forest3d-next-audio')||'null');if(v){this.muted=!!v.muted;this.musicVolume=this.clamp(v.music,.65);this.sfxVolume=this.clamp(v.sfx,.8);this.sfxStyle=soundStyle(v.sfxStyle);}}catch{}
+    try{const v=JSON.parse(localStorage.getItem('forest3d-reborn-audio')||'null');if(v){this.muted=!!v.muted;this.musicVolume=this.clamp(v.music,.65);this.sfxVolume=this.clamp(v.sfx,.8);this.sfxStyle=soundStyle(v.sfxStyle);}}catch{}
   }
   clamp(n,f){return Number.isFinite(n)?Math.max(0,Math.min(1,n)):f;}
-  save(){try{localStorage.setItem('forest3d-next-audio',JSON.stringify({muted:this.muted,music:this.musicVolume,sfx:this.sfxVolume,sfxStyle:this.sfxStyle}));}catch{}}
+  save(){try{localStorage.setItem('forest3d-reborn-audio',JSON.stringify({muted:this.muted,music:this.musicVolume,sfx:this.sfxVolume,sfxStyle:this.sfxStyle}));}catch{}}
   get effectProfile(){return SFX_STYLES[soundStyle(this.sfxStyle)];}
   materialCue(key,take=0){return this.effectProfile.material?this.materialEffects?.get(key,take):null;}
   setSfxStyle(value,{persist=true}={}){

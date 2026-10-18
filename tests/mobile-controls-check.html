@@ -68,7 +68,7 @@ function setScale(value){const input=el('#control-scale');assert(input,'缺少�
 function box(id){const r=rect(id);return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};}
 function overlap(a,b){return Math.min(a.right,b.right)-Math.max(a.x,b.x)>1&&Math.min(a.bottom,b.bottom)-Math.max(a.y,b.y)>1;}
 function controlsInside(width,height){const ids=['#joystick','#aim-stick','#dash','#jump','#crouch'],boxes=ids.map(id=>({id,...box(id)}));for(const b of boxes)assert(b.width>=40&&b.height>=40&&b.x>=-1&&b.y>=-1&&b.right<=width+1&&b.bottom<=height+1,b.id+' 超出屏幕或可点击面积过小：'+JSON.stringify(b));for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++)assert(!overlap(boxes[i],boxes[j]),boxes[i].id+' 与 '+boxes[j].id+' 重叠');return boxes;}
-const settingIds=['view-toggle','landscape','sound','audio-settings','controls-settings'],discoveryKey='forest3d-next-discovered-enemies',noticeKey='forest3d-next-known-notices';
+const settingIds=['view-toggle','landscape','sound','audio-settings','controls-settings'],discoveryKey='forest3d-reborn-discovered-enemies',noticeKey='forest3d-reborn-known-notices';
 const visible=node=>!!node&&node.getBoundingClientRect().width>0&&node.getBoundingClientRect().height>0&&win.getComputedStyle(node).visibility!=='hidden';
 function action(label){const b=[...doc().querySelectorAll('#dialog-content .dialog-actions button')].find(b=>b.textContent.trim()===label);assert(b,'缺少对话框入口：'+label);b.click();return b;}
 function pauseMenu(){if(g.state==='playing')el('#pause').click();else if(g.state==='paused'&&!el('#dialog').open){g.resume();el('#pause').click();}assert(g.state==='paused'&&el('#dialog').open,'暂停菜单未打开');}
@@ -126,7 +126,7 @@ $('#portrait').onclick=()=>preview(390,844);$('#landscape').onclick=()=>preview(
 $('#run').onclick=async()=>{
  lock(true);records.length=0;errors.length=0;storage.clear();
  try{
-  storage.set('forest-echoes-next-attack-mode','manual');await load();
+  storage.set('forest-echoes-reborn-attack-mode','manual');await load();
   await check('手机默认自动瞄准，不继承电脑模式；目标在场也不自动开火',()=>{
    assert(selectedMode()==='auto','手机首次默认不是自动瞄准');assert(el('[data-attack-mode="auto"]').textContent.includes('自动瞄准'),'手机文案仍叫自动攻击');
    setup();const foe=target();step(.8);assert(shots.length===0,'未按攻击键就发射');assert(g.controls.hasAim,'自动模式没有获取可见目标');return{mode:selectedMode(),shots:shots.length,targetNDC:foe.qaProjection};
@@ -165,10 +165,10 @@ $('#run').onclick=async()=>{
   await checkPauseSettings();
   await checkDiscoveryUI();
   await check('手机大小与模式持久化，电脑旧偏好独立保留',async()=>{
-   setScale(135);setMode('manual');assert(storage.get('forest-echoes-next-attack-mode')==='manual','手机写入覆盖了电脑模式');assert(storage.get('forest-echoes-next-mobile-attack-mode')==='manual','手机模式未保存');assert(storage.has('forest3d-next-touch-scale'),'按键大小未保存');await load();assert(selectedMode()==='manual','重开未恢复手机模式');assert(Number(el('#control-scale').value)===135,'重开未恢复按键大小');el('#control-scale-reset').click();assert(Number(el('#control-scale').value)===100,'恢复默认未回到100%');assert(el('#control-scale-value').textContent.includes('100'),'恢复默认后显示未更新');return{mobileMode:selectedMode(),restoredScale:135,resetScale:100};
+   setScale(135);setMode('manual');assert(storage.get('forest-echoes-reborn-attack-mode')==='manual','手机写入覆盖了电脑模式');assert(storage.get('forest-echoes-reborn-mobile-attack-mode')==='manual','手机模式未保存');assert(storage.has('forest3d-reborn-touch-scale'),'按键大小未保存');await load();assert(selectedMode()==='manual','重开未恢复手机模式');assert(Number(el('#control-scale').value)===135,'重开未恢复按键大小');el('#control-scale-reset').click();assert(Number(el('#control-scale').value)===100,'恢复默认未回到100%');assert(el('#control-scale-value').textContent.includes('100'),'恢复默认后显示未更新');return{mobileMode:selectedMode(),restoredScale:135,resetScale:100};
   });
   await check('电脑自动攻击照旧；手动鼠标按住才攻击',async()=>{
-   storage.set('forest-echoes-next-attack-mode','auto');await load(false,1100,700);assert(selectedMode()==='auto','电脑原有自动攻击偏好失效');setup();target();step(.8);assert(shots.length>0,'电脑自动模式被改成需要按住');const autoShots=shots.length;setup('manual');target();step(.5);assert(shots.length===0,'电脑手动模式自动发射');pointer('#world','pointerdown',1,80,80,'mouse');step(.8);assert(shots.length>0,'电脑鼠标按住无法发射');pointer('#world','pointerup',1,80,80,'mouse');const manualShots=shots.length;step(.6);assert(shots.length===manualShots,'电脑松开鼠标后继续发射');assert(storage.get('forest-echoes-next-mobile-attack-mode')==='manual','电脑模式覆盖了手机偏好');return{autoShots,manualShots};
+   storage.set('forest-echoes-reborn-attack-mode','auto');await load(false,1100,700);assert(selectedMode()==='auto','电脑原有自动攻击偏好失效');setup();target();step(.8);assert(shots.length>0,'电脑自动模式被改成需要按住');const autoShots=shots.length;setup('manual');target();step(.5);assert(shots.length===0,'电脑手动模式自动发射');pointer('#world','pointerdown',1,80,80,'mouse');step(.8);assert(shots.length>0,'电脑鼠标按住无法发射');pointer('#world','pointerup',1,80,80,'mouse');const manualShots=shots.length;step(.6);assert(shots.length===manualShots,'电脑松开鼠标后继续发射');assert(storage.get('forest-echoes-reborn-mobile-attack-mode')==='manual','电脑模式覆盖了手机偏好');return{autoShots,manualShots};
   });
   await check('电脑保留完整图鉴、顶部控件和可点击介绍',async()=>{
    storage.delete(noticeKey);storage.delete(discoveryKey);await load(false,1100,700);setup('manual','scout');const header=['#view-toggle','#sound','#audio-settings','#battle-guide'];assert(header.every(id=>visible(el(id))),'电脑顶部设置被手机规则隐藏');el('#battle-guide').click();assert(g.state==='paused'&&el('.guide-content'),'电脑图鉴入口失效');const all=guideKinds();assert(Object.keys(ENEMY_GUIDE).every(kind=>all.includes(kind)),'电脑图鉴被已发现规则过滤');g.resume();

@@ -45,7 +45,7 @@ export function fieldSupplyEvent(p,event){
  const effect={...info.effect};if(effect.kind==='heal'){const before=p.hp;p.hp=Math.min(p.maxHp,p.hp+effect.amount);effect.amount=p.hp-before;}return effect;
 }
 export function fieldSupplyLabel(p){const supply=p.fieldSupply,info=supply&&FIELD_SUPPLIES[supply.id];return info&&supply.charges>0?info.name+' · 剩余 '+supply.charges+' 次'+(supply.id==='forest'&&p.hp>=p.maxHp?' · 满血保留':''):'';}
-export const JOURNAL_KEY='forest-echoes-next-expedition-v1';
+export const JOURNAL_KEY='forest-echoes-reborn-expedition-v1';
 const maps=['forest','snow','ash','sand','coast','confluence'],weapons=['mycelialwhip','venomfan','arcstaff','briarpot','boomerang','harpoon','hammer','rifle','shotgun','fire','crossbow','shuriken','dark','shade','shadowblade','grimoire','sporelantern','miasmalantern'];
 const validWins=new Set(maps.flatMap(m=>weapons.map(w=>m+':'+w)));
 export function readJournal(storage){

@@ -1,7 +1,8 @@
 import * as T from './vendor/three.module.js';
-import{MAP_HALF}from'./map-layout.js?v=212';
-import{bridgeContains}from'./coast.js?v=212';
-import{wornStoneBlock}from'./environment-props.js?v=212';
+import{MAP_HALF}from'./map-layout.js?v=216';
+import{bridgeContains}from'./coast.js?v=216';
+import{wornStoneBlock}from'./environment-props.js?v=216';
+import{finishDistrict,wreckSection}from'./district-models.js?v=216';
 const slabGeometry=new T.BoxGeometry(1,1,1),slabMaterials={sand:new T.MeshStandardMaterial({color:0xb3a184,roughness:1,vertexColors:true}),coast:new T.MeshStandardMaterial({color:0x697f76,roughness:1,vertexColors:true}),wood:new T.MeshStandardMaterial({color:0x8a7a60,roughness:1})};
 // Districts leave a broad open center; solid pieces have matching collision footprints.
 export function districtLayout(id,spawn){const scale=MAP_HALF/82;return id==='sand'?[{x:spawn.x+12,z:spawn.z+1,kind:'gate'},...[[-34,-31],[34,29],[42,-33],[-35,36],[12,57]].map(([x,z])=>({x:x*scale,z:z*scale,kind:'court'}))]:id==='coast'?[{x:-16,z:-9,kind:'warehouse'},{x:24,z:29,kind:'warehouse'},{x:-16,z:42,kind:'wreck'}]:[];}
@@ -17,18 +18,26 @@ export function buildDistricts(world,id,layouts,mesh,rnd){
   if(!wooden){const dx=shift*.16,dz=wear*.16;if(allowed(x+dx,z+dz,Math.max(sx,sz)*.6)){x+=dx;z+=dz;}sx*=.77+wear*.17;sz*=.84+shift*.15;angle+=shift*.22;}
   dummy.position.set(x,wooden?.015:.010+wear*.009,z);dummy.rotation.set(0,angle,0);dummy.scale.set(sx,wooden?.05:.055,sz);dummy.updateMatrix();(wooden?boardMatrices:tileMatrices).push(dummy.matrix.clone());};
  for(const l of layouts){if(sites.some(s=>Math.hypot(s.x-l.x,s.z-l.z)<13))continue;world.districts.push(l);const a=l.angle||0,c=Math.cos(a),s=Math.sin(a),point=(x,z)=>({x:l.x+c*x+s*z,z:l.z-s*x+c*z});
-  const place=(x,z,build,r=.7)=>{const p=point(x,z);if(!allowed(p.x,p.z,r))return;const g=new T.Group();g.position.set(p.x,0,p.z);g.rotation.y=a;g.userData.district=l.kind;group.add(g);build(g);obstacles.push({x:p.x,z:p.z,r,mesh:g});};
+  const place=(x,z,build,r=.7)=>{const p=point(x,z);if(!allowed(p.x,p.z,r))return;const g=new T.Group();g.position.set(p.x,0,p.z);g.rotation.y=a;g.userData.district=l.kind;group.add(g);build(g);finishDistrict(g);obstacles.push({x:p.x,z:p.z,r,mesh:g});};
   const box=(g,color,x,y,z,w,h,d)=>{const m=mesh('BoxGeometry',[1,1,1],color,x,y,z,g);m.scale.set(w,h,d);return m;};
   const pier=(g,h=2.5)=>{mesh('CylinderGeometry',[.45,.6,h,10],stone,0,h/2,0,g);box(g,edge,0,.18,0,1.35,.35,1.35);box(g,edge,0,h+.1,0,1.16,.22,1.16);};
   if(id==='sand'){
    for(const side of[-1,1])place(side*3.6,0,g=>{pier(g,side<0?3.4:2.8);if(side<0){const top=box(g,edge,.7,3.55,0,2.4,.42,1.15);top.rotation.z=-.08;}},.96);
-   for(const side of[-1,1])for(let i=0;i<4;i++)place(side*(4.7+i*1.05),i>1?-2:0,g=>{g.userData.fragile=true;const h=.65+rnd()*1.25;box(g,stone,0,h/2,0,.94,h,.85);box(g,edge,0,h+.07,0,1.04,.15,.95);},.62);
+   for(const side of[-1,1])for(let i=0;i<4;i++)place(side*(4.7+i*1.05),i>1?-2:0,g=>{g.userData.fragile=true;const h=.65+rnd()*1.25,rows=Math.max(2,Math.ceil(h/.38));for(let row=0;row<rows;row++){const top=row===rows-1;box(g,row%2?stone:0xae987a,0,(row+.5)*h/rows,0,top?.88:.94,h/rows-.012,top?.80:.85);}box(g,edge,0,h+.07,0,1.04,.15,.95);},.62);
    for(let i=0;i<7;i++)place(-5+rnd()*10,4+rnd()*2,g=>{const rock=mesh('DodecahedronGeometry',[.45,0],stone,0,.25,0,g);rock.scale.set(1.5,.7,1);},.68);
   }else if(l.kind==='warehouse'){
-   // Open-front storehouse: roof above a walkable cargo apron.
-   for(const side of[-1,1])place(side*2.5,0,g=>{box(g,wood,0,1.65,0,.28,3.3,.28);box(g,stone,0,.25,0,.7,.5,.7);const roof=box(g,0x566f70,side*-1.1,3.12,0,2.65,.16,3.9);roof.rotation.z=side*.22;},.5);
-   for(const side of[-1,1])place(side*2.5,1.4,g=>{for(let row=0;row<4;row++)box(g,row%2?0x806e54:wood,0,.25+row*.31,0,.13,.26,1.65);},.85);
-   for(let i=0;i<3;i++)place(-2+i*2,2.1,g=>{box(g,wood,0,.48,0,1.25,.96,1.1);for(const y of[.18,.72])box(g,0xb0a17d,0,y,.565,1.3,.1,.055);},.85);
+   // A continuous pitched cedar roof rises toward the shared ridge. Both
+   // trusses bear on the original posts; the open cargo apron stays walkable.
+   for(const side of[-1,1])place(side*2.5,0,g=>{
+    box(g,wood,0,1.65,0,.28,3.3,.28);box(g,stone,0,.25,0,.7,.5,.7);
+    const roof=box(g,0x566f70,side*-1.2,3.52,0,2.85,.16,3.9);roof.rotation.z=-side*.22;roof.userData.districtRoof=true;
+    const beam=(a,b)=>{const from=new T.Vector3(...a),to=new T.Vector3(...b),direction=to.clone().sub(from),center=from.add(to).multiplyScalar(.5),m=mesh('CylinderGeometry',[.065,.075,direction.length(),8],0x998267,center.x,center.y,center.z,g);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),direction.normalize());};
+    beam([0,3.19,0],[-side*2.5,3.19,0]);beam([0,3.26,0],[-side*2.5,3.78,0]);
+    if(side<0){const ridge=mesh('CylinderGeometry',[.10,.10,4,8],0x7a6b55,-side*2.5,3.89,0,g);ridge.rotation.x=Math.PI/2;}
+    for(const z of[-.16,.16])box(g,0x998267,0,1.69,z,.20,3.1,.035);box(g,0x544c40,0,.065,0,.66,.13,.66);
+   },.5);
+   for(const side of[-1,1])place(side*2.5,1.4,g=>{for(let row=0;row<4;row++)box(g,row%2?0x806e54:wood,0,.25+row*.31,0,.13,.26,1.65);for(const z of[-.67,.67])box(g,0x998267,.08,.63,z,.055,1.2,.12);},.85);
+   for(let i=0;i<3;i++)place(-2+i*2,2.1,g=>{for(let row=0;row<5;row++)box(g,row%2?wood:0x806e54,0,.11+row*.19,0,1.25,.177,1.1);for(const y of[.18,.72])for(const side of[-1,1])box(g,0xb0a17d,0,y,side*.565,1.3,.1,.055);for(const x of[-.49,.49])box(g,0x998267,x,.47,.599,.10,.92,.04);},.85);
    for(const side of[-1,1])place(side*3.6,-2,g=>{pier(g,.75);mesh('TorusGeometry',[.26,.04,5,12],0x9f987f,0,.96,0,g).rotation.x=Math.PI/2;},.96);
   }else if(l.kind==='dock'){
    // Flush boards suggest a loading quay without an elevated collision surface.
@@ -36,10 +45,10 @@ export function buildDistricts(world,id,layouts,mesh,rnd){
    for(const x of[-4.8,4.8])for(const z of[-2.6,2.6])place(x,z,g=>{mesh('CylinderGeometry',[.22,.30,.85,8],wood,0,.42,0,g);for(const y of[.55,.65])mesh('TorusGeometry',[.24,.045,5,10],0xaea27e,0,y,0,g).rotation.x=Math.PI/2;},.35);
    for(const [x,z]of[[-3,3.7],[1.9,3.5]])place(x,z,g=>{mesh('CylinderGeometry',[.48,.45,1,10],0x887454,0,.5,0,g);for(const y of[.17,.79])mesh('TorusGeometry',[.46,.055,5,10],0x506568,0,y,0,g).rotation.x=Math.PI/2;},.55);
   }else if(l.kind==='beacon'){
-   place(0,0,g=>{mesh('CylinderGeometry',[.7,1.05,.55,8],stone,0,.27,0,g);mesh('CylinderGeometry',[.43,.66,2.1,8],edge,0,1.55,0,g);mesh('CylinderGeometry',[.76,.76,.14,8],0x526967,0,2.64,0,g);for(const side of[-1,1])box(g,wood,side*.4,3.04,0,.09,.75,.09);mesh('SphereGeometry',[.24,8,5],0xe8c98a,0,3.03,0,g);mesh('ConeGeometry',[.85,.65,8],0x587773,0,3.65,0,g);},1.08);
+   place(0,0,g=>{mesh('CylinderGeometry',[.7,1.05,.55,8],stone,0,.27,0,g);mesh('CylinderGeometry',[.43,.66,2.1,8],edge,0,1.55,0,g);mesh('CylinderGeometry',[.76,.76,.14,8],0x526967,0,2.64,0,g);for(const x of[-.32,.32])for(const z of[-.32,.32])box(g,wood,x,3.04,z,.065,.75,.065);mesh('CylinderGeometry',[.27,.31,.11,12],0x526967,0,2.76,0,g);mesh('SphereGeometry',[.24,12,8],0xe8c98a,0,3.03,0,g);mesh('ConeGeometry',[.85,.65,8],0x587773,0,3.65,0,g);},1.08);
    for(let i=0;i<4;i++)place(Math.sin(i*2.2)*2.4,Math.cos(i*2.2)*2.1,g=>{const rock=mesh('DodecahedronGeometry',[.65,1],stone,0,.33,0,g);rock.scale.set(1,.65,1.2);},.79);
   }else if(l.kind==='wreck'){
-   for(let i=0;i<6;i++){const width=.65+Math.sin((i+.5)/6*Math.PI)*1.1;place((i-2.5)*1.05,Math.sin(i*.6)*.35,g=>{box(g,0x998267,0,.12,0,.94,.18,width*1.5);for(const side of[-1,1]){const rib=box(g,wood,0,.47,side*width*.59,.16,.9,.17);rib.rotation.x=side*.38;}},Math.hypot(.47,width*.75));}
+   for(let i=0;i<6;i++){const width=.65+Math.sin((i+.5)/6*Math.PI)*1.1;place((i-2.5)*1.05,Math.sin(i*.6)*.35,g=>{const hull=new T.Mesh(wreckSection(width),new T.MeshStandardMaterial({color:wood}));hull.userData.ownedGeometry=true;hull.userData.ownedMaterial=true;g.add(hull);box(g,0x998267,0,.14,0,.94,.10,width*.58);for(const side of[-1,1]){const rib=box(g,0x998267,0,.47,side*width*.59,.13,.9,.14);rib.rotation.x=side*.38;}},Math.hypot(.47,width*.75));}
    place(-.6,2.1,g=>{const mast=mesh('CylinderGeometry',[.09,.16,3.2,8],wood,0,.28,0,g);mast.rotation.z=1.43;},1.6);
   }
   if(l.kind!=='dock')for(let x=-4;x<=4;x+=1.4)for(let z=-4;z<=3;z+=1.4){if(rnd()<.25)continue;const p=point(x,z);tile(p.x,p.z,1.2,1.2,a+(rnd()-.5)*.12);}

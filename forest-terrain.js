@@ -39,7 +39,9 @@ function refineOverlay(mesh,bounds,spacing,budget,sample,floorY){
 
 const BIOMES=['forest','snow','ash','sand','coast'];
 const fade=T.MathUtils.smoothstep;
-const HEIGHT=1.2,AXIS_GRADE=.12,OVERLAY_BUDGET=4096;
+// Wider relief needs more of the existing decals draped at crests. This is a
+// hard build-time cap (no extra draws), not an unbounded terrain subdivision.
+const HEIGHT=1.2,AXIS_GRADE=.12,OVERLAY_BUDGET=8192;
 
 function regionalShoulderPoints(points){
  if(points.length<2)return points;
@@ -77,6 +79,45 @@ function corridorWeight(route,x,z){
  // projectile floors and jump/platform rules keep their existing semantics.
  const shape=route.biome==='sand'?.78+.22*Math.cos(across*.22+progress*1.8)**2:route.biome==='snow'?.82+.18*Math.sin(across*.18-progress*2.2)**2:route.biome==='ash'?.80+.20*Math.cos(progress*Math.PI*2.0)**2:route.biome==='coast'?.86+.14*Math.sin(progress*Math.PI*.5):1;
  return envelope*shape*(across<0?1:.82);
+}
+
+// Broad dry-land shoulders use the existing floor, not separate mound meshes.
+// Select a few genuinely open areas once; buildings, streams and paths remain
+// at their old datum. No new random calls can shift the generated game layout.
+function terrainMasses(world,mapId,protection,pad){
+ if(!world.half)return {masses:[],weight:()=>0};
+ const lines=[];
+ const paths=[...(world.explorationRoutes||[]).map(r=>r.points),...(world.road?.length?[[...world.road,world.road[0]]]:[])];
+ for(const points of paths)for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i],dx=b.x-a.x,dz=b.z-a.z,l2=dx*dx+dz*dz;if(l2>.001)lines.push({x:a.x,z:a.z,dx,dz,l2});
+ }
+ const lane=(x,z)=>{
+  let distance=Infinity;for(const s of lines){const t=T.MathUtils.clamp(((x-s.x)*s.dx+(z-s.z)*s.dz)/s.l2,0,1);distance=Math.min(distance,Math.hypot(x-s.x-s.dx*t,z-s.z-s.dz*t));}
+  return fade(distance,2.8+pad,6.5+pad);
+ };
+ const masses=[],shapes={forest:[26,20,1.15],snow:[29,19,1.10],ash:[28,17,1.05],sand:[32,18,1.2],coast:[25,19,.85]};
+ for(const scope of world.regions||[{id:mapId,...world.spawn}]){
+  const shape=shapes[scope.id];if(!shape)continue;const [rx,rz,height]=shape,candidates=[];
+  for(let z=-world.half+22;z<=world.half-22;z+=16)for(let x=-world.half+22;x<=world.half-22;x+=16){
+   if(scope.contains&&!scope.contains(x,z)||Math.hypot(x-world.spawn.x,z-world.spawn.z)<10)continue;
+   const angle=scope.id==='sand'?.28:.45+Math.sin(x*.024+z*.017)*.6,c=Math.cos(angle),s=Math.sin(angle);let score=0;
+   for(const u of[-.65,0,.65])for(const v of[-.65,0,.65]){
+    const px=x+c*u*rx-s*v*rz,pz=z+s*u*rx+c*v*rz;
+    if(Math.max(Math.abs(px),Math.abs(pz))>world.half-8||scope.contains&&!scope.contains(px,pz))continue;
+    score+=protection(px,pz)*lane(px,pz)*(u===0&&v===0?2:1);
+   }
+   if(score>2.2)candidates.push({x,z,rx,rz,height,c,s,biome:scope.id,score:score-.006*Math.hypot(x-scope.x,z-scope.z)});
+  }
+  candidates.sort((a,b)=>b.score-a.score);let count=0;
+  for(const p of candidates){if(count>=(world.regions?4:8))break;if(masses.some(q=>Math.hypot(p.x-q.x,p.z-q.z)<29))continue;masses.push(p);count++;}
+ }
+ return{masses,weight(x,z){
+  let height=0;for(const p of masses){const dx=x-p.x,dz=z-p.z,u=(p.c*dx+p.s*dz)/p.rx,v=(-p.s*dx+p.c*dz)/p.rz;if(Math.abs(u)>=1||Math.abs(v)>=1)continue;
+   // Unequal flanks and a shallow curved crest avoid identical round bumps.
+   const crest=(1-u*u)**2*(1-v*v)**2*(.88+.12*Math.cos(u*2.4+v*1.1));height=Math.max(height,crest*p.height);
+  }
+  return height?height*lane(x,z):0;
+ }};
 }
 
 // A bounded set of real, walkable route shoulders on the existing ground mesh.
@@ -121,6 +162,7 @@ export function installForestTerrain(world,mapId){
   for(const candidate of candidates){const selected=corridors.filter(q=>q.biome===biome);if(selected.length===2)break;if(selected.some(q=>Math.hypot(q.x-candidate.x,q.z-candidate.z)<18))continue;corridors.push(candidate);}
  }
  if(!corridors.length&&!world.climateLandforms?.records.some(r=>r.kind==='dune'))return null;
+ const broad=terrainMasses(world,mapId,protection,pad);
  // Refine the existing surface once; interpolate its original colour triangles
  // so the denser grid does not change the established forest palette.
  const geometry=new T.PlaneGeometry(width,height,cols,rows),p=geometry.attributes.position,sourceColor=old.attributes.color;
@@ -138,8 +180,8 @@ export function installForestTerrain(world,mapId){
  for(let i=0;i<p.count;i++){
   const x=p.getX(i)+ground.position.x,z=-p.getY(i)+ground.position.z;
   let weight=0;for(const route of corridors)weight=Math.max(weight,corridorWeight(route,x,z));
-  const dune=world.climateLandforms?.heightAt(x,z)||0;
-  if(weight>0||dune>0)heights[i]=Math.max(HEIGHT*Math.min(weight,protection(x,z)),dune*protection(x,z));
+  const dune=world.climateLandforms?.heightAt(x,z)||0,mass=broad.weight(x,z);
+  if(weight>0||dune>0||mass>0){const mask=protection(x,z);heights[i]=Math.max(HEIGHT*Math.min(weight,mask),dune*mask,mass*mask);}
  }
  // Bound both triangle gradients. Only lower peaks; protected zeroes never rise.
  const stepX=dx*AXIS_GRADE,stepZ=dz*AXIS_GRADE;
@@ -154,9 +196,17 @@ export function installForestTerrain(world,mapId){
   const ix=Math.floor(gx),iz=Math.floor(gz),tx=gx-ix,tz=gz-iz,a=iz*(cols+1)+ix,b=a+cols+1;
   return tx+tz<=1?heights[a]*(1-tx-tz)+heights[b]*tz+heights[a+1]*tx:heights[b]*(1-tx)+heights[b+1]*(tx+tz-1)+heights[a+1]*(1-tz);
  };
- for(let i=0;i<p.count;i++)p.setZ(i,heights[i]);
+ const color=geometry.attributes.color,crestTint={forest:[.11,.045,-.025],snow:[.055,.045,.025],ash:[.075,.055,.035],sand:[.07,.045,.015],coast:[.06,.035,.015]};
+ for(let i=0;i<p.count;i++){
+  p.setZ(i,heights[i]);
+  if(color&&heights[i]>.001){
+   const x=p.getX(i)+ground.position.x,z=-p.getY(i)+ground.position.z,biome=world.regions?.find(r=>r.contains(x,z))?.id||mapId,tint=crestTint[biome];
+   if(tint){const dry=fade(heights[i],.05,1.2);color.setXYZ(i,color.getX(i)*(1+tint[0]*dry),color.getY(i)*(1+tint[1]*dry),color.getZ(i)*(1+tint[2]*dry));}
+  }
+ }
+ if(color)color.needsUpdate=true;
  p.needsUpdate=true;geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();
- const state={heights,cols,rows,width,height,sample,corridors,disposed:false,maxHeight:Math.max(...heights),instances:0,draped:0,overlayTrianglesAdded:0};
+ const state={heights,cols,rows,width,height,sample,corridors,masses:broad.masses,disposed:false,maxHeight:Math.max(...heights),instances:0,draped:0,overlayTrianglesAdded:0};
  world.forestTerrain=state;world.groundHeightAt=sample;
  const matrix=new T.Matrix4(),point=new T.Vector3();world.group.updateMatrixWorld(true);
  // Existing plants retain their placement, shared geometry and buried roots.

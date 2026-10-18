@@ -1,0 +1,44 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>人物固定三视图与动态检查</title>
+<style>body{margin:16px;background:#17262b;color:#e1e7e2;font:14px system-ui}button{padding:12px}#captures{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}img{width:100%}pre{white-space:pre-wrap}</style>
+<h1>七位英雄 · 固定正面 / 侧面 / 背面 / 面部</h1><p>使用实际游戏模型、骨骼、武器和本地环境反射；固定灯光、分辨率与动画进度。这里只检查人物，场景表现另在真实游戏页面检查。</p>
+<button id="run">生成固定机位对照与动作检查</button><p id="status">等待开始</p><pre id="report"></pre><div id="captures"></div>
+<script type="module">
+import * as T from '../vendor/three.module.js';
+import {actor,animateActor} from '../world.js';
+import {EnvironmentReflections} from '../environment-reflections.js';
+const source=await(await fetch('../world.js',{cache:'no-store'})).text(),entry=source.match(/from['"](.\/skinned-hero\.js[^'"]*)['"]/)[1];
+const {loadHeroAssets,disposeHero}=await import(new URL('../'+entry,location.href));
+const errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true}),scene=new T.Scene(),camera=new T.PerspectiveCamera(31,512/640,.02,80);
+renderer.setSize(512,640);renderer.outputColorSpace=T.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+scene.background=new T.Color(0x34434a);scene.add(new T.HemisphereLight(0x9cabb9,0x394a3f,1.3));
+const sun=new T.DirectionalLight(0xffe0b5,3.4);sun.position.set(-8,14,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4});sun.shadow.normalBias=.012;scene.add(sun);
+const rim=new T.DirectionalLight(0x9dbbcf,.9);rim.position.set(4,7,-6);scene.add(rim);
+const floor=new T.Mesh(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:0x566254,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;floor.position.y=-.015;scene.add(floor);
+const reflections=new EnvironmentReflections(renderer,scene);await Promise.all([loadHeroAssets(),reflections.load()]);reflections.update('forest',null,1,0);
+const kinds=[['scout','rifle'],['silver','crossbow'],['wraith','shadowblade'],['tide','harpoon'],['lingya','boomerang'],['wuling','sporelantern'],['mirage','miasmalantern']];
+function frame(center,height,direction){camera.position.copy(center).add(new T.Vector3(...direction).normalize().multiplyScalar(height/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))));camera.lookAt(center);camera.updateMatrixWorld(true);}
+document.querySelector('#run').onclick=async()=>{
+ const button=document.querySelector('#run'),captures=document.querySelector('#captures'),results=[];button.disabled=true;captures.replaceChildren();
+ try{
+  for(const [kind,weapon]of kinds){
+   document.querySelector('#status').textContent='检查 '+kind;
+   const model=actor(kind,weapon);scene.add(model);if(!model.userData.skinned)throw Error('Missing actual rig '+kind);
+   for(let f=0;f<100;f++){model.userData.travelAngle=0;model.userData.aimActive=false;animateActor(model,5+f/60,0,0);}
+   const head=model.userData.swimHead.getWorldPosition(new T.Vector3());
+   for(const [view,direction]of [['front',[0,0,1]],['side',[1,0,0]],['back',[0,0,-1]],['face',[.08,.08,1]]]){
+    if(view==='face')frame(head.clone().add(new T.Vector3(0,.025,0)),.62,direction);
+    else frame(new T.Vector3(0,kind==='lingya'?.71:1.03,0),kind==='lingya'?1.78:2.55,direction);
+    renderer.render(scene,camera);const image=document.createElement('img');image.id=kind+'-'+view;image.alt=kind+' '+view+' 实际模型';image.src=renderer.domElement.toDataURL('image/png');captures.append(image);
+    results.push({kind,view,camera:camera.position.toArray(),target:view==='face'?head.toArray():[0,kind==='lingya'?.71:1.03,0],calls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
+   }
+   let finite=true;
+   for(let f=0;f<180;f++){model.userData.travelAngle=Math.sin(f/40)*.4;model.userData.aimActive=true;animateActor(model,8+f/60,4,f%45<18?1-f%45/18:0);model.updateMatrixWorld(true);model.traverse(o=>{if(o.visible)finite&&=o.matrixWorld.elements.every(Number.isFinite);});}
+   renderer.render(scene,camera);if(!finite||renderer.getContext().getError()!==0||renderer.info.programs.some(p=>p.diagnostics?.runnable===false))throw Error('Invalid movement/render '+kind);
+   results.push({kind,motionFrames:180,finite});scene.remove(model);disposeHero(model);await new Promise(r=>setTimeout(r,0));
+  }
+  document.querySelector('#status').textContent='完成：28 张实际模型画面，7 组动作检查';
+ }catch(error){errors.push(error.stack);document.querySelector('#status').textContent='检查失败 '+error.message;}
+ document.querySelector('#report').textContent=JSON.stringify({resolution:[512,640],results,errors},null,2);button.disabled=false;
+};
+</script></html>
