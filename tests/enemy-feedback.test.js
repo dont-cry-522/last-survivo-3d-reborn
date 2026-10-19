@@ -50,3 +50,28 @@ test('scythe cuts turn bodies in opposite directions and the harpoon hook draws 
  const thrust=target(),hook=target();recordEnemyHit(thrust,{kind:'harpoon',combo:0,damage:20});recordEnemyHit(hook,{kind:'harpoon',combo:2,damage:20});animateEnemyHit(thrust,.03);animateEnemyHit(hook,.03);
  assert(thrust.userData.rig.position.z>0&&hook.userData.rig.position.z<0);
 });
+
+test('recoil reuses one actor-owned snapshot and restores each animated base without stale poses',()=>{
+ const actors=[target(),target()],snapshots=[];
+ for(const [index,mesh]of actors.entries()){
+  const d=mesh.userData,rig=d.rig;let previous;
+  for(let frame=0;frame<90;frame++){
+   restoreEnemyHit(mesh);
+   if(previous){assert(rig.position.equals(previous.position));assert(rig.quaternion.equals(previous.rotation));assert(rig.scale.equals(previous.scale));}
+   rig.position.set(index+frame*.001,.1,frame*.002);rig.rotation.set(frame*.003,index*.2,-frame*.001);rig.scale.set(1+frame*.001,.9,1.1);
+   const current={position:rig.position.clone(),rotation:rig.quaternion.clone(),scale:rig.scale.clone()};
+   // Calling restore twice must not reinstate an old frame over the new animation.
+   restoreEnemyHit(mesh);assert(rig.position.equals(current.position));assert(rig.quaternion.equals(current.rotation));
+   if(frame%20===0)recordEnemyHit(mesh,{kind:'hammer',angle:.7,damage:10,maxHp:100});
+   animateEnemyHit(mesh,frame===1?0:1/60);
+   if(d.hitBase){
+    snapshots[index]??={base:d.hitBase,position:d.hitBase.position,rotation:d.hitBase.rotation,scale:d.hitBase.scale};
+    for(const key of ['position','rotation','scale']){assert.equal(d.hitBase[key],snapshots[index][key]);assert(d.hitBase[key].equals(current[key]));}
+    assert.equal(d.hitBase,snapshots[index].base);
+   }
+   previous=current;
+  }
+  restoreEnemyHit(mesh);assert.equal(d.hitBase,null);assert.equal(d.hitBaseCache,snapshots[index].base);
+ }
+ for(const key of ['base','position','rotation','scale'])assert.notEqual(snapshots[0][key],snapshots[1][key],'no snapshot state crosses actors');
+});

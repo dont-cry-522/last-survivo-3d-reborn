@@ -27,6 +27,7 @@ for(const dir of ['vendor','assets/bestiary','assets/icons','assets/audio','asse
 // Ship only prepared model derivatives and their provenance. Source downloads,
 // Blender projects and future unselected models must not inflate offline exports.
 files.push(...['weathered-rock-a.glb','weathered-rock-b.glb','old-stump.glb','sources.json','LICENSE.txt','CC0-1.0.txt'].map(f=>'assets/environment/models/'+f));
+files.push(...['woodland-canopy.glb','leaning-canopy.glb','sources.json','LICENSE.txt','CC0-1.0.txt'].map(f=>'assets/environment/forest-trees-v222/'+f));
 const characterFiles=[...assets.textures,assets.motion.file,assets.motionFallback.file];
 for(const [name,model] of Object.entries(assets.models)){
  characterFiles.push(model.file,name+'.gltf');
@@ -37,6 +38,7 @@ files.push(...new Set(characterFiles.map(f=>'assets/characters/'+f)));
 files.push(...HERO_REFINEMENTS.files.map(entry=>entry.file));
 files.push(...(HERO_REFINEMENTS.provenance||['assets/characters/rebuilt-v215/sources.json','assets/characters/rebuilt-v215/LICENSE.txt']));
 files.push(...['forest-1k.hdr','sky-1k.hdr','sources.json'].map(f=>'assets/environment/lighting/'+f));
+for(const f of await readdir(new URL('assets/environment/forest-reborn/',root)))if(/\.(jpg|json|txt)$/.test(f))files.push('assets/environment/forest-reborn/'+f);
 files.sort();const hash=createHash('sha256');let bytes=0;
 // Git normalizes text on Pages/Linux; the package must also be reproducible on Windows.
 const normalize=text=>text.replace(/\r\n/g,'\n');

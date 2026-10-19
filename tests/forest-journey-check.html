@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REBORN 森林探索实景检查</title>
+<style>body{margin:12px;background:#15251f;color:#e2eade;font:14px system-ui}button,select,textarea{background:#294638;color:inherit;border:1px solid #82957d;border-radius:5px;padding:9px}button:disabled{opacity:.4}label{margin-right:12px}textarea{display:block;width:min(100%,1100px);box-sizing:border-box;margin:10px 0}iframe{display:block;border:0}#viewport{overflow:auto;margin:14px 0}#captures{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:10px}figure{margin:0}figure img{max-width:100%}pre{white-space:pre-wrap}summary{cursor:pointer}</style>
+<h1>森林探索 · 真实游戏固定机位</h1>
+<p>固定地图种子 522，独立内存存档；所有截图来自正式游戏 WebGL。手机尺寸仅模拟布局与触控分支，不代表真机帧率。</p>
+<label>尺寸 <select id="size"><option value="desktop">电脑 1180×720</option><option value="mobile">手机 844×390</option></select></label>
+<label>视角 <select id="view-mode"><option value="both">第一 / 第三人称</option><option value="first">第一人称</option><option value="third">第三人称</option></select></label>
+<label>画质 <select id="quality"><option value="high">高画质</option><option value="balanced">均衡</option><option value="mobile">移动设备</option><option value="auto">自动</option></select></label>
+<label><input id="environment-walk" type="checkbox">连续检查采用静态环境移动（仅测试：忽略敌人实体碰撞，仍更新与绘制敌人）</label>
+<button id="capture-route" disabled>拍摄整条路线</button><button id="performance" disabled>测量当前路线耗时</button><button id="walk-route" disabled>行走通路与地形检查</button><button id="continuous-play" disabled>连续运行 30 秒（接口）</button><button id="startup-restart" disabled>首次预热 / 进入 / 重开耗时</button>
+<label>单机位 <select id="station"><option value="0">入口</option><option value="1">转弯</option><option value="2">岩壁</option><option value="3">潭岸</option><option value="4">溪源</option></select></label><button id="preview-frame" disabled>预览单机位</button>
+<details><summary>固定机位 JSON：先拍基线，再把 spec 复制到新版；实际相机高度与缩近距离会另行记录</summary><textarea id="capture-spec" rows="7" placeholder="留空使用从真实 v218 seed522 冻结的5个机位，不会自动挪到新版的其他位置。"></textarea></details>
+<p id="status">正在加载检查器模块与依赖，请等待按钮启用…</p>
+<details id="startup-diagnostics" hidden open><summary>加载诊断（只观察，不跳过失败）</summary><pre id="startup-diagnostics-report"></pre></details>
+<div id="viewport"></div><div id="captures"></div><pre id="report"></pre>
+<script>
+window.qaShellErrors=[];window.qaShellWarnings=[];window.qaShellReady=false;window.qaShellCheckpoints=[];
+function qaShellReport(){document.querySelector('#report').textContent=JSON.stringify({type:qaShellErrors.length?'qa-shell-error':'qa-shell-loading',ready:qaShellReady,documentReadyState:document.readyState,phase:qaShellCheckpoints.at(-1),checkpoints:qaShellCheckpoints,errors:qaShellErrors,warnings:qaShellWarnings},null,2);}
+window.qaShellCheckpoint=label=>{qaShellCheckpoints.push({at:performance.now(),label});document.querySelector('#status').textContent=label+(qaShellWarnings.length?' · 有加载警告，详见报告':'');qaShellReport();};
+function qaShellRecord(detail,fatal){
+ (fatal?qaShellErrors:qaShellWarnings).push(detail);qaShellReport();
+ if(fatal){document.querySelector('#status').textContent='检查器脚本失败，请查看下方完整错误报告。';document.querySelectorAll('button').forEach(button=>button.disabled=true);}
+}
+addEventListener('error',event=>{
+ const target=event.target,tag=target?.tagName||null;
+ const detail={at:performance.now(),type:event.type,eventClass:event.constructor?.name,targetClass:target?.constructor?.name,tag,nodeName:target?.nodeName||null,src:target?.src||null,href:target?.href||null,message:event.message||null,filename:event.filename||null,line:event.lineno??null,column:event.colno??null,stack:event.error?.stack||null,error:event.error?String(event.error):null,element:target?.outerHTML?.slice(0,600)||null};
+ // Unattributed resource events (e.g. an extension or a missing icon) must be
+ // visible, but cannot prove that this inline module failed to initialize.
+ qaShellRecord(detail,!!(event.error||event.message||tag==='SCRIPT'));
+},true);
+addEventListener('unhandledrejection',event=>qaShellRecord({at:performance.now(),type:event.type,message:String(event.reason),stack:event.reason?.stack||null},true));
+qaShellCheckpoint('正在加载检查器模块与依赖，请等待按钮启用…');
+</script>
+<script type="module">
+import * as T from '../vendor/three.module.js';
+import {clearAt,moveActor,supportHeight} from '../world.js';
+import {waterDepth} from '../water.js';
+import {resetMobility} from '../adventure-mobility.js';
+import {bodyTravel,bodyRadius} from '../actor-collision.js';
+import {canMoveBelowOverhead,mobilityCeiling,needsMobilityCeiling} from '../adventure-overheads.js';
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const assert=(v,message)=>{if(!v)throw Error(message);};
+window.qaShellCheckpoint('检查器模块已执行，正在读取页面资源…');
+async function loadShellText(url,label){window.qaShellCheckpoint('正在加载检查器：'+label);const response=await fetch(url);assert(response.ok,label+' HTTP '+response.status);return response.text();}
+const source=await loadShellText('../index.html','正式游戏页面'),css=await loadShellText('../style.css','界面样式');
+window.qaShellCheckpoint('正在绑定检查器操作…');
+const html=source.replace(/<script\b[^>]*\bsrc=["'](?:\.\/)?offline\.js[^"']*["'][^>]*><\/script>/gi,'');
+let frame,win,g,now=0,sizeKey='',lastSpec,captureBaseTime=0,poseCount=0,loadReport;
+const LIGHT_SETTLE_FRAMES=60,LIGHT_SETTLE_STEP_MS=1000/30;
+const diagnosticMode=new URLSearchParams(location.search).has('diagnostics');$('#startup-diagnostics').hidden=!diagnosticMode;
+function loadingDiagnostics(){
+ if(!diagnosticMode||!win)return;
+ const resources=win.performance.getEntriesByType('resource'),clock=win.performance.now();
+ $('#startup-diagnostics-report').textContent=JSON.stringify({iframeMs:clock,readyState:win.document.readyState,stage:win.document.querySelector('#asset-loading-stage')?.textContent,gameExportReady:!!win.game3d,queuedGameFrame:!!win.qaFrame,serviceWorker:win.navigator.serviceWorker?.controller?.scriptURL||null,errors:win.qaErrors,scriptEvents:win.qaScriptEvents,pending:win.qaRequests?.filter(p=>p.finished===undefined).map(p=>({...p,waitingMs:clock-p.started})),completedResources:resources.length,lastResources:resources.slice(-16).map(r=>({name:r.name,initiator:r.initiatorType,startMs:r.startTime,durationMs:r.duration,bytes:r.encodedBodySize,status:r.responseStatus??null})),note:'Diagnostic wrappers observe fetch/cache-open promises without replacing their results or adding a timeout. Module requests are browser-managed; completed Resource Timing entries do not prove all imports have finished.'},null,2);
+}
+// Frozen from the real v218 seed-522 build. The cliff point is 8m from that
+// ridge's centre, dry/clear at r=.6 and reachable by the existing navigator.
+// Never silently move a camera after changing terrain: publish the obstruction.
+const REFERENCE_SPEC={mapSeed:522,hero:'silver',source:'v218-seed522-frozen-five-stations',positions:[
+ {id:'entry',name:'林荫门径',x:-12,z:9,yaw:1.4382447944982226,pitch:-.055},
+ {id:'bend',name:'溪岸转弯',x:6.216747189351765,z:14.41598165964038,yaw:1.1368109037077756,pitch:-.055},
+ {id:'cliff',name:'苔岩近岸',x:13.387614474144911,z:9.939825242643078,yaw:2.356194490192345,pitch:.06},
+ {id:'pool',name:'静潭开口',x:35.0877743782725,z:13.258620459750627,yaw:-1.9774891985631977,pitch:-.055},
+ {id:'overlook',name:'溪源林岸',x:39.847062124125124,z:.17057915865591156,yaw:-2.1385427288859358,pitch:-.055}
+]};
+const errors=[];
+const step=(count=1,ms=1000/60)=>{for(let i=0;i<count;i++)win.qaFrame(now+=ms);};
+const publish=report=>{$('#report').textContent=JSON.stringify({...report,measurementVersion:'callback-start-v2',initialLoad:loadReport},null,2);};
+const quantile=(values,f)=>{const sorted=[...values].sort((a,b)=>a-b);return sorted.length?sorted[Math.min(sorted.length-1,Math.floor(sorted.length*f))]:null;};
+function intervalStats(values){return{samples:values.length,medianMs:quantile(values,.5),p95Ms:quantile(values,.95),p99Ms:quantile(values,.99),maxMs:values.length?Math.max(...values):null,over33ms:values.filter(x=>x>1000/30).length,over50ms:values.filter(x=>x>50).length,over100ms:values.filter(x=>x>100).length,over250ms:values.filter(x=>x>250).length};}
+function callbackClock(started){
+ let previous=started;
+ return()=>{
+  // rAF's supplied timestamp can predate work done earlier in that same frame.
+  // Measure callback entry with the same monotonic clock as the window start.
+  const at=performance.now(),elapsed=at-started,delta=at-previous;
+  assert(Number.isFinite(delta)&&delta>=0&&elapsed>=0&&delta<=elapsed+.000001,'回调计时超出测量窗口');
+  previous=at;return{at,elapsed,delta};
+ };
+}
+function watchFrames(label,{driveGame=false}={}){
+ const started=performance.now(),clock=callbackClock(started),gaps=[],worst=[];let active=true,id,firstGameplayRenderMs=null;
+ const tick=()=>{
+  if(!active)return;const {elapsed,delta:gap}=clock();gaps.push(gap);
+  if(gap>1000/30){worst.push({elapsedMs:elapsed,gapMs:gap,stage:win?.document.querySelector('#asset-loading-stage')?.textContent,state:g?.state});worst.sort((a,b)=>b.gapMs-a.gapMs);worst.length=Math.min(worst.length,20);}
+  if(driveGame&&win?.qaFrame){const before=g.renderer.info.render.frame;win.qaFrame(now=win.performance.now());if(firstGameplayRenderMs===null&&g.state==='playing'&&win.document.querySelector('#asset-loading').hidden&&g.renderer.info.render.frame>before)firstGameplayRenderMs=performance.now()-started;}
+  id=requestAnimationFrame(tick);
+ };id=requestAnimationFrame(tick);
+ return()=>{active=false;cancelAnimationFrame(id);return{label,wallMs:performance.now()-started,intervals:intervalStats(gaps),worst,firstGameplayRenderMs,note:'Native rAF-driven callback-entry wall intervals measured with performance.now(); not presented-frame FPS.'};};
+}
+async function waitReady(expectedState){
+ for(let i=0;i<2400;i++){
+  if(i%20===0)loadingDiagnostics();
+  assert(!win.qaErrors?.length,win.qaErrors?.join('\n'));assert(win.document.querySelector('#asset-loading')?.dataset.state!=='error','正式加载界面报告失败');
+  if(win.game3d&&!win.document.querySelector('#start').disabled&&win.document.querySelector('#asset-loading').hidden&&(!expectedState||win.game3d.state===expectedState))return;
+  await sleep(50);
+ }throw Error('正式游戏准备超时');
+}
+function loadingStages(since=0){const entries=win.qaStages.filter(s=>s.at>=since),end=win.performance.now();return entries.map((s,i)=>({stage:s.stage,startMs:s.at-since,durationMs:(entries[i+1]?.at??end)-s.at}));}
+// Freeze the observer entries at the end of this measurement. Keeping its live
+// array would append later capture/warm-up work to the initial-load report.
+function longTaskSnapshot(since=0,until=win.performance.now()){return win.qaLongTasks?.filter(entry=>entry.at>=since&&entry.at<until).map(entry=>({...entry}))??null;}
+function details(){
+ const r=g.renderer,gl=r.getContext();assert(!win.qaErrors.length,win.qaErrors.join('\n'));
+ assert(r.info.programs.every(p=>p.diagnostics?.runnable!==false),'着色器编译失败');assert(gl.getError()===0,'WebGL 错误');
+ return{calls:r.info.render.calls,triangles:r.info.render.triangles,geometries:r.info.memory.geometries,textures:r.info.memory.textures,pixels:r.domElement.width*r.domElement.height,quality:g.renderQuality,mode:g.renderQualityMode};
+}
+async function load(fresh=false){
+ const mobile=$('#size').value==='mobile',width=mobile?844:1180,height=mobile?390:720,key=[mobile,width,height].join(':');
+ if(g&&sizeKey===key&&!fresh)return;
+ if(g){g.audio.stopMusic();g.cinema?.dispose();g.renderer.dispose();g.renderer.forceContextLoss();}frame?.remove();g=null;errors.length=0;loadReport=null;
+ const started=performance.now(),stopFrames=watchFrames('iframe-first-preload');
+ frame=document.createElement('iframe');frame.title='正式游戏森林检查';frame.style.width=width+'px';frame.style.height=height+'px';$('#viewport').append(frame);
+ const boot=`<base href="${new URL('../',location.href).href}"><script>
+ window.qaErrors=[];addEventListener('error',e=>qaErrors.push(e.message));addEventListener('unhandledrejection',e=>qaErrors.push(String(e.reason)));
+ const error=console.error.bind(console);console.error=(...a)=>{qaErrors.push(a.map(String).join(' '));error(...a)};
+ window.qaStages=[{at:performance.now(),stage:'文档启动'}];
+ window.qaScriptEvents=[];for(const event of ['load','error'])document.addEventListener(event,e=>{if(e.target?.tagName==='SCRIPT')qaScriptEvents.push({event,src:e.target.src,at:performance.now()});},true);
+ window.qaRequests=[];if(${diagnosticMode}){
+  performance.setResourceTimingBufferSize(700);
+  const observe=(kind,label,call)=>{const entry={kind,label,started:performance.now()};qaRequests.push(entry);let result;try{result=call();}catch(error){entry.error=String(error);entry.finished=performance.now();throw error;}result.then(value=>{entry.finished=performance.now();if(value?.status!==undefined)entry.status=value.status;},error=>{entry.finished=performance.now();entry.error=String(error);});return result;};
+  const fetchNative=window.fetch.bind(window);window.fetch=(input,init)=>observe('fetch',String(input?.url||input),()=>fetchNative(input,init));
+  try{const cacheNative=window.caches.open.bind(window.caches);window.caches.open=name=>observe('cache-open',name,()=>cacheNative(name));}catch(error){qaRequests.push({kind:'diagnostic-unavailable',error:String(error),started:performance.now(),finished:performance.now()});}
+ }
+ new MutationObserver(()=>{const stage=document.querySelector('#asset-loading-stage')?.textContent;if(stage&&stage!==qaStages.at(-1).stage)qaStages.push({at:performance.now(),stage});}).observe(document,{childList:true,subtree:true,characterData:true});
+ window.qaLongTasks=null;if(window.PerformanceObserver?.supportedEntryTypes?.includes('longtask')){window.qaLongTasks=[];new PerformanceObserver(list=>{for(const entry of list.getEntries()){qaLongTasks.push({at:entry.startTime,durationMs:entry.duration});if(qaLongTasks.length>200)qaLongTasks.shift();}}).observe({type:'longtask',buffered:true});}
+ let rng=522,forceSeed=false;window.qaSeed=()=>{rng=522;forceSeed=true;};
+ Math.random=()=>{if(forceSeed){forceSeed=false;return 522/1e8;}rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
+ window.requestAnimationFrame=callback=>{window.qaFrame=callback;return 0;};
+ const data=new Map();Object.defineProperty(window,'localStorage',{value:{getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,String(v)),removeItem:k=>data.delete(k)}});
+ const media=matchMedia.bind(window);window.matchMedia=q=>q.includes('pointer:coarse')||q.includes('pointer: coarse')?{matches:${mobile},media:q,addEventListener(){},removeEventListener(){}}:media(q);
+ <\/script>`;
+ frame.srcdoc=html.replace('<head>','<head>'+boot);win=frame.contentWindow;
+ try{
+  await waitReady('menu');g=win.game3d;const lobbyReadyMs=performance.now()-started;
+  assert(await g.surfaceReady,'本地地表资源未全部加载');g.audio.setMuted(true);g.audio.init=async()=>true;
+  if(mobile){const style=win.document.createElement('style');style.textContent=css.replaceAll(/\(pointer:\s*coarse\)/g,'(min-width:0px)');win.document.head.append(style);}
+  now=win.performance.now();sizeKey=key;step(2);
+  const observedUntilIframeMs=win.performance.now();
+  loadReport={lobbyReadyMs,firstObservedLobbyRenderMs:performance.now()-started,observedUntilIframeMs,stages:loadingStages(),longTasks:longTaskSnapshot(0,observedUntilIframeMs),note:'Fresh iframe initialization and local preload, observed at up to 50ms polling resolution. Browser HTTP cache is retained; not a cold-network or first-ever install measurement. QA shell HTML/CSS fetch is excluded. Long tasks are an observer snapshot; an entry not delivered before the snapshot may be absent.'};
+ }finally{const timeline=stopFrames();loadReport={...loadReport,frameTimeline:timeline,completed:!!g,diagnosticMode};loadingDiagnostics();}
+}
+function selectForest(){
+ // Enter play before rebuilding: rebuildHero then installs the real first-person
+ // arms as well. A menu-world followed only by start(true) would omit them.
+ g.menu();g.start(true);win.qaSeed();g.select('silver','forest',0);
+ const spawn=g.world.spawn;Object.assign(g.player,{x:spawn.x,z:spawn.z,vx:0,vz:0,attack:9999,inv:9999});resetMobility(g.player,g.world.groundHeightAt?.(spawn.x,spawn.z)||0);g.hero.position.set(spawn.x,g.player.y,spawn.z);
+ const mode=$('#quality').value,select=win.document.querySelector('#render-quality');select.value=mode;select.dispatchEvent(new win.Event('change'));
+ step(6);g.pause();win.document.querySelector('#dialog').close();step(2,0);captureBaseTime=g.time;poseCount=0;
+ assert(Math.abs(captureBaseTime-.1)<1e-6,'截图初始游戏时间不一致');
+ // Distinguish actual buildWorld seed 522 from older fixtures' RNG seed 522.
+ const pond=g.world.ponds.at(-1);assert(Math.hypot(pond.x-15.54115152240663,pond.z-18.737410155021003)<1e-5,'地图种子不是固定的 522');
+}
+function dry(x,z){return clearAt(g.world,x,z,.55)&&g.world.ponds.every(p=>waterDepth(p,x,z)===0);}
+function spec(){
+ const raw=$('#capture-spec').value.trim(),result=raw?JSON.parse(raw):structuredClone(REFERENCE_SPEC);assert(result.mapSeed===522&&Array.isArray(result.positions)&&result.positions.length,'机位 JSON 需要 mapSeed:522 与 positions');
+ for(const p of result.positions)assert([p.x,p.z,p.yaw,p.pitch].every(Number.isFinite),'机位坐标必须为有限数值');
+ lastSpec=result;$('#capture-spec').value=JSON.stringify(result,null,2);const select=$('#station'),old=select.value;select.replaceChildren(...result.positions.map((p,i)=>{const option=document.createElement('option');option.value=i;option.textContent=p.name||p.id;return option;}));select.value=old||'0';return result;
+}
+function pose(point,view){
+ assert(dry(point.x,point.z),'固定机位被水域或障碍占据：'+point.id);
+ const ground=g.world.groundHeightAt?.(point.x,point.z)||0;Object.assign(g.player,{x:point.x,z:point.z,y:ground,groundHeight:ground,vx:0,vz:0,vy:0,waterDepth:0,attack:9999,inv:9999});g.hero.position.set(point.x,ground,point.z);g.hero.rotation.y=point.yaw;
+ g.adventureCamera.yaw=point.yaw;g.adventureCamera.pitch=point.pitch;g.adventureCamera._ready=false;g.setView(view);g.renderer.shadowMap.needsUpdate=true;
+ // Advance the actual local lighting context before pausing. Nonzero callback
+ // intervals are also required by the game's render budget; zero-time callbacks
+ // can update the camera matrix while leaving the previous canvas untouched.
+ const before=g.time;g.resume();step(LIGHT_SETTLE_FRAMES,LIGHT_SETTLE_STEP_MS);
+ assert(g.state==='playing'&&Math.abs(g.time-before-2)<1e-6,'光照预热没有完整推进 2 秒');
+ poseCount++;assert(Math.abs(g.time-(captureBaseTime+poseCount*2))<1e-6,'机位时间序列不一致');
+ g.pause();win.document.querySelector('#dialog').close();step(3,100);
+}
+function record(point,view){return{id:point.id,name:point.name,view,position:{x:g.player.x,y:g.player.y,z:g.player.z},groundY:g.world.groundHeightAt?.(point.x,point.z)||0,clear:dry(point.x,point.z),cameraBasis:'ground-relative-gameplay-camera',cameraPosition:g.camera.position.toArray(),cameraQuaternion:g.camera.quaternion.toArray(),time:g.time,expectedTime:captureBaseTime+poseCount*2,lightingWarmup:{frames:LIGHT_SETTLE_FRAMES,stepMs:LIGHT_SETTLE_STEP_MS,gameSeconds:2},render:details()};}
+function save(point,view){
+ const image=document.createElement('img'),figure=document.createElement('figure'),caption=document.createElement('figcaption');image.id='journey-'+$('#size').value+'-'+view+'-'+point.id;image.src=g.renderer.domElement.toDataURL('image/png');image.alt=point.name+' · '+view+' · 正式游戏';caption.textContent=image.alt;figure.append(image,caption);$('#captures').append(figure);
+}
+const views=()=>$('#view-mode').value==='both'?['first','third']:[$('#view-mode').value];
+async function action(fn,{setup=true}={}){
+ const buttons=[...document.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);
+ // A new iframe also resets sceneryTime (wind/water), which a new game alone
+ // does not reset. Baseline and candidate therefore use the same time sequence.
+ try{await load(true);if(setup)selectForest();await fn();}catch(error){$('#status').textContent='检查失败：'+error.message;publish({error:error.stack,diagnostics:error.diagnostics??null,errors:[...errors,...(win?.qaErrors||[])]});}finally{buttons.forEach(b=>b.disabled=false);}
+}
+function movementDiagnostics(before,dx,dz,r=.45){
+ const world=g.world,target={x:before.x+dx,z:before.z+dz},bodies=[...(world.solidActors?.()||[])].filter(q=>q!==g.player),probeWorld={...world,solidActors:()=>bodies};
+ const posture=p=>Object.fromEntries(['x','y','z','groundHeight','standHeight','jumpVelocity','crouch','dashTime','size','heroId'].map(key=>[key,p[key]??null]));
+ return{before:posture(before),attempt:{dx,dz,r,...target},after:posture(g.player),actual:{dx:g.player.x-before.x,dz:g.player.z-before.z},ground:{before:world.groundHeightAt?.(before.x,before.z)||0,target:world.groundHeightAt?.(target.x,target.z)||0,after:world.groundHeightAt?.(g.player.x,g.player.z)||0},clearAt:clearAt(world,target.x,target.z,r,before.y||0),bodyTravel:bodyTravel(probeWorld,before,dx,dz,r),nearBodies:bodies.filter(q=>Math.hypot(q.x-before.x,q.z-before.z)<bodyRadius(q)+r+2).map(q=>({x:q.x,y:q.y,z:q.z,r:bodyRadius(q),kind:q.kind,role:q.role,alive:q.alive,stage:q.stage,distance:Math.hypot(q.x-before.x,q.z-before.z)})),nearObstacles:world.obstacles.filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<o.r+r+1.2).map(o=>({x:o.x,y:o.y||0,z:o.z,r:o.r,height:o.height,sceneryHeight:o.sceneryHeight,top:(o.y||0)+(o.sceneryHeight??o.height),mesh:o.mesh?.name,meshPosition:o.mesh?.position.toArray(),forestJourney:!!o.forestJourney})),overhead:{needed:needsMobilityCeiling(world,before),clear:canMoveBelowOverhead(world,before,target.x,target.z),ceiling:mobilityCeiling(world,before,target.x,target.z),meshes:world.overhead?.meshes.map(m=>m.name)}};
+}
+$('#capture-route').onclick=()=>action(async()=>{
+ $('#status').textContent='正在拍摄正式游戏路线';$('#captures').replaceChildren();const specification=spec(),records=[];
+ for(const point of specification.positions)for(const view of views()){pose(point,view);save(point,view);records.push(record(point,view));await sleep(0);}
+ publish({type:'same-camera-route',mapSeed:522,spec:specification,width:win.innerWidth,height:win.innerHeight,mobileSimulation:$('#size').value==='mobile',journey:!!g.world.forestJourney,records,errors:[...errors,...win.qaErrors],offlineTested:false});$('#status').textContent='路线拍摄完成 · '+records.length+' 张真实运行截图';
+});
+$('#preview-frame').onclick=()=>action(async()=>{const specification=spec(),point=specification.positions[Number($('#station').value)||0],view=views()[0];pose(point,view);publish({spec:specification,...record(point,view),errors:[...errors,...win.qaErrors]});$('#status').textContent='当前正式游戏机位：'+point.name+' · '+view;});
+$('#performance').onclick=()=>action(async()=>{
+ $('#status').textContent='测量路线 CPU 提交 / GPU 渲染耗时';const specification=spec(),samples=[],median=a=>{a.sort((a,b)=>a-b);return a.length?a[Math.floor(a.length/2)]:null;};
+ for(const point of specification.positions)for(const view of views()){
+  pose(point,view);step(10,100);const cpu=[];for(let i=0;i<45;i++){const start=performance.now();step(1,100);cpu.push(performance.now()-start);await sleep(0);}
+  const gl=g.renderer.getContext(),extension=gl.getExtension('EXT_disjoint_timer_query_webgl2'),gpu=[];
+  if(extension)for(let sample=0;sample<5;sample++){const query=gl.createQuery();gl.beginQuery(extension.TIME_ELAPSED_EXT,query);step(1,100);gl.endQuery(extension.TIME_ELAPSED_EXT);gl.flush();for(let j=0;j<200&&!gl.getQueryParameter(query,gl.QUERY_RESULT_AVAILABLE);j++)await sleep(5);if(gl.getQueryParameter(query,gl.QUERY_RESULT_AVAILABLE)&&!gl.getParameter(extension.GPU_DISJOINT_EXT))gpu.push(gl.getQueryParameter(query,gl.QUERY_RESULT)/1e6);gl.deleteQuery(query);}
+  const cpuMedianMs=median(cpu);samples.push({...record(point,view),cpuMedianMs,cpuP95Ms:cpu[Math.floor(cpu.length*.95)],gpuMedianMs:median(gpu),gpuSamples:gpu.length});await sleep(0);
+ }
+ publish({type:'paused-route-cost',spec:specification,width:win.innerWidth,height:win.innerHeight,mobileSimulation:$('#size').value==='mobile',samples,errors:[...errors,...win.qaErrors],note:'45 render-callback wall submission samples / 5 GPU queries per station, with 100ms callback intervals to cross the render-budget throttle. Actual paused game render; not gameplay FPS or a real mobile-device benchmark.'});$('#status').textContent='路线耗时采样完成 · '+samples.length+' 组';
+});
+$('#startup-restart').onclick=()=>action(async()=>{
+ $('#status').textContent='测量正式开始按钮与结算重开';
+ const quality=win.document.querySelector('#render-quality');quality.value=$('#quality').value;quality.dispatchEvent(new win.Event('change'));
+ async function enter(button,label){
+  assert(button&&!button.disabled,'找不到可用的正式按钮：'+label);const started=performance.now(),clock=win.performance.now(),oldWorld=g.world,stopFrames=watchFrames(label,{driveGame:true});let handlerMs,readyMs,timeline;
+  try{
+   win.qaSeed();button.click();handlerMs=performance.now()-started;await waitReady('playing');readyMs=performance.now()-started;
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   assert(g.world!==oldWorld,'进入对局没有创建新地图');const pond=g.world.ponds.at(-1);assert(Math.hypot(pond.x-15.54115152240663,pond.z-18.737410155021003)<1e-5,'正式开始后的地图种子不是522');details();
+  }finally{timeline=stopFrames();}
+  assert(timeline.firstGameplayRenderMs!==null,'未观察到准备结束后的实际游戏渲染回调');
+  return{label,handlerMs,readyMs,firstGameplayRenderMs:timeline.firstGameplayRenderMs,stages:loadingStages(clock),longTasks:win.qaLongTasks?.filter(entry=>entry.at>=clock)??null,frameTimeline:timeline,gameTime:g.time,render:details()};
+ }
+ const initial=await enter(win.document.querySelector('#start'),'start-ui');
+ // Use the existing damage/result path solely to reach the normal restart UI.
+ g.player.inv=0;assert(g.damage(100000,g.player.x+1,g.player.z,'contact')&&g.state==='lost','无法进入正式结算界面');
+ const restart=[...win.document.querySelectorAll('#dialog button')].find(button=>button.textContent.trim()==='再次远征');
+ const repeated=await enter(restart,'restart-ui');g.pause();win.document.querySelector('#dialog').close();step(3,100);
+ publish({type:'startup-and-restart-ui',mapSeed:522,width:win.innerWidth,height:win.innerHeight,mobileSimulation:$('#size').value==='mobile',initial,repeated,errors:[...errors,...win.qaErrors],note:'Real Start and Again buttons drive existing asynchronous preparation. Damage API is used only to open the normal result screen. Browser caches are retained, audio is muted by the fixture, and rAF gaps are not displayed FPS. Poll-observed readiness has up to 50ms granularity.'});$('#status').textContent='首次预热、正式进入、正式重开耗时记录完成';
+},{setup:false});
+$('#continuous-play').onclick=()=>action(async()=>{
+ const specification=spec(),points=g.world.forestJourney?.points||g.world.forestHabitats.approach.points,start=points[0],next=points[1],view=views()[0];
+ assert(points.length>1,'没有连续运行路线');pose({id:'live',x:start.x,z:start.z,yaw:Math.atan2(next.x-start.x,next.z-start.z),pitch:-.055},view);
+ const staticEnvironment=$('#environment-walk').checked,runWorld=g.world,savedSolidActors=runWorld.solidActors;
+ const samples=[],intervals=[],steadyIntervals=[],firstIntervals=[],worst=[],submissions=[],gameStart=g.time,wallStart=performance.now(),clock=callbackClock(wallStart);let target=1,direction=1,travelled=0,callbacks=0,renderCallbacks=0,changedView=false,clampedGameSeconds=0;
+ const key=type=>win.dispatchEvent(new win.KeyboardEvent(type,{key:'w',code:'KeyW',bubbles:true}));
+ g.resume();key('keydown');$('#status').textContent='连续真实回调运行：0 / 30 秒 · 测试角色免伤、关闭攻击';
+ try{
+  if(staticEnvironment)runWorld.solidActors=function*(){yield g.player;};
+  await new Promise((resolve,reject)=>{
+   const tick=()=>{try{
+    const {elapsed,delta}=clock();
+    assert(!document.hidden&&!win.document.hidden,'连续运行需要保持检查页面可见');assert(g.state==='playing','连续运行被游戏弹窗或状态中断：'+g.state);
+    intervals.push(delta);(elapsed<5000?firstIntervals:steadyIntervals).push(delta);
+    let point=points[target];if(Math.hypot(point.x-g.player.x,point.z-g.player.z)<.3){target+=direction;if(target>=points.length){direction=-1;target=points.length-2;}else if(target<0){direction=1;target=1;}point=points[target];}
+    g.adventureCamera.yaw=Math.atan2(point.x-g.player.x,point.z-g.player.z);
+    if(elapsed>=15000&&!changedView){g.setView(view==='first'?'third':'first');changedView=true;}
+    const x=g.player.x,z=g.player.z,before=g.renderer.info.render.frame,beforeTime=g.time,cpuStart=performance.now();win.qaFrame(now+=delta);const submitMs=performance.now()-cpuStart;submissions.push(submitMs);callbacks++;if(g.renderer.info.render.frame>before)renderCallbacks++;clampedGameSeconds+=Math.max(0,delta/1000-(g.time-beforeTime));
+    if(delta>1000/30){worst.push({wallSeconds:elapsed/1000,gapMs:delta,callbackWallSubmitMs:submitMs,view:g.adventureCamera.mode,target,position:{x:g.player.x,y:g.player.y,z:g.player.z},enemies:g.enemies.filter(e=>e.alive).length});worst.sort((a,b)=>b.gapMs-a.gapMs);worst.length=Math.min(worst.length,20);}
+    travelled+=Math.hypot(g.player.x-x,g.player.z-z);assert([g.player.x,g.player.y,g.player.z,...g.camera.position.toArray()].every(Number.isFinite),'连续运行出现非有限坐标');
+    if(elapsed>=samples.length*1000){samples.push({wallSeconds:elapsed/1000,gameSeconds:g.time-gameStart,view:g.adventureCamera.mode,position:{x:g.player.x,y:g.player.y,z:g.player.z},enemies:g.enemies.filter(e=>e.alive).length,render:details()});$('#status').textContent='连续真实回调运行：'+Math.min(30,Math.floor(elapsed/1000))+' / 30 秒';}
+    if(elapsed>=30000)resolve();else requestAnimationFrame(tick);
+   }catch(error){reject(error);}};requestAnimationFrame(tick);
+  });
+ }finally{runWorld.solidActors=savedSolidActors;key('keyup');if(g.state==='playing')g.pause();win.document.querySelector('#dialog').close();step(3,100);}
+ assert(travelled>1,'没有观察到实际移动');publish({type:'continuous-real-callback-interface',mapSeed:522,width:win.innerWidth,height:win.innerHeight,mobileSimulation:$('#size').value==='mobile',fixture:{staticEnvironmentMovement:staticEnvironment,enemyBodiesExcluded:staticEnvironment,enemiesStillSimulatedAndRendered:true,actorCollisionRestored:runWorld.solidActors===savedSolidActors,normalGameplay:false},wallSeconds:(performance.now()-wallStart)/1000,gameSeconds:g.time-gameStart,clampedGameSeconds,callbacks,renderCallbacks,travelled,changedView,nativeCallbackIntervals:intervalStats(intervals),firstFiveSecondIntervals:intervalStats(firstIntervals),steadyAfterFiveSecondIntervals:intervalStats(steadyIntervals),worstIntervals:worst,callbackWallSubmission:intervalStats(submissions),samples,errors:[...errors,...win.qaErrors],note:'30 wall-clock seconds driven by native browser requestAnimationFrame through the real game callback. Keyboard movement is injected on desktop and mobile layout; mobile touch gestures are not validated. Player invulnerability and attack suppression are fixture-only. Optional static-environment movement excludes enemy body collisions only during this test, while enemy simulation/rendering continues; it is not normal gameplay. Callback-entry wall intervals/submission costs are not presented-frame FPS, and mobile layout is not a physical-device benchmark. Long gaps may include browser scheduling or concurrent work, not only GPU/game costs.'});$('#status').textContent='连续运行完成 · 移动、双视角、敌人更新与渲染接口已检查；非真机帧率测试';
+});
+$('#walk-route').onclick=()=>action(async()=>{
+ $('#status').textContent='沿真实路径检查移动、地面支撑与相机';const journey=g.world.forestJourney,points=journey?.points||journey?.route?.points||g.world.forestHabitats.approach.points;assert(points.length>1,'没有可检查的通路');
+ const reports=[],routeWorld=g.world,savedSolidActors=routeWorld.solidActors;
+ try{routeWorld.solidActors=undefined;for(const view of ['first','third']){
+  const start=points[0],first=points[1];pose({id:'walk',x:start.x,z:start.z,yaw:Math.atan2(first.x-start.x,first.z-start.z),pitch:-.055},view);resetMobility(g.player,g.world.groundHeightAt?.(start.x,start.z)||0);
+  let travelled=0,maxGroundError=0,frames=0;for(let segment=1;segment<points.length;segment++){
+   const a=points[segment-1],b=points[segment],distance=Math.hypot(b.x-a.x,b.z-a.z),steps=Math.ceil(distance/.09),dx=(b.x-a.x)/steps,dz=(b.z-a.z)/steps;g.adventureCamera.yaw=Math.atan2(dx,dz);
+   for(let frame=0;frame<steps;frame++){
+    const before={...g.player},x=g.player.x,z=g.player.z;moveActor(g.world,g.player,dx,dz,.45);const moved=Math.hypot(g.player.x-x,g.player.z-z);if(moved<Math.hypot(dx,dz)*.96)throw Object.assign(new Error('路线被实际碰撞阻挡，第 '+segment+' 段'),{diagnostics:{view,segment,frame,from:a,to:b,...movementDiagnostics(before,dx,dz)}});assert(g.world.ponds.every(p=>waterDepth(p,g.player.x,g.player.z)===0),'干岸路线进入实际水面');travelled+=moved;
+    const ground=supportHeight(g.world,g.player);maxGroundError=Math.max(maxGroundError,Math.abs(g.player.y-ground));g.hero.position.set(g.player.x,g.player.y,g.player.z);g.hero.rotation.y=g.adventureCamera.yaw;step(1,100);frames++;
+    assert(g.camera.position.toArray().every(Number.isFinite),'相机非有限值');if(frames%60===0)await sleep(0);
+   }
+  }
+  reports.push({view,travelled,frames,maxGroundError,endpoint:{x:g.player.x,z:g.player.z},...details()});assert(maxGroundError<.001,'角色脚底不贴地');
+ }}finally{routeWorld.solidActors=savedSolidActors;}
+ const owned=[];g.world.group.traverse(o=>{if(o.userData.ownedGeometry)owned.push(o.geometry);});const unique=[...new Set(owned)],released=new Set();for(const geometry of unique)geometry.addEventListener('dispose',()=>released.add(geometry));
+ selectForest();assert(unique.every(geometry=>released.has(geometry)),'重建未释放旧场景几何');publish({type:'route-motion-and-release',mapSeed:522,journey:!!journey,points,reports,fixture:{staticEnvironmentRoute:true,actorBodiesExcluded:true,actorCollisionRestored:routeWorld.solidActors===savedSolidActors},ownedGeometries:unique.length,releasedGeometries:released.size,errors:[...errors,...win.qaErrors],note:'Static scenery/support checks use moveActor with actor-body collisions temporarily excluded and restored in finally. Paused enemies must not invalidate a terrain-route check. Scenery footprints, overheads, water and terrain remain active. This does not claim ordinary combat traversal, subjective movement feel or enemy-pressure balance.'});$('#status').textContent='静态通路、地面支撑、双视角与重建回收检查完成（已恢复实体碰撞）';
+});
+assert(!window.qaShellErrors.length,'检查器初始化已有错误');
+window.qaShellReady=true;document.querySelectorAll('button').forEach(button=>button.disabled=false);
+window.qaShellCheckpoint('检查器已就绪 · 可以选择拍摄或测试；首次游戏加载需要预热本地模型和材质。');
+</script></html>

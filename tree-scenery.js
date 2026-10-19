@@ -183,6 +183,8 @@ firMaterial.onBeforeCompile=shader=>{
  shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nif(!gl_FrontFacing)diffuseColor.rgb*=vec3(.40,.56,.52);');
 };
 firMaterial.customProgramCacheKey=()=> 'tree-rounded-snow-sprays';
+// Authored regional trees reuse these compiled surfaces and the local leaf atlas.
+export const treeSceneryMaterials={bark:material,leaves:leafMaterial,snow:firMaterial};
 leafMaterial.onBeforeCompile=shader=>{
  shader.uniforms.treeBreezeTime=treeBreezeTime;
  shader.vertexShader='uniform float treeBreezeTime; attribute float treeLeafFlex; varying float treeTint;\n'+shader.vertexShader;
@@ -316,6 +318,9 @@ function firCrown(variant,level,farSides=6){
  }
  return merge(parts);
 }
+// Regional branch architectures reuse the established rounded, two-sided
+// needle cushions instead of introducing flat snow cards or another material.
+export {firFan as createConiferSpray};
 function treeTemplate(id,variant){
  const key=id+variant;if(templates.has(key))return templates.get(key);const snow=id==='snow',wood=snow?0x687675:0x665b43;
  const trunkHeight=5,lean=(variant-1)*.16;
@@ -420,6 +425,7 @@ function compactFirCrown(template){
 // The constant UV samples one opaque leaf texel; vertex tint supplies leaf veins.
 function detailedCrown(template,level){
  if(template.lods[level])return template.lods[level];
+ if(template.makeLOD)return template.lods[level]=template.makeLOD(level);
  if(template.snow){
   const g=firCrown(template.variant,level),p=g.attributes.position,bounds=template.canopy.boundingBox;g.translate(0,-template.bottom,0);
   // Snow detail cannot widen a walkable gap or change the overhead envelope.
@@ -454,6 +460,23 @@ function detailedCrown(template,level){
  detail.computeVertexNormals();
  return template.lods[level]=merge([template.canopy.clone(),detail]);
 }
+// Prepare only templates used by animated trees in this map. Return shared
+// resources for the loading renderer to draw; never add permanent LOD meshes
+// or change the displayed crown, its transform, or the distance bands.
+export async function prepareTreeDetail(world,{yieldWork=()=>new Promise(resolve=>setTimeout(resolve,0)),report=()=>{}}={}){
+ const used=new Map();
+ for(const scope of[world,...world?.regions||[]])for(const {leaf}of scope?.foliage||[]){
+  const template=leaf?.userData.treeTemplate;
+  if(template&&leaf.parent)used.set(template,leaf.material);
+ }
+ const resources=[],total=used.size*3;let done=0;report(0,total);
+ for(const [template,material]of used)for(let level=0;level<3;level++){
+  const cached=template.lods[level],geometry=level===2?template.canopy:detailedCrown(template,level);
+  resources.push({geometry,material,level});report(++done,total);
+  if(!cached)await yieldWork();
+ }
+ return resources;
+}
 export function updateTreeDetail(canopy,x,z){
  const template=canopy.userData.treeTemplate,parent=canopy.parent;if(!template||!parent)return;
  const distance=Math.hypot(parent.position.x-x,parent.position.z-z),previous=canopy.userData.treeLOD;
@@ -463,9 +486,32 @@ export function updateTreeDetail(canopy,x,z){
  canopy.geometry=level===2?template.canopy:detailedCrown(template,level);canopy.userData.treeLOD=level;
 }
 
+// Keep close silhouettes and every LOD transition at the render cadence. The
+// tiny whole-crown lean beyond 40 m can be sampled less often; GPU leaf flutter
+// still receives the current game time on every frame, including an all-far view.
+export function updateTreeCanopies(foliage,time,focusX,focusZ){
+ if(!Number.isFinite(time))return;
+ treeBreezeTime.value=time;
+ for(const f of foliage){
+  const parent=f.leaf.parent;if(!parent)continue;
+  const dx=parent.position.x-focusX,dz=parent.position.z-focusZ,distance2=dx*dx+dz*dz;
+  if(distance2<1600||f.leaf.userData.treeLOD!==2)updateTreeDetail(f.leaf,focusX,focusZ);
+  const rate=distance2<1600?0:distance2<6400?15:8;
+  const tick=rate?Math.floor(time*rate+f.phase):time;
+  if(rate&&f.canopyTick===tick&&f.canopyRate===rate&&time>=f.canopyTime)continue;
+  animateTreeCanopy(f.leaf,time,f);f.canopyTick=tick;f.canopyRate=rate;f.canopyTime=time;
+ }
+}
+
 export function animateTreeCanopy(canopy,time,{x=0,z=0,phase=0}={}){
  if(!Number.isFinite(time))return;
  const parent=canopy.parent;
+ if(canopy.userData.biomeTreeForm){
+  // Heavy snow boughs and exposed coastal crowns bend slowly from their stem,
+  // without moving the static trunk or introducing another animation loop.
+  const weight=canopy.userData.biomeTreeBreeze??1,sway=(Math.sin(time*.63+phase)*.007+Math.sin(time*1.08+phase*.7)*.003)*weight;
+  canopy.rotation.x=sway*.35;canopy.rotation.z=sway;canopy.position.x=x;canopy.position.z=z;return;
+ }
  if(parent?.userData.treeBiome!=='forest'){
   // Preserve the existing snow motion and other biome animation exactly.
   const sway=Math.sin(time*1.35+phase)*.026+Math.sin(time*2.7+phase)*.008;

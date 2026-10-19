@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../vendor/three.module.js';
-import {moveActor,supportHeight,followTerrain} from '../world.js';
+import {moveActor,supportHeight,followTerrain,clearAt} from '../world.js';
 import {resetMobility,beginJump,tickMobility,airborne,attackReachesPlayer,MOBILITY} from '../adventure-mobility.js';
 import {segmentGroundEntry,aimPoint,groundAim,segmentHitsBody} from '../adventure-combat.js';
 import {AdventureCamera} from '../adventure-camera.js';
@@ -36,6 +36,18 @@ test('soil support does not turn a box into a slope, or a roll into phasing',()=
  for(let i=0;i<120;i++){step(w,p,1/60,.04);if(p.x>1&&p.y>soil(p.x,p.z)&&p.y<.7)falling=true;}
  assert(falling);near(p.y,soil(p.x,p.z));
  const foe={x:p.x+2,z:0,alive:true,size:1};w.solidActors=()=>[p,foe];const before=p.x;moveActor(w,p,4,0);assert(p.x<before+2,'rolling crossed a living body');
+});
+
+test('raised scenery keeps its world-space top for movement, landing and projectile collision',()=>{
+ const w=world(()=>2.4),rock={x:0,z:0,y:2.4,r:.6,height:.7};w.obstacles.push(rock);
+ assert(!clearAt(w,0,0,.35,2.4),'a raised rock cannot be walked through');
+ assert(clearAt(w,0,0,.35,3.1),'a jump above its top remains clear');
+ near(supportHeight(w,{x:0,z:0,y:3.1},.35),3.1);
+ near(supportHeight(w,{x:0,z:0,y:2.4},.35),2.4);
+ assert(segmentHitsBody(-2,2.8,0,2,2.8,0,rock));
+ assert(!segmentHitsBody(-2,3.2,0,2,3.2,0,rock));
+ rock.sceneryHeight=1.2;
+ assert(!clearAt(w,0,0,.35,3.2));near(supportHeight(w,{x:0,z:0,y:3.6},.35),3.6);
 });
 
 test('teleport landing, companions and grounded enemies use soil; fliers and legacy worlds retain altitude',()=>{

@@ -80,6 +80,10 @@ export function installWorldLightShafts(world,mapId){
  const focuses=[];
  // Cover the five actual regions before spending the final slot on forest vistas.
  if(mapId==='confluence')for(const region of world.regions||[])focuses.push({point:(world.sites||[]).find(s=>s.biome===region.id)||region,biome:region.id,region});
+ // Spend the existing woodland allocation at actual changes of view along the
+ // reachable path, before the old random sites. Other climates retain their
+ // original placement and count.
+ if(mapId==='forest')for(const point of world.forestJourney?.landmarks||[])focuses.push({point,biome:'forest'});
  focuses.push({point:world.spawn,biome:mapId==='confluence'?'forest':mapId});
  if(world.forestHabitats?.approach?.shore)focuses.push({point:world.forestHabitats.approach.shore,biome:'forest'});
  else if(world.forestHabitats?.ponds[0]){const p=world.forestHabitats.ponds[0],a=p.angle||0;focuses.push({point:{x:p.x+Math.cos(a)*(p.rx+2),z:p.z-Math.sin(a)*(p.rx+2)},biome:'forest'});}
@@ -158,8 +162,21 @@ export function installForestMist(world,mapId,{mobile=false}={}){
  if(mapId!=='forest'&&mapId!=='confluence')return null;
  const region=world.regions?.find(r=>r.id==='forest'),focus=region||world.spawn;
  if(!focus)return null;
- const anchors=[];
- for(let i=0;i<24&&anchors.length<(mobile?3:6);i++){
+ const anchors=[],limit=mobile?3:6;
+ if(mapId==='forest'){
+  // Keep the route itself clear. Low mist sits beyond a bend or beside the
+  // pool and remains fixed in world space, instead of following the player.
+  const points=world.forestJourney?.landmarks||[];
+  for(const point of [...points.filter(p=>p.kind==='pool'),...points.filter(p=>p.kind!=='pool')]){
+   if(anchors.length>=limit)break;
+   for(let j=0;j<6;j++){
+    const angle=j*2.399963,r=8+(j%3)*5,x=point.x+Math.cos(angle)*r,z=point.z+Math.sin(angle)*r;
+    if(!Number.isFinite(x+z)||!openGround(world,x,z,region)||anchors.some(p=>Math.hypot(x-p.x,z-p.z)<12))continue;
+    anchors.push({x,z});break;
+   }
+  }
+ }
+ for(let i=0;i<24&&anchors.length<limit;i++){
   const angle=i*2.399963,r=11+(i%4)*9,x=focus.x+Math.cos(angle)*r,z=focus.z+Math.sin(angle)*r;
   if(!openGround(world,x,z,region)||anchors.some(p=>Math.hypot(x-p.x,z-p.z)<12))continue;
   // The shader fades close to the camera, preserving nearby combat silhouettes.
@@ -172,6 +189,7 @@ export function installForestMist(world,mapId,{mobile=false}={}){
    void main(){mistUV=uv;mistPhase=dot(instanceMatrix[3].xz,vec2(.19,.13));vec4 p=modelViewMatrix*instanceMatrix*vec4(position,1.);mistDistance=length(p.xyz);gl_Position=projectionMatrix*p;}`,
   fragmentShader:`uniform float mistTime;uniform vec3 mistColor;uniform float mistOpacity;varying vec2 mistUV;varying float mistPhase;varying float mistDistance;
    void main(){vec2 p=mistUV;float edge=pow(max(0.,1.-abs(p.x*2.-1.)),2.);float height=smoothstep(0.,.15,p.y)*(1.-smoothstep(.18,1.,p.y));float drift=.68+.16*sin(p.x*11.+p.y*6.+mistPhase+mistTime*.10)+.12*sin(p.x*23.-p.y*8.-mistTime*.07);float nearFade=smoothstep(2.,7.,mistDistance);float farFade=1.-smoothstep(45.,72.,mistDistance);gl_FragColor=vec4(mistColor,mistOpacity*edge*height*drift*nearFade*farFade);
+   #include <tonemapping_fragment>
    #include <colorspace_fragment>
   }`});
  const mist=new T.InstancedMesh(geometry,material,anchors.length);mist.name='FX_Forest_GroundMist_A';mist.renderOrder=-2;

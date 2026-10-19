@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 
 // Root shoulders stay wholly inside permanent tree colliders. They are scenery,
-// not walkable slopes: the shared walking floor and every collision remain flat.
+// not separate walkable platforms, and share the underlying rendered terrain.
 export function installForestFloorRelief(world,mapId){
  const region=world.regions?.find(r=>r.id==='forest'),ground=world.ground,params=ground?.geometry.parameters;
  if(mapId!=='forest'&&!(mapId==='confluence'&&region)||!params?.widthSegments||!ground.material?.isMeshStandardMaterial)return null;
@@ -24,10 +24,10 @@ export function installForestFloorRelief(world,mapId){
  const sides=16,rings=6;
  for(const o of sources.slice(0,32)){
   const phase=o.x*.37+o.z*.61,height=.12+(.5+.5*Math.sin(phase*1.7))*.10,start=position.length/3,cx=o.x+Math.cos(phase)*o.r*.022,cz=o.z+Math.sin(phase)*o.r*.022;
-  vertex(cx,height,cz);
+  vertex(cx,(world.groundHeightAt?.(cx,cz)||0)+height,cz);
   for(let ring=1;ring<=rings;ring++)for(let side=0;side<sides;side++){
    const t=ring/rings,a=side*Math.PI*2/sides,reach=o.r*t*(.87+.045*Math.sin(a*3+phase)+.015*Math.cos(a*5-phase));
-   const x=cx+Math.cos(a)*reach,z=cz+Math.sin(a)*reach*(.93+.025*Math.sin(phase)),y=floorY+(height-floorY)*(1-t*t)**2-.008*t**8;
+   const x=cx+Math.cos(a)*reach,z=cz+Math.sin(a)*reach*(.93+.025*Math.sin(phase)),y=(world.groundHeightAt?.(x,z)||0)+floorY+(height-floorY)*(1-t*t)**2-.008*t**8;
    vertex(x,y,z);
    const current=start+1+(ring-1)*sides+side,next=start+1+(ring-1)*sides+(side+1)%sides;
    if(ring===1)indices.push(start,next,current);

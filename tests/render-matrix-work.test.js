@@ -74,7 +74,8 @@ test('preview retains fresh camera, fill and pet transforms with one full-scene 
    preview.render(scene,hero,pet);hero.position.x+=.3;preview.needsFit=true;preview.render(scene,hero,pet);
    assert.equal(scene.matrixWorldAutoUpdate,true);assert.equal(preview.fill.parent,null);assert.equal(scene.fog.density,.0078);assert(pet.position.equals(petPosition));assert.equal(pet.visible,true);assert.equal(material.clippingPlanes,null);
    assert.notDeepEqual(draws[0].fill,draws[1].fill,'new fill position was not uploaded');assert.notDeepEqual(draws[0].hero,draws[1].hero);
-   assert(draws.every(d=>d.clipped===(portrait?4:0)&&d.visible===!portrait));
+   // Both framings share four preview-side planes; only the portrait hides the pet.
+   assert(draws.every(d=>d.clipped===4&&d.visible===!portrait));
    return{calls:fixture.calls,draws};
   }finally{geometry.dispose();material.dispose();}
  }

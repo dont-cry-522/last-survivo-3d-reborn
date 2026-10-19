@@ -1,6 +1,16 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{groundWindTime}from'./adventure-ground-detail.js?v=216';
+import{groundWindTime}from'./adventure-ground-detail.js?v=227';
+
+// Match the far coastal shoulders to the real bridge-side reveal. These are
+// distant, out-of-bounds landforms; playable banks are shaped by the terrain
+// field using the same journey view, not by adding collision-less near rocks.
+export function harborHeadlandSilhouette(world){
+ const journey=world.biomeJourney?.biome==='coast'?world.biomeJourney:world.biomeJourneys?.find(p=>p.biome==='coast');
+ const view=journey?.landmarks?.find(p=>p.kind==='opening');if(!view)return null;
+ const reach=world.half*1.5,angle=Math.atan2(view.x+Math.sin(view.yaw)*reach,view.z+Math.cos(view.yaw)*reach);
+ return[{center:angle-.28,width:.61,height:1.0},{center:angle+.56,width:.51,height:.76}];
+}
 
 // A real basin outside the walking boundary, aligned with the existing lagoon.
 // No pond/collision records are added: this water is background scenery only.

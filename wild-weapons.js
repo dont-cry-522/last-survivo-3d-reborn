@@ -1,4 +1,4 @@
-import{segmentBodyEntry,segmentGroundEntry}from'./adventure-combat.js?v=216';
+import{segmentBodyEntry,segmentGroundEntry}from'./adventure-combat.js?v=227';
 
 export const ARCSTAFF={rate:4,damage:9,range:9.5,radius:.09,jump:3,chainScale:.6,focusWindow:.55,focusTime:1.25,focusCap:[0,.55,.80,1.05],brineWeight:.5};
 export const BRIARPOT={rate:.85,damage:44,range:10,radius:2.1,gravity:12,arm:.55,max:6,slow:.7,staggerCooldown:2};

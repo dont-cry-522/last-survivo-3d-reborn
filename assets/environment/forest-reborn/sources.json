@@ -1,0 +1,123 @@
+{
+  "license": "CC0-1.0",
+  "licenseURL": "https://polyhaven.com/license",
+  "legalcode": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "verifiedOn": "2026-10-18",
+  "licenseEvidenceSHA256": "46158a6b319ae8ef55acd18bd96d986c9261fb0cc8086124e97bcbefe779a623",
+  "files": [
+    {
+      "kind": "mossRock",
+      "slot": "color",
+      "file": "mossRock-color-1k.jpg",
+      "bytes": 362863,
+      "sha256": "dc7c4441997c13162393d0f4803f341f608640ab838f29b4bdff59e01bc819c1",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "aerial_rocks_02",
+      "sourcePage": "https://polyhaven.com/a/aerial_rocks_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_diff_1k.jpg",
+      "sourceBytes": 785923,
+      "sourceMD5": "b5795e9b9e43d718ace73448c97d57ab",
+      "sourceSHA256": "708373b2af7fd07ac8de1500556006aaf904c41a99985a849cacc78874f38eac",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    },
+    {
+      "kind": "mossRock",
+      "slot": "normal",
+      "file": "mossRock-normal-1k.jpg",
+      "bytes": 1013210,
+      "sha256": "d231c003d9ebb86ecca116c72e51d481e9342a8e4575fe3fa43ed87cda5d0e43",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "aerial_rocks_02",
+      "sourcePage": "https://polyhaven.com/a/aerial_rocks_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_nor_gl_1k.jpg",
+      "sourceBytes": 1177932,
+      "sourceMD5": "66fcad0f6a7c2ac99bc978685195420b",
+      "sourceSHA256": "6df5263ba6c30e9343ee324d87078b926024d710b0b349025083600369df8d25",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    },
+    {
+      "kind": "mossRock",
+      "slot": "roughness",
+      "file": "mossRock-roughness-1k.jpg",
+      "bytes": 226439,
+      "sha256": "bcf4eff7a26cddfdabef0d5938ef8fc352110518961db47eeaf789700efc198a",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "aerial_rocks_02",
+      "sourcePage": "https://polyhaven.com/a/aerial_rocks_02",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_rocks_02/aerial_rocks_02_rough_1k.jpg",
+      "sourceBytes": 381745,
+      "sourceMD5": "327899ac752a79de880fc00510b6a304",
+      "sourceSHA256": "07e842a9c9f128fb2afc2655cb09db914b5ec7c7657dcff4dcfce9c487ee0aae",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    },
+    {
+      "kind": "bark",
+      "slot": "color",
+      "file": "bark-color-1k.jpg",
+      "bytes": 377508,
+      "sha256": "b9b6ddec2249cba1a541f0f42da577119c8e17576990371dd643d207000583aa",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "bark_brown_01",
+      "sourcePage": "https://polyhaven.com/a/bark_brown_01",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_01/bark_brown_01_diff_1k.jpg",
+      "sourceBytes": 729893,
+      "sourceMD5": "b6d5dcde10b7cd1b36d70cd33a34724a",
+      "sourceSHA256": "4213441aebcb72b9911f5a860e9ce74a61a8f6ce3b9c23d1f204173e7e7f6066",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    },
+    {
+      "kind": "bark",
+      "slot": "normal",
+      "file": "bark-normal-1k.jpg",
+      "bytes": 1070640,
+      "sha256": "1e11c56937b127255c2c1fbaaa3ff5885f95835e508897d731b0fca36bb59c1b",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "bark_brown_01",
+      "sourcePage": "https://polyhaven.com/a/bark_brown_01",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_01/bark_brown_01_nor_gl_1k.jpg",
+      "sourceBytes": 1226534,
+      "sourceMD5": "8ae9907be7ce562c11aab619615d30d4",
+      "sourceSHA256": "9d1537b3429579436a62890bb7c5050a0172a15ce768787eacde81c5ccefc9cc",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    },
+    {
+      "kind": "bark",
+      "slot": "roughness",
+      "file": "bark-roughness-1k.jpg",
+      "bytes": 112555,
+      "sha256": "4f4ace375c06110574316c366d55d061a1320988cc34da6bd8d6caff3fca4340",
+      "width": 1024,
+      "height": 1024,
+      "sourceId": "bark_brown_01",
+      "sourcePage": "https://polyhaven.com/a/bark_brown_01",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourceURL": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/bark_brown_01/bark_brown_01_rough_1k.jpg",
+      "sourceBytes": 201307,
+      "sourceMD5": "b7a1aa42ecf0b30aba7f587769d13910",
+      "sourceSHA256": "4e7f62508cf77faebfeee15ffb571ff02c45c18d5174aa19fcb8b98506359c5c",
+      "conversion": "JPEG recompression, no colour adjustment; normal full-chroma quality 92; albedo/roughness quality 88"
+    }
+  ]
+}

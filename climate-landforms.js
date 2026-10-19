@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {batchedSurfaceMaterial} from './environment-props.js?v=216';
-import {segmentDistance} from './rules.js?v=216';
+import {batchedSurfaceMaterial} from './environment-props.js?v=227';
+import {segmentDistance} from './rules.js?v=227';
 
 const BIOMES=['snow','ash','sand'],materials=new Map(),fade=T.MathUtils.smoothstep;
 const palette={snow:[0x647e88,0x90a6ac,0xd6e4e5],ash:[0x383b3b,0x56504a,0x777065],sand:[0x9d8059,0xbd9e6b,0xd1b887]};
@@ -10,10 +10,10 @@ function material(id){
  return materials.get(id);
 }
 const distanceBox=(q,x,z)=>{const dx=x-q.x,dz=z-q.z,u=q.c*dx-q.s*dz,v=q.s*dx+q.c*dz;return Math.hypot(Math.max(0,Math.abs(u)-q.hx),Math.max(0,Math.abs(v)-q.hz));};
-function reservations(world){
+function reservations(world,ignored=new Set()){
  const circles=[{...world.spawn,r:7},...(world.regions||[]).map(p=>({x:p.x,z:p.z,r:7})),...(world.sites||[]).flatMap(s=>[{...s,r:s.event?9:5},...(s.nodes||[]).map(n=>({...n,r:3}))]),
   ...(world.discoveries||[]).flatMap(s=>[{...s,r:4.2},...(s.nodes||[]).map(n=>({...n,r:2.5}))]),...(world.roaming||[]).map(s=>({...s,r:s.kind==='camp'?7:4.5})),
-  ...(world.obstacles||[]).map(o=>({...o,r:o.r+.6})),...(world.patches||[]).filter(p=>p.kind==='vent').map(p=>({...p,r:p.r+2})),
+  ...(world.obstacles||[]).filter(o=>!ignored.has(o)).map(o=>({...o,r:o.r+.6})),...(world.patches||[]).filter(p=>p.kind==='vent').map(p=>({...p,r:p.r+2})),
   ...[...(world.districts||[]),...(world.regions||[]).flatMap(r=>r.districts||[])].map(p=>({...p,r:11}))];
  const boxes=[...(world.biomePlaces||[]).map(p=>({...p,hx:10,hz:10})),...(world.bridges||[]).map(p=>({...p,hx:p.width/2+2,hz:p.length/2+2})),...(world.fords||[]).map(p=>({...p,hx:p.half+2,hz:p.width/2+2}))].map(p=>({...p,c:Math.cos(p.angle||0),s:Math.sin(p.angle||0)}));
  const waters=[...(world.ponds||[]).map(p=>{const k=p.baseRx===undefined?1:1.19;return{...p,rx:(p.baseRx??p.rx)*k*1.25+1,rz:(p.baseRz??p.rz)*k*1.25+1};}),...(world.ice||[]).map(p=>({...p,rx:p.rx*1.16+1,rz:p.rz*1.16+1}))].map(p=>({...p,c:Math.cos(p.angle||0),s:Math.sin(p.angle||0)}));
@@ -47,11 +47,13 @@ function spans(p,scope,reserved){
  // Keep connected runs, not scattered little rocks left by all the exclusions.
  return result.filter((p,i,a)=>a[i-1]?.i===p.i-1||a[i+1]?.i===p.i+1);
 }
+const fractureRoof=[[0,.46],[.12,.86],[.22,.72],[.34,1.06],[.43,.94],[.57,.80],[.66,1.08],[.78,.75],[.89,.88],[1,.32]];
+function fractureHeight(t){for(let i=1;i<fractureRoof.length;i++)if(t<=fractureRoof[i][0]){const a=fractureRoof[i-1],b=fractureRoof[i];return T.MathUtils.lerp(a[1],b[1],(t-a[0])/(b[0]-a[0]));}return fractureRoof.at(-1)[1];}
 function ridgeGeometry(p,span){
  const positions=[],colors=[],indices=[],tone=palette[p.biome].map(c=>new T.Color(c)),segments=6;
  // Broad rock shoulders and offset strata, not a triangular tent section.
  // Sand uses upright masonry faces on a wider buried foundation instead.
- const section=p.biome==='sand'?[[-1,0],[-1,.18],[-.84,.19],[-.84,.91],[-.53,1],[.50,1],[.82,.92],[.85,.19],[1,.17],[1,0]]:
+ const section=p.kind==='journey-escarpment'?[[-1,0],[-.95,.08],[-.64,.12],[-.70,.39],[-.46,.43],[-.50,.71],[-.16,.76],[-.28,1],[.22,.95],[.36,.76],[.31,.60],[.65,.55],[.58,.28],[.94,.18],[1,0]]:p.biome==='sand'?[[-1,0],[-1,.18],[-.84,.19],[-.84,.91],[-.53,1],[.50,1],[.82,.92],[.85,.19],[1,.17],[1,0]]:
   [[-1,0],[-.97,.17],[-.80,.20],[-.84,.47],[-.65,.51],[-.67,.73],[-.44,.86],[-.26,1],[.21,.97],[.43,.84],[.49,.67],[.75,.63],[.80,.29],[.98,.18],[1,0]];
  const cols=section.length,steps=p.biome==='sand'?10:14,step=p.length/steps;
  let runStart=span.i,runEnd=span.i;while(p.parts.some(q=>q.i===runStart-1))runStart--;while(p.parts.some(q=>q.i===runEnd+1))runEnd++;
@@ -61,7 +63,7 @@ function ridgeGeometry(p,span){
   // Each actual break subsides into a low apron. Safety cuts no longer leave a
   // repeated triangular vertical end wall or sharp sawtooth at every gap.
   const end=.13+.87*fade(edge,0,p.biome==='sand'?1.1:2.1),taper=.67+.33*Math.sin(Math.PI*t);
-  const h=p.height*taper*(.91+.09*Math.cos(t*13+p.index))*end;
+  const h=p.height*(p.kind==='journey-escarpment'?fractureHeight(t):taper*(.91+.09*Math.cos(t*13+p.index)))*end;
   for(let col=0;col<cols;col++){
    const [u,crest]=section[col],shift=p.biome==='sand'?0:.065*Math.sin(t*17+col*.41)*(1-Math.abs(u));
    const across=(u+shift)*p.width/2*(.93+.07*Math.cos(t*19));
@@ -93,6 +95,55 @@ function smoothJoinedNormals(geometry){
  geometry.setAttribute('normal',new T.BufferAttribute(normal,3));
 }
 const duneWeight=(p,x,z)=>{const dx=x-p.x,dz=z-p.z,u=(Math.cos(p.angle)*dx+Math.sin(p.angle)*dz)/(p.length/2),v=(-Math.sin(p.angle)*dx+Math.cos(p.angle)*dz)/(p.width/2);if(Math.abs(u)>=1||Math.abs(v)>=1)return 0;return (1-u*u)**2*(1-v*v)**2*p.height;};
+
+// One real, accessible fracture frames the ash journey's reveal. Reuse the
+// existing layered rock topology and stone shader; replace only ordinary
+// scatter slots inside its footprint, never an objective or interactive prop.
+export function installJourneyEscarpment(world,mapId){
+ const steps=installJourneyEscarpmentSteps(world,mapId);let step;do{step=steps.next();}while(!step.done);return step.value;
+}
+export function* installJourneyEscarpmentSteps(world,mapId){
+ if(world.journeyEscarpment)return world.journeyEscarpment;
+ if(mapId!=='ash'&&mapId!=='confluence')return null;
+ const journey=(world.biomeJourneys||[world.biomeJourney]).find(j=>j?.biome==='ash');if(!journey)return null;
+ const scope=world.regions?.find(r=>r.id==='ash')||{},node=journey.landmarks.find(p=>p.id==='opening'),replaceable=new Set();if(!node)return null;
+ for(const o of world.obstacles){
+  const root=o.mesh;
+  if(!root?.visible||o.r<.6||o.r>.81||o.tactic||o.place||o.sceneryHeight!==undefined||world.breakables?.includes(o)||scope.contains&&!scope.contains(o.x,o.z))continue;
+  if(root.parent!==world.group&&!(scope.group&&root.parent===scope.group))continue;
+  if(['treeBiome','district','fragile','explorationLandmark','forestVistaTrunk'].some(k=>root.userData[k])||root.children.length>2||!root.children.every(c=>c.isMesh))continue;
+  if(root.children.some(c=>/Cylinder|Box/.test(c.geometry.type)))continue;
+  replaceable.add(o);
+ }
+ const reserved=reservations(world,replaceable),candidates=[];
+ for(const route of [...(world.explorationRoutes||[]),journey])for(let i=1;i<route.points.length;i++)reserved.paths.push({a:route.points[i-1],b:route.points[i],width:3});
+ for(const node of journey.landmarks)reserved.circles.push({...node,r:4});
+ // The ridge lies across the sightline, off the walking lane. A deliberate
+ // central breach and tapered ends preserve lateral escape routes.
+ let checked=0;
+ for(const radius of[20,27,34,42])for(const offset of[-.55,-.3,0,.3,.55])for(const turn of[-.25,0,.25]){
+  if(++checked%24===0)yield '构建灰谷断层';
+  const a=node.yaw+offset,p={kind:'journey-escarpment',biome:'ash',index:2,x:node.x+Math.sin(a)*radius,z:node.z+Math.cos(a)*radius,angle:-node.yaw+turn,length:28,width:3.6,height:6.7};
+  p.parts=spans(p,scope,reserved);if(p.parts.length<5)continue;
+  p.score=p.parts.length*4-radius*.09-Math.abs(offset)*4-Math.abs(turn);candidates.push(p);
+ }
+ candidates.sort((a,b)=>b.score-a.score);const p=candidates[0];if(!p)return null;
+ const group=new T.Group();group.name='SM_Landform_AshEscarpment_A';const geometries=[],solids=[];let first=0;
+ for(const span of p.parts){
+  const geometry=ridgeGeometry(p,span),vertices=geometry.attributes.position;let r=0;
+  for(let i=0;i<vertices.count;i++)r=Math.max(r,Math.hypot(vertices.getX(i)-span.x,vertices.getZ(i)-span.z));
+  const marker=new T.Object3D();marker.name='COL_Landform_AshEscarpment';marker.position.set(span.x,0,span.z);group.add(marker);
+  solids.push({x:span.x,z:span.z,r,height:geometry.boundingBox.max.y,sceneryHeight:geometry.boundingBox.max.y,mesh:marker,biome:'ash',climateLandform:true,climateSpan:{first,count:vertices.count}});first+=vertices.count;geometries.push(geometry);
+ }
+ const retired=new Set([...replaceable].filter(o=>solids.some(s=>Math.hypot(s.x-o.x,s.z-o.z)<s.r+o.r+.35)));
+ for(const o of retired)o.mesh.visible=false; // retain owned geometry for normal world cleanup
+ world.obstacles=world.obstacles.filter(o=>!retired.has(o));if(scope.obstacles)scope.obstacles=scope.obstacles.filter(o=>!retired.has(o));
+ const geometry=mergeGeometries(geometries);for(const part of geometries)part.dispose();smoothJoinedNormals(geometry);geometry.computeBoundingSphere();
+ const mesh=new T.Mesh(geometry,material('ash'));mesh.name='SM_Rock_AshFracture_A';mesh.userData.ownedGeometry=true;mesh.castShadow=mesh.receiveShadow=true;group.add(mesh);world.group.add(group);
+ world.obstacles.push(...solids);if(scope.obstacles)scope.obstacles.push(...solids);
+ const record={...p,solids,mesh};delete record.parts;
+ return world.journeyEscarpment={group,records:[record],retired:[...retired],draws:1,triangles:geometry.index.count/3};
+}
 
 // Build-time only. Three fixed shared materials; each world owns its merged
 // geometry. No scene instance is cached, animated, or searched during combat.

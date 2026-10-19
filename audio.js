@@ -1,10 +1,10 @@
-import{BIOME_THEMES,instrumentSample,scoreBiome,biomeThreat}from'./biome-music.js?v=216';
-import{companionSample}from'./companion-audio.js?v=216';
-import{weaponSample,weaponTakeCount}from'./weapon-audio.js?v=216';
-import{enemySurface}from'./enemy-surfaces.js?v=216';
-import{creatureSample,creatureFoleySample,creatureSpatial,ENEMY_VOICES,CREATURE_FOLEY}from'./enemy-audio.js?v=216';
-import{RecordedMusic}from'./recorded-music.js?v=216';
-import{RecordedEffects}from'./recorded-effects.js?v=216';
+import{BIOME_THEMES,instrumentSample,scoreBiome,biomeThreat}from'./biome-music.js?v=227';
+import{companionSample}from'./companion-audio.js?v=227';
+import{weaponSample,weaponTakeCount}from'./weapon-audio.js?v=227';
+import{enemySurface}from'./enemy-surfaces.js?v=227';
+import{creatureSample,creatureFoleySample,creatureSpatial,ENEMY_VOICES,CREATURE_FOLEY}from'./enemy-audio.js?v=227';
+import{RecordedMusic}from'./recorded-music.js?v=227';
+import{RecordedEffects}from'./recorded-effects.js?v=227';
 // Local licensed recordings, with the original procedural score as a loading/offline fallback.
 const midi=n=>440*2**((n-69)/12);
 // Sound preferences only: attack timing, damage and music keep their existing behavior.
@@ -91,6 +91,14 @@ export class GameAudio{
     source.musicEnvelope=gain;this.nodes++;this.musicSources.add(source);source.onended=()=>{source.disconnect();gain.disconnect();p.disconnect();this.musicSources.delete(source);this.nodes--;};source.start(at);source.stop(end+.02);
   }
   stopCreatures(){for(const s of this.creatureSources)s.stop();}
+  creatureBuffer(kind,event,take=0,material=null){
+    const foley=this.effectProfile.material&&Object.hasOwn(CREATURE_FOLEY,kind),recorded=foley&&!!material?.buffer?.getChannelData;
+    const cacheKey=foley?'foley:'+kind+':'+event+':'+(take%2)+':'+(recorded?'recorded':'generated'):kind+':'+event;
+    if(recorded)for(let i=0;i<2;i++)this.creatureBuffers.delete('foley:'+kind+':'+event+':'+i+':generated');
+    let buffer=(!foley&&material?.buffer)||this.creatureBuffers.get(cacheKey);
+    if(!buffer){const samples=foley?creatureFoleySample(kind,event,this.ctx.sampleRate,take,recorded?material:null):creatureSample(kind,event,this.ctx.sampleRate);if(!samples)return null;buffer=this.ctx.createBuffer(1,samples.length,this.ctx.sampleRate);buffer.copyToChannel(samples,0);this.creatureBuffers.set(cacheKey,buffer);}
+    return buffer;
+  }
   creature(kind,event,dx=0,dz=0){
     if(!ENEMY_VOICES[kind]||!this.available())return false;
     const {gain,pan}=creatureSpatial(event,dx,dz),quiet=event==='step'||event==='hurt',limit=quiet?4:10;
@@ -100,11 +108,7 @@ export class GameAudio{
     if((this.cooldowns.get(key)||0)>t||(this.cooldowns.get('creature-'+group)||0)>t)return false;
     const materialKey='material:'+ENEMY_VOICES[kind].texture+':impact',take=this.weaponTakes.get(key)||0;
     const material=['impact','hurt'].includes(event)?this.materialCue(materialKey,take):null;
-    const foley=this.effectProfile.material&&Object.hasOwn(CREATURE_FOLEY,kind),recorded=foley&&!!material?.buffer?.getChannelData;
-    const cacheKey=foley?'foley:'+kind+':'+event+':'+(take%2)+':'+(recorded?'recorded':'generated'):kind+':'+event;
-    if(recorded)for(let i=0;i<2;i++)this.creatureBuffers.delete('foley:'+kind+':'+event+':'+i+':generated');
-    let buffer=(!foley&&material?.buffer)||this.creatureBuffers.get(cacheKey);
-    if(!buffer){const samples=foley?creatureFoleySample(kind,event,this.ctx.sampleRate,take,recorded?material:null):creatureSample(kind,event,this.ctx.sampleRate);if(!samples)return false;buffer=this.ctx.createBuffer(1,samples.length,this.ctx.sampleRate);buffer.copyToChannel(samples,0);this.creatureBuffers.set(cacheKey,buffer);}
+    const foley=this.effectProfile.material&&Object.hasOwn(CREATURE_FOLEY,kind),buffer=this.creatureBuffer(kind,event,take,material);if(!buffer)return false;
     this.cooldowns.set(key,t+(quiet?.3:.14));this.cooldowns.set('creature-'+group,t+interval);
     if(foley)this.weaponTakes.set(key,(take+1)%2);else if(material)this.weaponTakes.set(key,(take+1)%this.materialEffects?.count(materialKey));
     const source=this.ctx.createBufferSource(),volume=this.ctx.createGain(),panner=this.ctx.createStereoPanner();
@@ -113,14 +117,64 @@ export class GameAudio{
     source.onended=()=>{source.disconnect();volume.disconnect();panner.disconnect();this.creatureSources.delete(source);this.nodes--;};if(material&&!foley)source.start(0,material.offset,material.duration);else source.start();return true;
   }
   tone(f,d=.12,v=.06,type='sine',end=null){this.voice(f,d,v,type,end);}
+  weaponBuffer(id,event,variant=0,take=0){
+    const key=id+':'+event+':'+variant+':'+take;let buffer=this.weaponBuffers.get(key);
+    if(!buffer){const samples=id==='companion'?companionSample(event,this.ctx.sampleRate):id==='material:wood'||id==='material:stone'?creatureSample(id==='material:wood'?'shaman':'golem','impact',this.ctx.sampleRate):weaponSample(id,event,this.ctx.sampleRate,variant,take);if(!samples)return null;buffer=this.ctx.createBuffer(1,samples.length,this.ctx.sampleRate);buffer.copyToChannel(samples,0);this.weaponBuffers.set(key,buffer);}
+    return buffer;
+  }
+  async prepareWeapon(id,{yieldWork=()=>new Promise(resolve=>setTimeout(resolve,0)),report=()=>{}}={}){
+    if(!this.ready||!this.ctx)return false;
+    // Recordings retain priority. Offline/legacy fallbacks use the same buffers
+    // as playback, without starting sources or advancing takes and cooldowns.
+    if(this.effectProfile.material&&!this.materialEffects?.buffer&&!this.materialEffects?.error)await this.materialEffects?.prepare?.();
+    const melee=id==='harpoon'||id==='shadowblade',herbal=id==='mycelialwhip'||id==='venomfan';
+    const variants={shot:melee?3:herbal?2:1,mechanism:id==='shotgun'||id==='crossbow'?2:1,impact:melee?3:2};
+    if(id==='miasmalantern')variants.charge=1;
+    if(id==='sporelantern')Object.assign(variants,{move:1,burst:1,shield:1});
+    const takes=weaponTakeCount(id),total=Object.values(variants).reduce((n,count)=>n+count,0)*takes;let done=0;
+    report(0,total);
+    for(const [event,count]of Object.entries(variants))for(let variant=0;variant<count;variant++)for(let take=0;take<takes;take++){
+      const key=id+':'+event+':'+variant,cueKey=this.materialEffects?.count(key)?key:id+':'+event;
+      if(id==='boomerang'||!this.materialCue(cueKey,take)?.buffer){
+        const before=this.weaponBuffers.size;this.weaponBuffer(id,event,variant,take);
+        report(++done,total);if(this.weaponBuffers.size!==before)await yieldWork();
+      }else report(++done,total);
+    }
+    return true;
+  }
+  async prepareEncounters(kinds,{voiceKinds=kinds,yieldWork=()=>new Promise(resolve=>setTimeout(resolve,0)),report=()=>{}}={}){
+    if(!this.ready||!this.ctx)return false;
+    if(this.effectProfile.material&&!this.materialEffects?.buffer&&!this.materialEffects?.error)await this.materialEffects?.prepare?.();
+    // Only this map's existing roster. Reuse playback's exact cached samples;
+    // no voices, cooldowns, random choices or combat clocks advance in loading.
+    const roster=[...new Set(voiceKinds)].filter(kind=>Object.hasOwn(ENEMY_VOICES,kind));
+    // Flying enemies borrow a ground voice but retain their own body surface.
+    const surfaces=[...new Set(kinds.map(enemySurface))],events=['step','wind','attack','impact','hurt','death'];
+    const total=roster.reduce((n,kind)=>n+events.length*(this.effectProfile.material&&Object.hasOwn(CREATURE_FOLEY,kind)?2:1),0)+surfaces.length+2;let done=0;
+    report(0,total);
+    for(const kind of roster)for(const event of events){
+      const takes=this.effectProfile.material&&Object.hasOwn(CREATURE_FOLEY,kind)?2:1;
+      for(let take=0;take<takes;take++){
+        const before=this.creatureBuffers.size,material=['impact','hurt'].includes(event)?this.materialCue('material:'+ENEMY_VOICES[kind].texture+':impact',take):null;
+        this.creatureBuffer(kind,event,take,material);report(++done,total);
+        if(this.creatureBuffers.size!==before)await yieldWork();
+      }
+    }
+    for(const id of [...surfaces.map(surface=>'surface:'+surface),'material:wood','material:stone']){
+      if(id.startsWith('surface:')||!this.materialCue(id+':impact')?.buffer){
+        const before=this.weaponBuffers.size;this.weaponBuffer(id,'impact');report(++done,total);
+        if(this.weaponBuffers.size!==before)await yieldWork();
+      }else report(++done,total);
+    }
+    return true;
+  }
   weapon(id,event,variant=0,volume=1,pan=0,maxDuration=null){
     // Contact tails cannot occupy the final slots reserved for a fresh attack.
     const limit=event==='impact'?10:event==='mechanism'?12:16;
     if(!this.available()||this.weaponSources.size>=limit)return false;
-    const takeKey=id+':'+event+':'+variant,take=this.weaponTakes.get(takeKey)||0,key=takeKey+':'+take;
+    const takeKey=id+':'+event+':'+variant,take=this.weaponTakes.get(takeKey)||0;
     const cueKey=this.materialEffects?.count(takeKey)?takeKey:id+':'+event,material=id==='boomerang'||id.startsWith('surface:')?null:this.materialCue(cueKey,take);
-    let buffer=material?.buffer||this.weaponBuffers.get(key);
-    if(!buffer){const samples=id==='companion'?companionSample(event,this.ctx.sampleRate):id==='material:wood'||id==='material:stone'?creatureSample(id==='material:wood'?'shaman':'golem','impact',this.ctx.sampleRate):weaponSample(id,event,this.ctx.sampleRate,variant,take);if(!samples)return false;buffer=this.ctx.createBuffer(1,samples.length,this.ctx.sampleRate);buffer.copyToChannel(samples,0);this.weaponBuffers.set(key,buffer);}
+    const buffer=material?.buffer||this.weaponBuffer(id,event,variant,take);if(!buffer)return false;
     this.weaponTakes.set(takeKey,(take+1)%(material?this.materialEffects?.count(cueKey):weaponTakeCount(id)));
     const source=this.ctx.createBufferSource(),gain=this.ctx.createGain(),panner=this.ctx.createStereoPanner();source.buffer=buffer;source.playbackRate.value=material?1:.975+Math.random()*.05;gain.gain.value=(event==='impact'&&variant?1.12:1)*volume*(this.effectProfile[event]??1)*(material?.gain??1)*(.97+Math.random()*.06);panner.pan.value=pan;
     const duration=material?Math.min(material.duration,maxDuration??Infinity):Math.min(buffer.duration||Infinity,maxDuration??Infinity);

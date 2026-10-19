@@ -4,6 +4,7 @@ import * as T from './vendor/three.module.js';
 export class HeroPreview {
  constructor(renderer,element){
   this.renderer=renderer;this.element=element;
+  this.compileScene=new T.Scene();
   this.camera=new T.PerspectiveCamera(35,1,.1,70);
   this.fill=new T.PointLight(0xe7edf1,3,4.5,2);
   this.edge=new T.PointLight(0xd6e4f1,2.4,4,2);
@@ -17,6 +18,40 @@ export class HeroPreview {
   element.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home'].includes(e.key))return;e.preventDefault();this.yaw=e.key==='Home'?0:this.yaw+(e.key==='ArrowLeft'?-.18:.18);this.needsFit=true;});
  }
  setPortrait(value){this.portrait=value;this.full.setAttribute('aria-pressed',String(!value));this.detail.setAttribute('aria-pressed',String(value));}
+ async compileSceneAsync(scene,hero,pet){
+  await this.render(scene,hero,pet,(scene,camera)=>{
+   const r=this.renderer,autoClear=r.autoClear;
+   const actors=[hero,pet].filter(o=>o?.parent).map(object=>({object,parent:object.parent,index:object.parent.children.indexOf(object)}));
+   try{
+    // Environment materials have no local preview planes. Compiling the whole
+    // scene with the last actor's four-plane state creates unused programs and
+    // makes the first real forest draw compile again synchronously.
+    for(const {object}of actors)object.removeFromParent();
+    r.autoClear=false;r.render(this.compileScene,camera);
+    return r.compileAsync(scene,camera);
+   }finally{
+    r.autoClear=autoClear;
+    for(const {object,parent,index}of actors){parent.add(object);parent.children.splice(index,0,parent.children.pop());}
+   }
+  });
+  await this.compileAsync(scene,hero,pet);
+  if(pet)await this.compileAsync(scene,hero,pet,pet);
+ }
+ compileAsync(scene,hero,pet,subject=hero){
+  return this.render(scene,hero,pet,(scene,camera)=>{
+   const r=this.renderer,planes=r.clippingPlanes,autoClear=r.autoClear;
+   try{
+    // compileAsync reads the last render's clipping counts. An empty draw sets
+    // the same four union planes as the portrait, without drawing or clearing.
+    r.clippingPlanes=[...planes,...this.clipFrustum.planes.slice(0,4)];
+    r.autoClear=false;r.render(this.compileScene,camera);
+    // A subject may contain several pending heroes. Plane positions are uniforms;
+    // all portrait materials need the same four-plane variant primed above.
+    // The target scene supplies the real lights, fog and environment.
+    return r.compileAsync(subject,camera,scene);
+   }finally{r.clippingPlanes=planes;r.autoClear=autoClear;}
+  });
+ }
  render(scene,hero,pet,draw=(scene,camera)=>this.renderer.render(scene,camera)){
   const rect=this.element.getBoundingClientRect(),width=innerWidth,height=innerHeight;
   if(rect.width<=0||rect.height<=0)return;
@@ -44,11 +79,13 @@ export class HeroPreview {
     distance=Math.max(distance,Math.abs(p.dot(right))*1.14/tanH+depth,Math.abs(p.dot(up))*1.14/tanV+depth);
    }
    this.camera.position.copy(center).addScaledVector(direction,distance);
-   if(this.portrait){
+   {
+    // Both views share this four-plane program. Fullbody framing already has
+    // 14% breathing room, so this only bounds the actor to its preview area.
     this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld(true);this.clipFrustum.setFromProjectionMatrix(new T.Matrix4().multiplyMatrices(this.camera.projectionMatrix,this.camera.matrixWorldInverse));
     const planes=this.clipFrustum.planes.slice(0,4);
-    hero.traverse(o=>{if(!o.isMesh)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){if(!clippedMaterials.has(m))clippedMaterials.set(m,m.clippingPlanes);m.clippingPlanes=planes;}});
-    if(pet)pet.visible=false;
+    for(const root of [hero,pet])root?.traverse(o=>{if(!o.isMesh)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){if(!clippedMaterials.has(m))clippedMaterials.set(m,m.clippingPlanes);m.clippingPlanes=planes;}});
+    if(this.portrait&&pet)pet.visible=false;
    }
    // Extend the portrait's view over the whole page: one continuous landscape,
    // with the hero still centered in the reserved area (including mobile scroll).

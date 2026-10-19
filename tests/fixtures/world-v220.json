@@ -1,0 +1,98 @@
+{
+  "forest:7": {
+    "gameplay": "d8c9a126a1ef7940930c6920f060803739af3dae44d4a380620f534bff515f0a",
+    "scene": "896dfaeb8b27946b5708626acd34d03922dcf194c182888073798e59883b1cc0",
+    "passability": "bb959d46f70b6d457bec59cc8eee5b1c63a3ea8611854d10f714a0c5960969fb",
+    "nodes": 673,
+    "obstacles": 172,
+    "foliage": 166
+  },
+  "forest:522": {
+    "gameplay": "b7a4535e243f4ec77cee4f9d18c0ae3f2caa7d520938d6fe4f704e66c81223b6",
+    "scene": "48e41c04d4983ff062411dc483009bc5cfd416818de9215c81c48535b9b4e89f",
+    "passability": "eb02bf6e17a9881c8f02fb76cacc525b73ff10f4ede6554e81d94e503a4766dc",
+    "nodes": 718,
+    "obstacles": 187,
+    "foliage": 181
+  },
+  "snow:7": {
+    "gameplay": "492c075fcccccdf26beb484561ac737aa57059ab7242482e8138913cd70fda8b",
+    "scene": "8a93eadd3e954fa015aaf41c9eadc73d5625a0ed38d14886a2af363a209e48eb",
+    "passability": "b5ba742e24d1444a92300e4502a4a5b75be8b314305892f62d2f76e9fe4fb446",
+    "nodes": 687,
+    "obstacles": 168,
+    "foliage": 168
+  },
+  "snow:522": {
+    "gameplay": "d560bae469d91810c7d86e791a29236ae02a4f4f929c9908291123785643544b",
+    "scene": "aa2d8cb0133815260f1c4baa7955328056c2f3d962b9000d795c248574b75274",
+    "passability": "df9704bbc077d4222895e9880104b4d3b661667bc034b7d30b03ff1a44e706ea",
+    "nodes": 726,
+    "obstacles": 181,
+    "foliage": 181
+  },
+  "ash:7": {
+    "gameplay": "1fbc72684b77d2563d9236c76128e6557da6cd6dbf289352d39953c94f373822",
+    "scene": "8071747fffb48f21ff89f8b1599f8ffa31c7107e47f8bb0592b529df23f1a12a",
+    "passability": "64bb95dbd5a8243fa9e861b8ea7f53012caec8898fc49e7e977e873e65100e95",
+    "nodes": 889,
+    "obstacles": 245,
+    "foliage": 0
+  },
+  "ash:522": {
+    "gameplay": "59d1e984739ff138f2f245ea5a807f944358ea2af92e489aeaa898709b4c408a",
+    "scene": "35024402b1bb757d36c3935f452476e4612c1849d6590f58f69aee963e196369",
+    "passability": "29493f0c823fae0f3cc384ea1ac7ad12eb0abc1b908eacc37d7a9b5525b5c39a",
+    "nodes": 877,
+    "obstacles": 241,
+    "foliage": 0
+  },
+  "sand:7": {
+    "gameplay": "5b4c65f9316354afd3c06386440ad75e3f65b2c1efc861ee6927d3be9bda6844",
+    "scene": "7947893e820be8ffa47d8d80f177b82369a75a030459720c07b41d14f2db7257",
+    "passability": "2fbc5a8e6774c5e6513b57f6324f08e75eec206ca8efd0a97a1969407cb61a30",
+    "nodes": 1047,
+    "obstacles": 351,
+    "foliage": 0
+  },
+  "sand:522": {
+    "gameplay": "42be3466399f086aad60eb14632b53fa85b75ece2731af57a261061b68c9b9d0",
+    "scene": "fef6252a12eab4a83dc368b2826e533f5bc15882fc67a4fd34a42076cab40890",
+    "passability": "541fc295629fbc6d36ec70ba44c3caf3826ed8850e91043447390345c99b53ae",
+    "nodes": 1029,
+    "obstacles": 343,
+    "foliage": 0
+  },
+  "coast:7": {
+    "gameplay": "1d690d184e5558016da98da24c757e38938bc277daf0e92a4373588e1ac48dc2",
+    "scene": "3f18e8ff5e4345d7172217cd83c64f1a196937062863316fcfb5e3d8298912b2",
+    "passability": "29200eaec84bdbb063aa9b8a23e23c97fca9d6c1452a0299b2f4f7f0589590f4",
+    "nodes": 855,
+    "obstacles": 191,
+    "foliage": 0
+  },
+  "coast:522": {
+    "gameplay": "64300ebfbc78b39ee4b487afa4b708524f5a67df19e71ad06ecb476729ecdeb1",
+    "scene": "33c19401b83151210c1825d7421f5a4dbea34f7c0f659807590669fc1a293390",
+    "passability": "1c232bfa7b724c9668f254acaedb4d484156225fe4540d354c5329cd14dbbe38",
+    "nodes": 927,
+    "obstacles": 212,
+    "foliage": 0
+  },
+  "confluence:7": {
+    "gameplay": "1054af2941c52e05e56a66eca44720d3667293d64ab13c98076267d9f3a02702",
+    "scene": "84dc52c0ce80f9fd0afcd751702d6fabc4a7d1384db8d407da297ca6ca2a0947",
+    "passability": "6079d9ed18ff6402f837660641d520fb03e979fe3e82b58b57c9a210690dd7ae",
+    "nodes": 2321,
+    "obstacles": 573,
+    "foliage": 213
+  },
+  "confluence:522": {
+    "gameplay": "06db7d9510ade9a51b63aa6d9f9798d30c2d31392137f6792157cf6d2db5d504",
+    "scene": "d95a2538330107fdb6fcc3bc0e257c46c08bad49ea74d7b2a7b20e2dbd5da56a",
+    "passability": "c0225c9222e408b4b658d680a71314c61e30d2b309e0482f83ebed2faf3d87ed",
+    "nodes": 2289,
+    "obstacles": 556,
+    "foliage": 206
+  }
+}

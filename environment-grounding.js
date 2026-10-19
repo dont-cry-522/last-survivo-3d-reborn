@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {forestHabitatAt} from './forest-habitats.js?v=216';
-import {biomeWeights} from './confluence.js?v=216';
+import {forestHabitatAt} from './forest-habitats.js?v=227';
+import {biomeWeights} from './confluence.js?v=227';
 
 function bakeForestFloor(world,data,size,extent){
  const habitat=world.forestHabitats;if(!habitat)return 0;
@@ -9,6 +9,8 @@ function bakeForestFloor(world,data,size,extent){
  for(let i=1;i<(world.road?.length||0);i++)line(world.road[i-1],world.road[i],2.2);
  const approach=world.forestHabitats?.approach;
  for(let i=1;i<(approach?.points.length||0);i++)line(approach.points[i-1],approach.points[i],.72);
+ const journey=world.forestJourney;
+ for(let i=1;i<(journey?.points.length||0);i++)line(journey.points[i-1],journey.points[i],.82);
  for(const site of world.sites||[]){
   const trail=site.trail,p=trail?.geometry?.attributes.position;
   // Discovery still owns hidden guides. Do not bake unrevealed destinations
@@ -145,7 +147,7 @@ export function installEnvironmentGrounding(world){
  if(world.environmentGrounding&&!world.environmentGrounding.disposed)return world.environmentGrounding;
  // Ruin columns reuse tree colliders rather than place/cluster records. Their
  // permanent plinths need the same ground contact; falling timber still does not.
- const sources=(world.obstacles||[]).filter(o=>(o.place||o.environmentCluster||o.climateLandform||o.mesh?.userData.forestVistaTrunk&&!world.breakables?.includes(o))&&!o.tactic&&Number.isFinite(o.x+o.z+o.r)&&o.r>0);
+ const sources=(world.obstacles||[]).filter(o=>(o.place||o.environmentCluster||o.climateLandform||o.forestJourney||o.mesh?.userData.forestVistaTrunk&&!world.breakables?.includes(o))&&!o.tactic&&Number.isFinite(o.x+o.z+o.r)&&o.r>0);
  const plants=[];
  for(const group of [world.adventureGroundDetail,world.habitatDetail])for(const p of group?.userData.records||[]){
   if(plants.length>=4096)break;

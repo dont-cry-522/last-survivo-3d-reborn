@@ -1,0 +1,108 @@
+{
+  "retrieved": "2026-10-19",
+  "author": "Quaternius",
+  "license": "CC0-1.0",
+  "source": "https://quaternius.com/packs/stylizednaturemegakit.html",
+  "downloadPage": "https://quaternius.itch.io/stylized-nature-megakit",
+  "edition": "Standard FREE",
+  "archive": {
+    "name": "stylized-nature-megakit-standard.zip",
+    "bytes": 104088529,
+    "sha256": "298f6732b872e4cf7b30e6e7abf9641c7f6dc6b326df37ac089533ed7e3d58c9"
+  },
+  "generator": "scripts/prepare-forest-trees.py",
+  "blender": "4.5.9 LTS",
+  "adaptation": "Two original branching/crown meshes normalized to local forest height. Upper boughs and leaves widened together 20%; lower trunk constrained to existing collider; low crown gently lifted for eye clearance. One smooth bounded trunk and three whole-card leaf LODs preserving extreme lobes. Source UVs, alpha and normal maps retained at 512px; flat lime/red leaf albedo recoloured to grey olive, bark recoloured to grey brown preserving luminance. Runtime uses shared material, game-time wind, original obstacle objects and local URLs.",
+  "assets": [
+    {
+      "id": "woodland-canopy",
+      "sourceModel": "CommonTree_1",
+      "sourceFiles": [
+        {
+          "name": "CommonTree_1.gltf",
+          "bytes": 3869,
+          "sha256": "b51cdea6545edb51d102dd6c27caafe62aa75e3c328ac8f9039f4e7bfd690bfa"
+        },
+        {
+          "name": "CommonTree_1.bin",
+          "bytes": 491576,
+          "sha256": "9dd689e84e1aa2f5b08db8def591254d582783c73737af54ba0d89b3e549c3ae"
+        }
+      ],
+      "file": "woodland-canopy.glb",
+      "bytes": 663344,
+      "sha256": "72a2228e122e9ce20ecbf8689a8f74ac0b78980fd5ff809eac9c93cb9424aa3d",
+      "nodes": [
+        {
+          "node": "SM_Tree_woodland_canopy_Bark",
+          "triangles": 979,
+          "vertices": 582
+        },
+        {
+          "node": "SM_Tree_woodland_canopy_Leaves_LOD0",
+          "triangles": 1920,
+          "vertices": 3840
+        },
+        {
+          "node": "SM_Tree_woodland_canopy_Leaves_LOD1",
+          "triangles": 964,
+          "vertices": 1928
+        },
+        {
+          "node": "SM_Tree_woodland_canopy_Leaves_LOD2",
+          "triangles": 648,
+          "vertices": 1296
+        }
+      ],
+      "height": 9.6,
+      "leafComponents": 960,
+      "canopyOffsetY": 3.6,
+      "textureMaxSize": 512
+    },
+    {
+      "id": "leaning-canopy",
+      "sourceModel": "TwistedTree_5",
+      "sourceFiles": [
+        {
+          "name": "TwistedTree_5.gltf",
+          "bytes": 3822,
+          "sha256": "c193b23d5dc52e7b9c9d5ddda2bc0b89cd1cbbd4b8f1c08fae3216424bd1e982"
+        },
+        {
+          "name": "TwistedTree_5.bin",
+          "bytes": 811680,
+          "sha256": "687fe8183da031a2c6b66668081bf1bc8e5c408b49f165a2b13b45742280e07b"
+        }
+      ],
+      "file": "leaning-canopy.glb",
+      "bytes": 744808,
+      "sha256": "18f6c46db455ca7b4912ddfd5706a98330ed5d88a51cc2d4b5c122a3c6281097",
+      "nodes": [
+        {
+          "node": "SM_Tree_leaning_canopy_Bark",
+          "triangles": 1099,
+          "vertices": 700
+        },
+        {
+          "node": "SM_Tree_leaning_canopy_Leaves_LOD0",
+          "triangles": 3022,
+          "vertices": 6044
+        },
+        {
+          "node": "SM_Tree_leaning_canopy_Leaves_LOD1",
+          "triangles": 1514,
+          "vertices": 3028
+        },
+        {
+          "node": "SM_Tree_leaning_canopy_Leaves_LOD2",
+          "triangles": 1012,
+          "vertices": 2024
+        }
+      ],
+      "height": 9.4,
+      "leafComponents": 1511,
+      "canopyOffsetY": 3.6,
+      "textureMaxSize": 512
+    }
+  ]
+}

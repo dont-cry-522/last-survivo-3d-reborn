@@ -4,6 +4,14 @@ import{buildWorld,clearAt,moveActor}from'../world.js';
 import{REGIONS,biomeAt,biomeWeights,biomeColor,roadDistance}from'../confluence.js';
 import{terrainAt,waterDepth}from'../water.js';import{updateTide}from'../coast.js';import{sandWeather}from'../sand-weather.js';
 import{recordVictory,writeJournal,readJournal}from'../expedition.js';
+test('reused climate output exactly matches the original weights across cores, borders and unusual coordinates',()=>{
+ const legacy=(x,z)=>{const u=x+5*Math.sin(z*.041),v=z+4*Math.sin(x*.035),ds=REGIONS.map(r=>Math.hypot(u-r.x,v-r.z)),near=Math.min(...ds),raw=ds.map(d=>Math.max(0,1-(d-near)/24)**2),sum=raw.reduce((a,b)=>a+b,0);return Object.fromEntries(REGIONS.map((r,i)=>[r.id,raw[i]/sum]));};
+ const out={},check=(x,z)=>{const expected=legacy(x,z);assert.deepEqual(biomeWeights(x,z),expected);assert.strictEqual(biomeWeights(x,z,out),out);assert.deepEqual(out,expected);};
+ for(let x=-150;x<=150;x+=3.7)for(let z=-150;z<=150;z+=4.3)check(x,z);
+ for(const r of REGIONS)check(r.x,r.z);
+ for(const x of[0,-0,Number.MIN_VALUE,1e200,-1e200,Infinity,-Infinity,NaN])for(const z of[0,1e200,Infinity,NaN])check(x,z);
+ const first=biomeWeights(-72,20),saved={...first},second=biomeWeights(78,24);assert.notStrictEqual(first,second);assert.deepEqual(first,saved,'default result was shared between callers');
+});
 test('five distinct climate cores share smooth, curved and normalized borders',()=>{
  for(const r of REGIONS){assert.equal(biomeAt(r.x,r.z),r.id);assert(biomeWeights(r.x,r.z)[r.id]>.98);}
  let blends=0;for(let x=-130;x<=130;x+=4)for(let z=-130;z<=130;z+=4){const weights=Object.values(biomeWeights(x,z));assert(Math.abs(weights.reduce((a,b)=>a+b)-1)<1e-10);assert(weights.every(w=>w>=0&&w<=1));if(Math.max(...weights)<.9)blends++;const a=biomeColor(x,z),b=biomeColor(x+.05,z);assert(Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b)<.01);}

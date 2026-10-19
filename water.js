@@ -1,11 +1,11 @@
-import{onIce,onFord}from'./map-tactics.js?v=216';
-import{onBridge}from'./coast.js?v=216';
-import{MAP_SCALE}from'./map-layout.js?v=216';
-import{coastLayout}from'./coast-layout.js?v=216';
-import{swimStroke,swimLimb,HERO_SWIM,heroSwimPose,swimTravel}from'./swim-motion.js?v=216';
-import{newHeroAttack}from'./new-hero-motion.js?v=216';
-import{naturalRockGeometry,environmentDetailTexture}from'./biome-scenery.js?v=216';
-import{CLIMATE_LIGHT}from'./environment-lighting.js?v=216';
+import{onIce,onFord}from'./map-tactics.js?v=227';
+import{onBridge}from'./coast.js?v=227';
+import{MAP_SCALE}from'./map-layout.js?v=227';
+import{coastLayout}from'./coast-layout.js?v=227';
+import{swimStroke,swimLimb,HERO_SWIM,heroSwimPose,swimTravel}from'./swim-motion.js?v=227';
+import{newHeroAttack}from'./new-hero-motion.js?v=227';
+import{naturalRockGeometry,environmentDetailTexture}from'./biome-scenery.js?v=227';
+import{CLIMATE_LIGHT}from'./environment-lighting.js?v=227';
 import * as T from './vendor/three.module.js';
 const clamp=T.MathUtils.clamp;
 const shore=a=>1+.07*Math.sin(a*3)+.045*Math.cos(a*5);
@@ -27,11 +27,13 @@ let surfaceGeometry;const stoneGeometry=naturalRockGeometry,surfaces=new Map();
 let bedTexture;
 // One small, tiled gravel bed, generated once without consuming map randomness.
 // RGB is linear reflectance; alpha is the rounded pebble height. Mips keep it quiet at distance.
-function pondBedTexture(){
+function* pondBedTextureSteps(){
  if(bedTexture)return bedTexture;
  const size=256,cells=20,data=new Uint8Array(size*size*4),hash=(x,y,k)=>{const n=Math.sin(((x+cells)%cells)*127.1+((y+cells)%cells)*311.7+k*74.7)*43758.5453;return n-Math.floor(n);};
  const sites=Array.from({length:cells*cells},(_,i)=>{const x=i%cells,y=Math.floor(i/cells);return{x:.08+hash(x,y,0)*.84,y:.08+hash(x,y,1)*.84,rx:.39+hash(x,y,2)*.24,ry:.32+hash(x,y,3)*.24,tone:hash(x,y,4),phase:hash(x,y,5)*Math.PI*2};});
- for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+ for(let y=0;y<size;y++){
+  if(y%8===0)yield {stage:'water-bed',completed:y,total:size};
+  for(let x=0;x<size;x++){
   const u=x/size*cells,v=y/size*cells,cx=Math.floor(u),cy=Math.floor(v);let nearest=2,px=0,py=0,tone=0;
   for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){
    const gx=cx+i,gy=cy+j,site=sites[((gy+cells)%cells)*cells+(gx+cells)%cells],dx=(u-gx-site.x)/site.rx,dy=(v-gy-site.y)/site.ry,a=Math.atan2(dy,dx),d=Math.hypot(dx,dy)*(1+Math.sin(a*3+site.phase)*.065+Math.cos(a*5+site.phase)*.045);
@@ -40,6 +42,7 @@ function pondBedTexture(){
   const round=Math.sqrt(Math.max(0,1-nearest*nearest)),edge=T.MathUtils.smoothstep(nearest,.86,1),grain=(Math.sin(x*73.3+y*37.9)*43758.5)%1;
   const shade=.70+round*.26-px*.12-py*.16,stone=(.065+tone*.075)*shade+grain*.007,silt=.057+grain*.008,light=T.MathUtils.lerp(stone,silt,edge),index=(y*size+x)*4;
   data[index]=Math.round(clamp(light*(1.03+tone*.12),0,1)*255);data[index+1]=Math.round(light*255);data[index+2]=Math.round(light*(.90+tone*.04)*255);data[index+3]=Math.round(round*255);
+  }
  }
  bedTexture=new T.DataTexture(data,size,size);bedTexture.name='T_Pond_Gravel_A';bedTexture.wrapS=bedTexture.wrapT=T.RepeatWrapping;bedTexture.generateMipmaps=true;bedTexture.minFilter=T.LinearMipmapLinearFilter;bedTexture.magFilter=T.LinearFilter;bedTexture.anisotropy=4;bedTexture.needsUpdate=true;return bedTexture;
 }
@@ -88,7 +91,7 @@ function waterSurface(id){
   const current={value:new T.Vector2(-.644,.765)},flow=id==='forest'?{speed:'.34',medium:'2.05',fine:'8.4',swell:'.023',ripple:'.008',drift:'.70'}:id==='coast'?{speed:'.24',medium:'.95',fine:'5.2',swell:'.040',ripple:'.006',drift:'.55'}:id==='snow'?{speed:'.065',medium:'1.35',fine:'6.4',swell:'.010',ripple:'.0025',drift:'.18'}:{speed:'.10',medium:'1.5',fine:'6.4',swell:'.018',ripple:'.004',drift:'.30'};
   // One stationary bed continues through each wet shoreline. Each climate tints
   // the same small texture; sand exposes less gravel than the colder rocky banks.
-  const bed={value:pondBedTexture()},bedStyle={
+  const bed={value:bedTexture},bedStyle={
    forest:{sediment:'.043,.052,.038',dry:'.057,.055,.040',tint:'.72,.91,.88',mix:'.28+.56',scale:'.36'},
    snow:{sediment:'.115,.145,.162',dry:'.36,.44,.47',tint:'1.04,1.24,1.36',mix:'.32+.42',scale:'.32'},
    sand:{sediment:'.20,.153,.083',dry:'.32,.254,.16',tint:'1.70,1.45,.92',mix:'.12+.25',scale:'.31'},
@@ -211,9 +214,12 @@ function waterSurface(id){
  }
  return surfaces.get(id);
 }
-export function buildPonds(group,id,rnd,spawn,sites,locations=null){
+export function buildPonds(...args){const steps=buildPondsSteps(...args);let step;do{step=steps.next();}while(!step.done);return step.value;}
+export function* buildPondsSteps(group,id,rnd,spawn,sites,locations=null){
  if(id==='coast'&&!locations)locations=coastLayout(rnd).ponds;
- if(id==='ash'||locations?.length===0)return[];const ponds=[],surface=waterSurface(id);
+ if(id==='ash'||locations?.length===0)return[];
+ yield* pondBedTextureSteps();yield {stage:'water-surface'};
+ const ponds=[],surface=waterSurface(id);
  for(let i=0;i<(locations?.length||180)&&ponds.length<(locations?.length||6);i++){
   const a=rnd()*Math.PI*2,d=18+rnd()*8,rx=locations?.[i]?.rx??((id==='coast'?9:4.7)+rnd()*2.2),rz=locations?.[i]?.rz??((id==='coast'?16:3.7)+rnd()*1.6);
   let x=ponds.length? (rnd()-.5)*96*MAP_SCALE:spawn.x+Math.sin(a)*d,z=ponds.length?(rnd()-.5)*96*MAP_SCALE:spawn.z+Math.cos(a)*d,r=Math.max(rx,rz)*1.12;
@@ -231,7 +237,7 @@ export function buildPonds(group,id,rnd,spawn,sites,locations=null){
  }
  const reeds=new T.InstancedMesh(reedGeometry,surface.reeds,ponds.length*24),stones=new T.InstancedMesh(stoneGeometry,surface.stones,ponds.length*6),dummy=new T.Object3D();let ri=0,si=0;
  reeds.name='pond-reeds';stones.name='pond-shore-stones';
- for(const pond of ponds){const c=Math.cos(pond.angle),s=Math.sin(pond.angle),at=(a,r)=>{const k=shore(a)*r,lx=Math.cos(a)*pond.rx*k,lz=Math.sin(a)*pond.rz*k;return{x:pond.x+c*lx+s*lz,z:pond.z-s*lx+c*lz};};
+ for(const pond of ponds){yield {stage:'water-banks'};const c=Math.cos(pond.angle),s=Math.sin(pond.angle),at=(a,r)=>{const k=shore(a)*r,lx=Math.cos(a)*pond.rx*k,lz=Math.sin(a)*pond.rz*k;return{x:pond.x+c*lx+s*lz,z:pond.z-s*lx+c*lz};};
   const submerged=point=>['coast','forest'].includes(id)&&ponds.some(p=>p!==pond&&waterDepth(p,point.x,point.z)>.03);
   // Keep the same random draws and instance counts: only forest shore dressing
   // groups into four uneven reed patches and three stone clusters.

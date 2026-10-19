@@ -1,9 +1,9 @@
-import {shadowFocus} from './shadow-gear.js?v=216';
-import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=216';
-import{miasmaLantern}from'./mirage-appearance.js?v=216';
-import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=216';
+import {shadowFocus} from './shadow-gear.js?v=227';
+import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=227';
+import{miasmaLantern}from'./mirage-appearance.js?v=227';
+import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=227';
 import * as T from './vendor/three.module.js';
-import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=216';
+import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=227';
 // Shared smooth geometry: detail is concentrated on the two heroes, not multiplied across the forest.
 const geometries=new Map(),materials=new Map();
 let woodGrain;
@@ -135,9 +135,16 @@ export function makeHero(kind,weapon){
     ell(elbow,dark,[0,-.105,0],[.073,.15,.075]);tube(elbow,silver?0x34475b:0x66503b,[0,-.17,0],[.077,.135,.074]);tube(elbow,trim,[0,-.226,0],[.078,.012,.075],.5);
     ell(elbow,dark,[0,-.287,.012],[.075,.087,.065]);block(elbow,trim,[0,-.28,.069],[.071,.036,.012],.6);
   }
-  const gun=joint(d.rightElbow,[0,-.287,.025]);d.weapon=gun;
+  const gun=makeWeapon(kind,weapon);gun.position.set(0,-.287,.025);d.rightElbow.add(gun);d.weapon=gun;
+  if(isHerbalWeapon(weapon))d.herbalModel=gun.children[0];
+  return g;
+}
+// Bone-driven actors need this held object, not a second, discarded fallback body.
+// Keep the fallback and live rig on exactly the same geometry and grip helpers.
+export function makeWeapon(kind,weapon){
+  const gun=new T.Group(),dark=0x15212c,trim=kind==='silver'?0xa4b9d2:0xba9358;
   if(isHerbalWeapon(weapon)){
-    const held=makeHerbalWeapon(weapon);gun.add(held);d.herbalModel=held;
+    gun.add(makeHerbalWeapon(weapon));
   }else if(weapon==='briarpot'){
     gun.name='SM_Weapon_Briarpot';
     const bowl=part(gun,'LatheGeometry',[[[0,-.15],[.075,-.15],[.105,-.12],[.145,-.045],[.14,.045],[.112,.12],[.112,.14],[.087,.14],[.087,.12],[.112,.04],[.115,-.035],[.075,-.10],[0,-.10]].map(p=>new T.Vector2(...p)),20],0xb2784d);bowl.name='SM_Briarpot_CeramicBowl';bowl.userData.identityDetail=true;
@@ -227,7 +234,7 @@ export function makeHero(kind,weapon){
     if(weapon==='shotgun'){barrel(.032,.43,[.075,.068,.47],'Side');const pump=joint(gun,[0,0,0]),rings=[[0,.020,.269,.108,.060]];for(let i=0;i<5;i++){const z=.278+i*.0255;rings.push([0,.0175,z,.140,.085],[0,.0175,z+.012,.140,.085],[0,.019,z+.020,.119,.067]);}rings.push([0,.022,.402,.106,.056]);woodFinish(weaponHull(pump,'SM_Firearm_ShotgunGroovedPump',rings,0x8c6e48));gun.userData.pump=pump;}
   }
   nameWeapon(gun,kind,weapon);
-  return g;
+  return gun;
 }
 const stringUp=new T.Vector3(0,1,0),stringStart=new T.Vector3(),stringEnd=new T.Vector3();
 export function poseCrossbow(gun,phase=1){

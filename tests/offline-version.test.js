@@ -30,6 +30,12 @@ test('offline build aligns static/lazy module and HTML versions before hashing; 
   const path='assets/environment/models/'+name;files[path]=await readFile(new URL(path,root));
  }
  for(const name of ['forest-1k.hdr','sky-1k.hdr','sources.json']){const path='assets/environment/lighting/'+name;files[path]=await readFile(new URL(path,root));}
+ for(const name of ['woodland-canopy.glb','leaning-canopy.glb','sources.json','LICENSE.txt','CC0-1.0.txt']){
+  const path='assets/environment/forest-trees-v222/'+name;files[path]=await readFile(new URL(path,root));
+ }
+ for(const name of ['bark-color-1k.jpg','bark-normal-1k.jpg','bark-roughness-1k.jpg','mossRock-color-1k.jpg','mossRock-normal-1k.jpg','mossRock-roughness-1k.jpg','sources.json','LICENSE.txt']){
+  const path='assets/environment/forest-reborn/'+name;files[path]=await readFile(new URL(path,root));
+ }
  const run=async(check=false)=>{const args=process.argv;process.argv=[process.execPath,'build-offline.mjs',...(check?['--check']:[])];try{await import(pathToFileURL(join(dir,'scripts/build-offline.mjs')).href+'?run='+Math.random());}finally{process.argv=args;}};
  try{
   for(const folder of['vendor','assets/bestiary','assets/icons','assets/audio','assets/environment'])await mkdir(join(dir,folder),{recursive:true});

@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {biomeWeights} from './confluence.js?v=216';
+import {biomeWeights} from './confluence.js?v=227';
 
 // Build-time composition only: existing crowns, owned branches and floor colors.
 // No scene nodes, materials, listeners or animation work are installed.
@@ -87,7 +87,8 @@ export function sceneryRhythmAt(world,x,z){
 export function installExplorationComposition(world,mapId){
  if(world.explorationComposition)return world.explorationComposition;
  const routes=[];
- const approach=world.forestHabitats?.approach,sources=[...(world.explorationRoutes||[]),...(approach?[{...approach,biome:'forest',approach:true}]:[])];
+ const journeys=world.biomeJourneys||(world.biomeJourney?[world.biomeJourney]:[]);
+ const approach=world.forestHabitats?.approach,sources=[...(world.explorationRoutes||[]),...(approach?[{...approach,biome:'forest',approach:true}]:[]),...journeys];
  for(const source of sources){
   const points=source.points||[],segments=[];let length=0;
   for(let i=1;i<points.length;i++){
@@ -98,7 +99,7 @@ export function installExplorationComposition(world,mapId){
   if(length>1)routes.push({biome:source.biome||mapId,segments,length,approach:!!source.approach});
  }
  if(!routes.length)return null;
- const landmarks=(world.explorationLandmarks||[]).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z));
+ const landmarks=[...(world.explorationLandmarks||[]),...journeys.flatMap(j=>j.landmarks).filter(p=>p.kind==='opening'||p.kind==='overlook')].filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.z));
  const state={mapId,routes,landmarks,approach:!!approach,trees:0,overhangingTrees:0,skippedLowTrees:0,groundVertices:0};world.explorationComposition=state;
  const protectedMeshes=new Set(landmarks.flatMap(p=>[p.mesh,p.obstacle?.mesh])),protectedObstacles=new Set([...(world.breakables||[]),...landmarks.map(p=>p.obstacle)]);
  const gate=world.forestVista?.gateCenter,box=new T.Box3(),oldScale=new T.Vector3(),oldPosition=new T.Vector3(),oldCrown=new T.Matrix4(),branchDelta=new T.Matrix4(),branchPoint=new T.Vector3();world.group.updateMatrixWorld(true);

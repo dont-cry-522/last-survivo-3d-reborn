@@ -1,4 +1,4 @@
-import{MUSIC_TRACKS}from'./music-tracks.js?v=216';
+import{MUSIC_TRACKS}from'./music-tracks.js?v=227';
 
 export const MUSIC_TRANSITIONS=Object.freeze({map:3.2,battle:1.15,recovery:4.2,resume:.45,borderHold:1.2,calmHold:9});
 const FADE=MUSIC_TRANSITIONS.map;

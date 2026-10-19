@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {prepareBatchedSurface,batchedSurfaceMaterial} from './environment-props.js?v=216';
+import {prepareBatchedSurface,batchedSurfaceMaterial} from './environment-props.js?v=227';
 
 const finishes=new Map();
 const timberBlock=new T.BoxGeometry(1,1,1,2,2,2),point=new T.Vector3(),core=new T.Vector3();

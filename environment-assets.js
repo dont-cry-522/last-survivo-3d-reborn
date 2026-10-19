@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {boulderRockGeometry} from './biome-scenery.js?v=216';
+import {boulderRockGeometry} from './biome-scenery.js?v=227';
 
 export const ENVIRONMENT_MODELS={
  'weathered-rock-a':{file:'assets/environment/models/weathered-rock-a.glb',node:'SM_Rock_Weathered_A'},
@@ -90,9 +90,10 @@ export function installEnvironmentAssets(world,models=loadedModels){
  const lists=new Map();for(const r of state.records){const key=r.biome+':'+r.id;if(!lists.has(key))lists.set(key,[]);lists.get(key).push(r);}
  for(const[key,records]of lists){
   const sample=records[0],material=biomeMaterial(sample.model.lods[0].material,sample.biome);state.materials.set(key,material);
+  const dirtyLevels=[false,false,false];for(const r of records)r.dirtyLevels=dirtyLevels;
   for(let level=0;level<3;level++){
    const mesh=new T.InstancedMesh(sample.model.lods[level].geometry,material,records.length);mesh.name='SM_Scanned_'+key.replace(':','_')+'_LOD'+level;mesh.castShadow=mesh.receiveShadow=true;mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
-   records.forEach((r,i)=>mesh.setMatrixAt(i,r.matrix));mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.count=0;mesh.visible=false;group.add(mesh);state.batches.push({mesh,records,level});
+   records.forEach((r,i)=>mesh.setMatrixAt(i,r.matrix));mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.count=0;mesh.visible=false;group.add(mesh);state.batches.push({mesh,records,level,dirtyLevels});
   }
  }
  state.dispose=()=>{if(state.disposed)return;state.disposed=true;for(const b of state.batches)b.mesh.dispose();for(const material of state.materials.values())material.dispose();for(const h of state.hidden)h.mesh.visible=h.visible;group.removeFromParent();};
@@ -102,10 +103,13 @@ export function installEnvironmentAssets(world,models=loadedModels){
 export function updateEnvironmentAssets(world,focus,mobile=false,force=false){
  const state=world?.environmentAssets;if(!state||state.disposed)return;
  if(!force&&state.mobile===mobile&&state.focus.distanceToSquared(focus)<.25)return;
- state.focus.copy(focus);state.mobile=mobile;let changed=force;state.levels.fill(0);
+ state.focus.copy(focus);state.mobile=mobile;state.levels.fill(0);
  for(const r of state.records){
-  const level=environmentLOD(Math.hypot(focus.x-r.x,focus.y-r.y,focus.z-r.z),mobile);changed ||= level!==r.level;r.level=level;state.levels[level]++;
+  const level=environmentLOD(Math.hypot(focus.x-r.x,focus.y-r.y,focus.z-r.z),mobile);
+  if(level!==r.level){if(r.level>=0)r.dirtyLevels[r.level]=true;r.dirtyLevels[level]=true;r.level=level;}
+  state.levels[level]++;
  }
- if(!changed)return;
- for(const batch of state.batches){let count=0;for(const r of batch.records)if(r.level===batch.level)batch.mesh.setMatrixAt(count++,r.matrix);batch.mesh.count=count;batch.mesh.visible=count>0;batch.mesh.instanceMatrix.needsUpdate=true;}
+ // A crossing changes only the old/new LOD of this material group. Preserve
+ // record order, while leaving every other instance buffer untouched.
+ for(const batch of state.batches){if(!force&&!batch.dirtyLevels[batch.level])continue;let count=0;for(const r of batch.records)if(r.level===batch.level)batch.mesh.setMatrixAt(count++,r.matrix);batch.mesh.count=count;batch.mesh.visible=count>0;batch.mesh.instanceMatrix.needsUpdate=true;batch.dirtyLevels[batch.level]=false;}
 }

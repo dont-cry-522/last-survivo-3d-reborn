@@ -1,6 +1,6 @@
-import{installHarborHorizon,harborBayLayout,harborBayCut}from'./harbor-horizon.js?v=216';
-import{installForestBackdrop}from'./tree-scenery.js?v=216';
-import{environmentDetailTexture}from'./biome-scenery.js?v=216';
+import{installHarborHorizon,harborBayLayout,harborBayCut,harborHeadlandSilhouette}from'./harbor-horizon.js?v=227';
+import{installForestBackdrop}from'./tree-scenery.js?v=227';
+import{environmentDetailTexture}from'./biome-scenery.js?v=227';
 import * as T from './vendor/three.module.js';
 
 // The same three lights serve every climate; transitions do not allocate lights or shadow maps.
@@ -14,7 +14,12 @@ export const CLIMATE_LIGHT={
 const colorKeys=['sky','bounce','sun','rim','fog'],scalarKeys=['ambient','key','edge','density','exposure'];
 const tones=Object.fromEntries(Object.entries(CLIMATE_LIGHT).map(([id,p])=>[id,Object.fromEntries(colorKeys.map(k=>[k,new T.Color(p[k])]))]));
 export const FOREST_CYCLE={seconds:720,startAngle:.90,night:{sky:0x8eafc2,bounce:0x4b665d,sun:0xc3d9ef,rim:0x92afc6,fog:0x3e5962,ambient:1.10,key:.95,edge:.55,density:.0105,exposure:1.08}};
+// Modest, camera-local atmosphere cues for the authored woodland route. Actual
+// occlusion still comes from the trees' shadow maps, not these light values.
+// No exposure adaptation: leaving a grove must not brighten the whole screen.
+export const FOREST_LOCAL_LIGHT={canopyKey:.14,canopyFill:.06,canopyHaze:.0005,waterHaze:.0011};
 const nightTones=Object.fromEntries(colorKeys.map(k=>[k,new T.Color(FOREST_CYCLE.night[k])])),evening=new T.Color(0xffbe82);
+const unit=value=>Number.isFinite(value)?T.MathUtils.clamp(value,0,1):0;
 export const DEFAULT_SUN_DIRECTION=new T.Vector3(-18,30,14).normalize();
 // Game-time only: a paused frame and a resumed tab cannot advance the sun.
 export function sampleForestDay(time,out={direction:new T.Vector3()}){
@@ -26,6 +31,21 @@ export function sampleForestDay(time,out={direction:new T.Vector3()}){
  out.direction.set(-Math.cos(angle)*sign,Math.max(.08,Math.abs(height)),.46*sign).normalize();
  return out;
 }
+// These few fixed route landmarks are independent of the camera/player and
+// never alter the world. A reused result avoids a new object every frame.
+export function forestLightingContext(world,x,z,out=null){
+ const journey=world?.forestJourney;if(!journey)return null;
+ out??=(journey.lightContext??={canopy:0,water:0});
+ let canopy=0,total=0,coverage=0,water=0;
+ if(Number.isFinite(x)&&Number.isFinite(z))for(const point of journey.landmarks||[]){
+  if(!Number.isFinite(point.x)||!Number.isFinite(point.z))continue;
+  const distance=Math.hypot(point.x-x,point.z-z),weight=1-T.MathUtils.smoothstep(distance,7,22);
+  if(!weight)continue;
+  canopy+=unit(point.canopy)*weight;total+=weight;coverage=Math.max(coverage,weight);
+  if(point.kind==='pool')water=Math.max(water,1-T.MathUtils.smoothstep(distance,4,18));
+ }
+ out.canopy=total?canopy/total*coverage:0;out.water=water;return out;
+}
 export class EnvironmentLighting{
  constructor(scene,renderer,hemi,sun,rim){
   Object.assign(this,{scene,renderer,hemi,sun,rim});
@@ -34,7 +54,7 @@ export class EnvironmentLighting{
   this.colors=Object.fromEntries(colorKeys.map(k=>[k,new T.Color()]));this.values={};
   this.direction=DEFAULT_SUN_DIRECTION.clone();this.cycle=sampleForestDay(0);this.cycleColor=new T.Color();this.timeOffset=0;this.shaftStrength=1;this.day=1;
  }
- update(id,weights=null,dt=0,gameTime=null){
+ update(id,weights=null,dt=0,gameTime=null,forestContext=null){
   const a=dt>0?1-Math.exp(-dt*1.4):1;
   for(const k of colorKeys)this.colors[k].setRGB(0,0,0);
   for(const k of scalarKeys)this.values[k]=0;
@@ -58,6 +78,16 @@ export class EnvironmentLighting{
    for(const k of scalarKeys){let value=T.MathUtils.lerp(night[k],CLIMATE_LIGHT.forest[k],cycle.day);if(k==='key')value*=cycle.horizon;this.values[k]+=(value-CLIMATE_LIGHT.forest[k])*forest;}
    this.direction.lerp(cycle.direction,forest*cycle.horizon).normalize();this.day=1-forest+forest*cycle.day;
    this.shaftStrength=1-forest+forest*cycle.horizon*T.MathUtils.lerp(.10,1,cycle.day);
+  }
+  if(forest>0&&forestContext){
+   const canopy=unit(forestContext.canopy),water=unit(forestContext.water),day=cycling?this.cycle.day:1;
+   const key=cycling?T.MathUtils.lerp(FOREST_CYCLE.night.key,CLIMATE_LIGHT.forest.key,day)*this.cycle.horizon:CLIMATE_LIGHT.forest.key;
+   // Adjust only the forest share, so an adjoining climate retains its actual
+   // palette. Night keeps the readable moonlit baseline; transitions use the
+   // same frame-rate-independent interpolation as ordinary climate changes.
+   this.values.key-=key*FOREST_LOCAL_LIGHT.canopyKey*canopy*day*forest;
+   this.values.ambient+=FOREST_LOCAL_LIGHT.canopyFill*canopy*day*forest;
+   this.values.density+=(FOREST_LOCAL_LIGHT.canopyHaze*canopy+FOREST_LOCAL_LIGHT.waterHaze*water)*forest;
   }
   this.hemi.color.lerp(this.colors.sky,a);this.hemi.groundColor.lerp(this.colors.bounce,a);
   this.sun.color.lerp(this.colors.sun,a);this.rim.color.lerp(this.colors.rim,a);
@@ -172,6 +202,7 @@ function rangeMass(biome,angle,ring){
 export function installDistantLandscape(world,id,biomeAt=()=>id){
  const positions=[],colors=[],indices=[],climates=[],layers=[],segments=192,rows=9,half=world.half;
  const bay=harborBayLayout(world,id,biomeAt);
+ const coastHeadlands=id==='coast'||id==='confluence'?harborHeadlandSilhouette(world):null;
  // Broad shoulders overlap a taller, more distant range. Each climate keeps
  // a low pass instead of wrapping the player in a uniformly high mountain bowl.
  const landforms={forest:{height:[1.3,2.65],width:[34,45],pass:.85},snow:{height:[1.3,2.85],width:[35,46],pass:2.65},ash:{height:[1.4,3.15],width:[33,44],pass:4.5},sand:{height:[1.35,3.0],width:[38,48],pass:5.25},coast:{height:[1,3.2],width:[21,43],pass:1.65}};
@@ -225,9 +256,18 @@ export function installDistantLandscape(world,id,biomeAt=()=>id){
    contour=.28+.72*(.5+.5*Math.sin(angle*3+ring))**2;
    const profile=[0,.12,.68,.91,1],q=t*4,k=Math.min(3,Math.floor(q));slope=T.MathUtils.lerp(profile[k],profile[k+1],q-k);
    relief=fade*Math.sin(angle*29+ring*1.3)*.055+T.MathUtils.smoothstep(t,.50,.95)*fade*(.035*fold-.018*gully);
-   if(ring){cut=(.5+.5*Math.sin(angle*13+phase+t*.6))**3;slope=.15*t+.85*T.MathUtils.smoothstep(t,.17,.72);relief=fade*(.05*fold-.12*cut);}
+   if(ring){
+    cut=(.5+.5*Math.sin(angle*13+phase+t*.6))**3;slope=.15*t+.85*T.MathUtils.smoothstep(t,.17,.72);relief=fade*(.05*fold-.12*cut);
+    if(coastHeadlands){
+     let shoulders=.035;for(const p of coastHeadlands){const d=Math.abs(Math.atan2(Math.sin(angle-p.center),Math.cos(angle-p.center)));shoulders+=p.height*(1-T.MathUtils.smoothstep(d,p.width*.12,p.width));}
+     rhythm=Math.max(mass*.55,shoulders);contour=.92+.08*Math.cos(angle*5+.7);
+     // Preserve an uneven broad crest above the low quay shelf, rather than
+     // multiplying the same shallow contour by a second arbitrary low pass.
+     slope=.10*t+.90*T.MathUtils.smoothstep(t,.08,.86);relief=fade*(.05*fold-.10*cut);
+    }
+   }
   }
-  const opening=biome==='coast'&&!ring?1:1-pass*.82;
+  const opening=biome==='coast'&&(!ring||coastHeadlands)?1:1-pass*.82;
   const top=form.height[ring]*p.height*rhythm*contour*opening,y=t===0?-.13:Math.max(.015,top*(slope+relief)),shade=new T.Color(p.ridge),haze=new T.Color(p.fog);
   if(biome==='forest')shade.lerp(stone,T.MathUtils.smoothstep(t,.40,.98)*(.11+.16*gully)).multiplyScalar(.94+.06*fold-.10*cut*fade);
   if(biome==='snow'){

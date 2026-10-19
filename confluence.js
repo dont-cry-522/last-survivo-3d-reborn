@@ -1,17 +1,17 @@
-import{forestStreamLayout}from'./forest-stream-layout.js?v=216';
+import{forestStreamLayout}from'./forest-stream-layout.js?v=227';
 import * as T from './vendor/three.module.js';
-import{addTree}from'./tree-scenery.js?v=216';
-import{MAPS,seeded,segmentDistance}from'./rules.js?v=216';
-import{buildPonds,waterDepth}from'./water.js?v=216';
-import{installCoast}from'./coast.js?v=216';
-import{coastProp}from'./coast-models.js?v=216';
-import{buildDistricts}from'./map-districts.js?v=216';
-import{installScenery}from'./biome-scenery.js?v=216';
-import{installDiscoveries}from'./map-discoveries.js?v=216';
-import{installTactics}from'./map-tactics.js?v=216';
-import{installRoaming}from'./roaming-events.js?v=216';
-import{biomeEvent}from'./map-events.js?v=216';
-import{groundCue}from'./ground-cues.js?v=216';
+import{addTree}from'./tree-scenery.js?v=227';
+import{MAPS,seeded,segmentDistance}from'./rules.js?v=227';
+import{buildPondsSteps,waterDepth}from'./water.js?v=227';
+import{installCoast}from'./coast.js?v=227';
+import{coastProp}from'./coast-models.js?v=227';
+import{buildDistricts}from'./map-districts.js?v=227';
+import{installScenerySteps}from'./biome-scenery.js?v=227';
+import{installDiscoveries}from'./map-discoveries.js?v=227';
+import{installTactics}from'./map-tactics.js?v=227';
+import{installRoaming}from'./roaming-events.js?v=227';
+import{biomeEvent}from'./map-events.js?v=227';
+import{groundCue}from'./ground-cues.js?v=227';
 export const CONFLUENCE_HALF=140;
 export const REGIONS=[
  {id:'forest',x:-72,z:20,label:'古木河谷',transition:'林缘渐冷，针叶林沿山麓向雪线延伸'},
@@ -22,9 +22,14 @@ export const REGIONS=[
 ];
 export const CONFLUENCE_TEXT='五境环游 · 280 × 280 连续地图。沿古道自由跨越林地、雪山、地热裂谷、遗城和海港；灰岩山麓、冷却砾地与河口湿岸形成过渡。完成各区地标事件并领取奖励后，靠近该区路标唤醒守卫；击败五位守卫完成远征。跨区保留生命、技能和敌人。';
 // Curved climate boundaries, softened over a broad band instead of hard rectangular tiles.
-export function biomeWeights(x,z){
- const u=x+5*Math.sin(z*.041),v=z+4*Math.sin(x*.035),ds=REGIONS.map(r=>Math.hypot(u-r.x,v-r.z)),near=Math.min(...ds),raw=ds.map(d=>Math.max(0,1-(d-near)/24)**2),sum=raw.reduce((a,b)=>a+b,0);
- return Object.fromEntries(REGIONS.map((r,i)=>[r.id,raw[i]/sum]));
+export function biomeWeights(x,z,out={}){
+ const u=x+5*Math.sin(z*.041),v=z+4*Math.sin(x*.035);let near=Infinity,sum=0;
+ // Reuse the output for distances and raw weights before normalizing. Particle
+ // updates can supply their scratch object without allocating arrays per sample.
+ for(const r of REGIONS){const distance=Math.hypot(u-r.x,v-r.z);out[r.id]=distance;near=Math.min(near,distance);}
+ for(const r of REGIONS){const weight=Math.max(0,1-(out[r.id]-near)/24)**2;out[r.id]=weight;sum+=weight;}
+ for(const r of REGIONS)out[r.id]/=sum;
+ return out;
 }
 export function biomeAt(x,z){const weights=biomeWeights(x,z);return REGIONS.reduce((best,r)=>weights[r.id]>weights[best.id]?r:best,REGIONS[0]).id;}
 const palette={forest:0x3e6047,snow:0xb2c7c8,ash:0x634c4d,sand:0xae9873,coast:0x728d79},colors=Object.fromEntries(Object.entries(palette).map(([k,v])=>[k,new T.Color(v)]));
@@ -37,10 +42,11 @@ const noiseLayers=[8,24,64].map(n=>({n,values:Float32Array.from({length:n*n},()=
 const noiseAt=(layer,x,y)=>{const u=x/256*layer.n,v=y/256*layer.n,ix=Math.floor(u),iy=Math.floor(v),fx=u-ix,fy=v-iy,get=(a,b)=>layer.values[(b%layer.n)*layer.n+a%layer.n];return T.MathUtils.lerp(T.MathUtils.lerp(get(ix,iy),get(ix+1,iy),fx),T.MathUtils.lerp(get(ix,iy+1),get(ix+1,iy+1),fx),fy);};
 for(let y=0;y<256;y++)for(let x=0;x<256;x++){const n=noiseAt(noiseLayers[0],x,y)*.08+noiseAt(noiseLayers[1],x,y)*.06+noiseAt(noiseLayers[2],x,y)*.025+(grainRandom()-.5)*.045,k=(y*256+x)*4;grain[k]=grain[k+1]=grain[k+2]=Math.round((.82+n)*255);grain[k+3]=255;}
 const grainTexture=new T.DataTexture(grain,256,256);grainTexture.wrapS=grainTexture.wrapT=T.RepeatWrapping;grainTexture.repeat.set(26,26);grainTexture.magFilter=T.LinearFilter;grainTexture.minFilter=T.LinearMipmapLinearFilter;grainTexture.generateMipmaps=true;grainTexture.needsUpdate=true;groundMaterial.map=grainTexture;
-export function buildConfluence(seed,{mesh,trail,makeWeather,buildSites,groundShape}){
+export function buildConfluence(seed,helpers){const steps=buildConfluenceSteps(seed,helpers);let step;do{step=steps.next();}while(!step.done);return step.value;}
+export function* buildConfluenceSteps(seed,{mesh,trail,makeWeather,buildSites,groundShape}){
  const rnd=seeded(seed),group=new T.Group(),spawn={x:-83,z:32},w={group,half:CONFLUENCE_HALF,spawn,theme:MAPS.forest,obstacles:[],patches:[],ponds:[],sites:[],foliage:[],motes:[],breakables:[],ice:[],fords:[],bridges:[],discoveries:[],roaming:[],regions:[],road,weather:{kind:'confluence'},visited:new Set(['forest']),activeBiome:'forest'};
  const g=new T.PlaneGeometry(296,296,112,112),a=g.attributes.position,tones=[];
- for(let i=0;i<a.count;i++){const x=a.getX(i),z=-a.getY(i),c=biomeColor(x,z),n=Math.sin(x*.12+Math.sin(z*.055)*2)*Math.cos(z*.09)*.04+Math.sin(x*.64+z*.39)*.01,d=roadDistance(x,z),track=1-T.MathUtils.smoothstep(d,1.9,5.2);c.multiplyScalar(1+n).lerp(new T.Color(0x9b9076),track*.52);tones.push(c.r,c.g,c.b);}
+ for(let i=0;i<a.count;i++){if(i%128===0)yield {stage:'confluence-ground',completed:i,total:a.count};const x=a.getX(i),z=-a.getY(i),c=biomeColor(x,z),n=Math.sin(x*.12+Math.sin(z*.055)*2)*Math.cos(z*.09)*.04+Math.sin(x*.64+z*.39)*.01,d=roadDistance(x,z),track=1-T.MathUtils.smoothstep(d,1.9,5.2);c.multiplyScalar(1+n).lerp(new T.Color(0x9b9076),track*.52);tones.push(c.r,c.g,c.b);}
  g.setAttribute('color',new T.Float32BufferAttribute(tones,3));const ground=new T.Mesh(g,groundMaterial);ground.rotation.x=-Math.PI/2;ground.position.y=-.03;ground.receiveShadow=true;ground.userData.ownedGeometry=true;group.add(ground);w.ground=ground;
  // One landmark event per region, plus a nearby starting relic and recovery supplies.
  for(const [i,r]of REGIONS.entries()){
@@ -50,10 +56,12 @@ export function buildConfluence(seed,{mesh,trail,makeWeather,buildSites,groundSh
  w.sites.push({x:-98,z:38,type:'relic',biome:'forest',availableAt:0,claimed:false,discovered:false,reveal:0});
  const locations={forest:forestStreamLayout(rnd,spawn,w.sites,{half:CONFLUENCE_HALF,center:REGIONS[0],contains:(x,z)=>biomeAt(x,z)==='forest',roadDistance}),snow:[{x:-77,z:-102,rx:6,rz:4,angle:-.3}],ash:[],sand:[],coast:[{x:0,z:88,rx:12,rz:17},{x:34,z:112,rx:7,rz:11}]};
  for(const r of REGIONS){
-  const ponds=['ash','sand'].includes(r.id)?[]:buildPonds(group,r.id,rnd,spawn,w.sites,locations[r.id]);w.ponds.push(...ponds);w.patches.push(...ponds);
+  yield {stage:'water',region:r.id};
+  const ponds=['ash','sand'].includes(r.id)?[]:yield* buildPondsSteps(group,r.id,rnd,spawn,w.sites,locations[r.id]);w.ponds.push(...ponds);w.patches.push(...ponds);
  }
  // Sparse groves and mixed foothill stones soften borders; the old road stays passable.
  for(let i=0;i<850;i++){
+  if(i%8===0)yield {stage:'trees',completed:i,total:850};
   const r=REGIONS[i%5],cluster=i%3!==0,ang=rnd()*6.28,rad=18+Math.sqrt(rnd())*58;let x=cluster?r.x+Math.sin(ang)*rad:(rnd()-.5)*264,z=cluster?r.z+Math.cos(ang)*rad:(rnd()-.5)*264;
   // Reuse forest candidates along alternating, staggered banks rather than
   // increasing the global tree budget or lining the water with two rigid rows.
@@ -75,6 +83,7 @@ export function buildConfluence(seed,{mesh,trail,makeWeather,buildSites,groundSh
   }
  }
  for(const r of REGIONS){
+  yield {stage:'region',region:r.id};
   const regional={...w,group:new T.Group(),regional:true,regions:null,spawn:{x:r.x,z:r.z},id:r.id,label:r.label,x:r.x,z:r.z,cleared:false,theme:MAPS[r.id],obstacles:w.obstacles.filter(o=>o.biome===r.id),ponds:w.ponds.filter(p=>p.biome===r.id),patches:[],sites:w.sites,foliage:w.foliage.filter(f=>f.leaf.parent&&biomeAt(f.leaf.parent.position.x,f.leaf.parent.position.z)===r.id),groves:[],contains:(x,z)=>biomeAt(x,z)===r.id,landmark:w.sites.find(s=>s.biome===r.id&&s.event)};
   group.add(regional.group);regional.weather=makeWeather(r.id,rnd,regional.group,regional.spawn,w.half);regional.weather.half=w.half;
   if(r.id==='coast'){installCoast(regional);w.bridges.push(...regional.bridges);}
@@ -82,7 +91,11 @@ export function buildConfluence(seed,{mesh,trail,makeWeather,buildSites,groundSh
   let pockets=0;for(let i=0;i<200&&pockets<5;i++){const x=r.x-30+rnd()*60,z=r.z-30+rnd()*60,rad=2+rnd()*2;if(roadDistance(x,z)<6||w.sites.some(s=>Math.hypot(s.x-x,s.z-z)<9)||!regional.contains(x,z)||w.obstacles.some(o=>Math.hypot(x-o.x,z-o.z)<rad+o.r))continue;
    pockets++;const kind=r.id==='ash'?'vent':'slow',patch={x,z,r:rad,kind,biome:r.id,phase:rnd()*4};w.patches.push(patch);regional.group.add(groundShape(x,z,rad,rnd,r.id==='ash'?0x995f40:r.id==='snow'?0x9eaca8:r.id==='sand'?0x9b835f:0x405c46));if(kind==='vent'){patch.marker=groundCue(0xffa45f,rad);patch.marker.position.set(x,.09,z);patch.marker.visible=false;regional.group.add(patch.marker);}
   }
-  const props=regional.obstacles;regional.obstacles=w.obstacles;installDiscoveries(regional,r.id,rnd);regional.obstacles=r.id==='snow'?w.obstacles:props;installTactics(regional,r.id,rnd);regional.obstacles=w.obstacles;installRoaming(regional,r.id,rnd);regional.obstacles=props;const terrainPatches=regional.patches;regional.patches=w.patches.filter(p=>p.biome===r.id).concat(terrainPatches);installScenery(regional,r.id,rnd);
+  const props=regional.obstacles;regional.obstacles=w.obstacles;
+  yield {stage:'discoveries',region:r.id};installDiscoveries(regional,r.id,rnd);regional.obstacles=r.id==='snow'?w.obstacles:props;
+  yield {stage:'tactics',region:r.id};installTactics(regional,r.id,rnd);regional.obstacles=w.obstacles;
+  yield {stage:'roaming',region:r.id};installRoaming(regional,r.id,rnd);regional.obstacles=props;const terrainPatches=regional.patches;regional.patches=w.patches.filter(p=>p.biome===r.id).concat(terrainPatches);
+  yield {stage:'scenery',region:r.id};yield* installScenerySteps(regional,r.id,rnd);
   w.patches.push(...terrainPatches);for(const key of['discoveries','breakables','ice','fords','roaming'])w[key].push(...regional[key]);
   // A readable stone waypost, rather than another large ground ring.
   const marker=new T.Group();const tangent=curve.getTangent(REGIONS.indexOf(r)/5);marker.position.set(r.x+tangent.z*6,0,r.z-tangent.x*6);group.add(marker);w.obstacles.push({x:marker.position.x,z:marker.position.z,r:.65,mesh:marker,biome:r.id});mesh('CylinderGeometry',[.45,.65,1.3,8],0x847e68,0,.65,0,marker);const crystal=mesh('OctahedronGeometry',[.38],MAPS[r.id].accent,0,1.65,0,marker,true);regional.beacon=crystal;w.regions.push(regional);
@@ -90,7 +103,7 @@ export function buildConfluence(seed,{mesh,trail,makeWeather,buildSites,groundSh
  // Coast installation can remove props in bridge lanes; remove them from global collision too.
  w.obstacles=w.obstacles.filter(o=>o.mesh.parent);
  const sandSite=w.sites.find(s=>s.event==='mechanism');sandSite.gates=[];for(let i=-1;i<=1;i++){const x=sandSite.x-9,z=sandSite.z+i*1.8,gate=new T.Group();gate.position.set(x,0,z);group.add(gate);mesh('BoxGeometry',[.85,2.2,1.5],0x9d8a6b,0,1.1,0,gate);const o={x,z,r:.85,mesh:gate,biome:'sand'};w.obstacles.push(o);sandSite.gates.push(o);}
- for(const s of w.sites){buildSites(group,[s],MAPS[s.biome]);s.trail=trail(group,REGIONS.find(r=>r.id===s.biome),s,s.biome,rnd);s.trail.visible=s.type==='relic';}
+ for(const s of w.sites){yield {stage:'sites',region:s.biome};buildSites(group,[s],MAPS[s.biome]);s.trail=trail(group,REGIONS.find(r=>r.id===s.biome),s,s.biome,rnd);s.trail.visible=s.type==='relic';}
  w.fire=new T.Group();w.fire.position.set(spawn.x-2,.2,spawn.z+2);group.add(w.fire);mesh('ConeGeometry',[.2,.8,7],0xffb262,0,.4,0,w.fire,true);for(let i=0;i<5;i++){const a=i*1.26,log=mesh('CylinderGeometry',[.08,.12,1.05,6],0x68503c,Math.sin(a)*.22,0,Math.cos(a)*.22,w.fire);log.rotation.z=Math.PI/2;log.rotation.y=a;}w.light=new T.PointLight(0xffb56d,6,9);w.light.position.set(spawn.x-2,1,spawn.z+2);group.add(w.light);
  w.scenery={batches:w.regions.flatMap(r=>r.scenery.batches)};return w;
 }

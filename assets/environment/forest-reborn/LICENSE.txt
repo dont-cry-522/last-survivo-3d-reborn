@@ -1,0 +1,9 @@
+Two PBR texture sets from Poly Haven, distributed under CC0 1.0.
+Aerial Rocks 02 and Bark Brown 01 by Rob Tuytel.
+https://polyhaven.com/a/aerial_rocks_02
+https://polyhaven.com/a/bark_brown_01
+Licence: https://polyhaven.com/license
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/
+Runtime derivatives are 1024x1024 JPEGs recompressed without colour adjustment.
+Original download URLs, official MD5 checksums, source and runtime SHA256 hashes,
+dimensions and byte sizes are recorded in sources.json.

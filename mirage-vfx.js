@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=216';
-import {MIRAGE} from './mirage-config.js?v=216';
+import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=227';
+import {MIRAGE} from './mirage-config.js?v=227';
 
 const clamp=n=>Math.max(0,Math.min(1,n));
 const fogVertex=`varying vec2 fogUv;void main(){fogUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`;
@@ -34,13 +34,14 @@ export class MirageVFX {
   this.decoy=new T.Group();this.decoy.name='mirage-decoy';this.decoy.visible=false;this.group.add(this.decoy);this.snapshot=new Map();this.sourceHero=null;this.decoyId=null;this.hitAt=-100;
   const instances=(count,color)=>{const material=new T.MeshBasicMaterial({color,transparent:true,opacity:.65,depthWrite:false}),mesh=new T.InstancedMesh(this.petalGeometry,material,count);mesh.count=0;mesh.frustumCulled=false;this.group.add(mesh);return mesh;};
   this.spores=instances(16,0xa78cc7);this.petals=instances(9,0x8b639f);this.guard=instances(5,0xcab6df);
-  this.dummy=new T.Object3D();this.point=new T.Vector3();this.origin=new T.Vector3();this.local=new T.Matrix4();this.clouds=[];
+  this.dummy=new T.Object3D();this.point=new T.Vector3();this.origin=new T.Vector3();this.local=new T.Matrix4();this.captureMatrix=new T.Matrix4();this.captureSkeletons=new Set();this.clouds=[];
  }
  capture(hero){
   if(!hero)return;
   if(hero!==this.sourceHero){this.clearSnapshot();this.sourceHero=hero;}
   hero.updateWorldMatrix(true,true);hero.getWorldPosition(this.origin);
   this.local.makeTranslation(-this.origin.x,-this.origin.y,-this.origin.z);
+  this.captureSkeletons.clear();
   for(const entry of this.snapshot.values())entry.visible=false;
   hero.traverseVisible(source=>{
    if(!source.isMesh||source.isInstancedMesh||!source.geometry?.attributes.position||source.userData.mirageEffect)return;
@@ -49,11 +50,33 @@ export class MirageVFX {
     const geometry=source.geometry.clone();geometry.deleteAttribute('skinIndex');geometry.deleteAttribute('skinWeight');geometry.morphAttributes={};
     mesh=new T.Mesh(geometry,this.ghostMaterial);mesh.frustumCulled=false;mesh.name='mirage-imprint-'+source.name;this.snapshot.set(source.uuid,mesh);this.decoy.add(mesh);
    }
-   source.skeleton?.update();
-   const out=mesh.geometry.attributes.position,matrix=new T.Matrix4().multiplyMatrices(this.local,source.matrixWorld);
+   if(source.skeleton&&!this.captureSkeletons.has(source.skeleton)){source.skeleton.update();this.captureSkeletons.add(source.skeleton);}
+   const out=mesh.geometry.attributes.position,matrix=this.captureMatrix.multiplyMatrices(this.local,source.matrixWorld);
    for(let i=0;i<out.count;i++){source.getVertexPosition(i,this.point);this.point.applyMatrix4(matrix);out.setXYZ(i,this.point.x,this.point.y,this.point.z);}
    out.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.visible=true;
   });
+ }
+ // Allocate and draw this run's real ghost surfaces during loading. Every live
+ // decoy still captures its own current pose; no combat id, clock or effect fires.
+ // Cleanup restores the scene graph but retains buffers until normal run cleanup.
+ prepareSnapshotSample(hero,parent){
+  if(this.decoyId!==null||this.decoy.visible)throw new Error('Mirage prewarm requires an inactive decoy');
+  const decoy=this.decoy,previousParent=decoy.parent,index=previousParent?.children.indexOf(decoy),position=decoy.position.clone(),rotation=decoy.quaternion.clone(),scale=decoy.scale.clone(),visible=decoy.visible;
+  const uniforms=this.ghostMaterial.uniforms,values=Object.fromEntries(Object.entries(uniforms).map(([key,u])=>[key,u.value]));let restored=false;
+  const restore=()=>{
+   if(restored)return;restored=true;decoy.removeFromParent();
+   if(previousParent){previousParent.add(decoy);const children=previousParent.children;children.splice(children.indexOf(decoy),1);children.splice(index,0,decoy);}
+   decoy.position.copy(position);decoy.quaternion.copy(rotation);decoy.scale.copy(scale);decoy.visible=visible;
+   for(const [key,value]of Object.entries(values))uniforms[key].value=value;
+  };
+  try{
+   this.capture(hero);
+   const box=new T.Box3(),center=new T.Vector3(),size=new T.Vector3();
+   for(const mesh of this.snapshot.values())if(mesh.visible){mesh.geometry.computeBoundingBox();box.union(mesh.geometry.boundingBox);}
+   if(!box.isEmpty()){box.getCenter(center);box.getSize(size);const fit=.32/Math.max(size.x,size.y,size.z,.01);decoy.scale.setScalar(fit);decoy.position.copy(center).multiplyScalar(-fit);decoy.position.y-=1.2;}
+   decoy.quaternion.identity();decoy.visible=true;uniforms.opacity.value=.7;uniforms.clock.value=0;uniforms.hit.value=0;parent.add(decoy);
+   return restore;
+  }catch(error){restore();throw error;}
  }
  set(mesh,i,x,y,z,sx,sy,sz,angle=0){const d=this.dummy;d.position.set(x,y,z);d.scale.set(sx,sy,sz);d.rotation.set(.2,angle,.18);d.updateMatrix();mesh.setMatrixAt(i,d.matrix);}
  update(combat,player,hero){
@@ -124,7 +147,7 @@ export class MirageVFX {
    const size=Math.max(.25,e.size||.6);particle('smoke',0x7b5897,e.x+size*.28,.35,e.z,{life:.28,size:[.06,.15,.05],velocity:[.04,.27,0],opacity:.32,additive:false});
   }
  }
- clearSnapshot(){for(const mesh of this.snapshot.values()){mesh.removeFromParent();mesh.geometry.dispose();}this.snapshot.clear();this.sourceHero=null;}
+ clearSnapshot(){for(const mesh of this.snapshot.values()){mesh.removeFromParent();mesh.geometry.dispose();}this.snapshot.clear();this.sourceHero=null;this.captureSkeletons.clear();}
  clear(){this.clouds=[];this.group.visible=false;this.decoy.visible=false;this.decoyId=null;this.hitAt=-100;for(const mesh of this.fog){mesh.visible=false;disposeGroundSurface(mesh);}for(const mesh of[this.spores,this.petals,this.guard])mesh.count=0;this.clearSnapshot();}
  dispose(){this.clear();this.group.removeFromParent();this.plane.dispose();this.petalGeometry.dispose();this.ghostMaterial.dispose();for(const mesh of this.fog)mesh.material.dispose();for(const mesh of[this.spores,this.petals,this.guard]){mesh.dispose();mesh.material.dispose();}}
 }

@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
-import {herbalPose} from './weapon-performance.js?v=216';
-import {nameWeapon} from './weapon-identity.js?v=216';
+import {herbalPose} from './weapon-performance.js?v=227';
+import {nameWeapon} from './weapon-identity.js?v=227';
 
 const materials=new Map(),geometry=new Map(),UP=new T.Vector3(0,1,0),FORWARD=new T.Vector3(0,0,1);
 function mat(color,metal=0){const key=color+':'+metal;if(!materials.has(key))materials.set(key,new T.MeshStandardMaterial({color,metalness:metal,roughness:metal?.39:.79,side:T.DoubleSide}));return materials.get(key);}

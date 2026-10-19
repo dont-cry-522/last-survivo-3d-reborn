@@ -1,0 +1,66 @@
+[
+  {
+    "hero": "scout",
+    "weapon": "rifle",
+    "fingerprint": {
+      "nodes": 12,
+      "hash": "d8b0a58a3d349cb1cfd0df81c32a61f3812ec9e5c08d1231659356e30f33dbb8"
+    }
+  },
+  {
+    "hero": "scout",
+    "weapon": "shotgun",
+    "fingerprint": {
+      "nodes": 13,
+      "hash": "43ad196585a23d978b572bc6a7df6026113cba6eab2094ad1c20de19c3cf0449"
+    }
+  },
+  {
+    "hero": "scout",
+    "weapon": "fire",
+    "fingerprint": {
+      "nodes": 9,
+      "hash": "4d5285a4fa87b7f91ed3eed001f97e01a4235947ef090a40c54a96b49487df0d"
+    }
+  },
+  {
+    "hero": "silver",
+    "weapon": "crossbow",
+    "fingerprint": {
+      "nodes": 27,
+      "hash": "58c60bda92661d872ff529330519d9bcea4f632e8a4d65d37904ac1705358380"
+    }
+  },
+  {
+    "hero": "silver",
+    "weapon": "shuriken",
+    "fingerprint": {
+      "nodes": 7,
+      "hash": "4a702cecba1097f37de77919d0eb296bdddc583ecda5c92ea3c5f1babf82183f"
+    }
+  },
+  {
+    "hero": "silver",
+    "weapon": "dark",
+    "fingerprint": {
+      "nodes": 8,
+      "hash": "f8a45292b78fc636814cef16446805f5f7008c61d5e4fc6364c2acc4d464b266"
+    }
+  },
+  {
+    "hero": "tide",
+    "weapon": "arcstaff",
+    "fingerprint": {
+      "nodes": 11,
+      "hash": "a2b882c03dc655010b8c3103b854d277352ce03c42a11ef1d71618c57d7c98d5"
+    }
+  },
+  {
+    "hero": "lingya",
+    "weapon": "briarpot",
+    "fingerprint": {
+      "nodes": 10,
+      "hash": "86f0ec89007048852b3a5d18b33b1e27474f882f2f763efbd21abb4ee7aa9d66"
+    }
+  }
+]

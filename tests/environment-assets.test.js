@@ -102,6 +102,39 @@ test('LOD boundaries are exact, mobile changes only distances, and distant scene
  cleanup(world);
 });
 
+test('moving LODs retain the full-rebuild output while only changed material/level buffers upload',t=>{
+ const models=templates(),create=()=>({group:new T.Group(),obstacles:[],spawn:{x:0,z:0},environmentClusters:{records:[
+  {biome:'forest',variant:0,x:0,z:0,angle:.2,scale:1},{biome:'forest',variant:1,x:14,z:2,angle:-.3,scale:1},
+  {biome:'snow',variant:0,x:72,z:45,angle:.7,scale:1}
+ ]}}),world=create(),reference=create(),state=installEnvironmentAssets(world,models),before=installEnvironmentAssets(reference,models),focus=new T.Vector3();
+ function legacy(focus,mobile,force){
+  if(!force&&before.mobile===mobile&&before.focus.distanceToSquared(focus)<.25)return;
+  before.focus.copy(focus);before.mobile=mobile;let changed=force;before.levels.fill(0);
+  for(const r of before.records){const level=environmentLOD(Math.hypot(focus.x-r.x,focus.y-r.y,focus.z-r.z),mobile);changed ||= level!==r.level;r.level=level;before.levels[level]++;}
+  if(!changed)return;
+  for(const batch of before.batches){let count=0;for(const r of batch.records)if(r.level===batch.level)batch.mesh.setMatrixAt(count++,r.matrix);batch.mesh.count=count;batch.mesh.visible=count>0;batch.mesh.instanceMatrix.needsUpdate=true;}
+ }
+ let uploads=0,legacyUploads=0,writes=0,legacyWrites=0,unchanged=0;
+ for(const [s,record]of[[state,()=>writes++],[before,()=>legacyWrites++]])for(const b of s.batches){const set=b.mesh.setMatrixAt;b.mesh.setMatrixAt=function(...args){record();return set.apply(this,args);};}
+ const run=(x,z,mobile=false,force=false)=>{
+  focus.set(x,1.7,z);const levels=state.records.map(r=>r.level),versions=state.batches.map(b=>b.mesh.instanceMatrix.version),oldVersions=before.batches.map(b=>b.mesh.instanceMatrix.version);
+  legacy(focus,mobile,force);updateEnvironmentAssets(world,focus,mobile,force);
+  assert.deepEqual(state.levels,before.levels);assert.deepEqual(state.records.map(r=>r.level),before.records.map(r=>r.level));
+  for(const [i,batch]of state.batches.entries()){
+   const expected=before.batches[i],changed=force||batch.records.some(r=>{const previous=levels[state.records.indexOf(r)];return previous!==r.level&&(previous===batch.level||r.level===batch.level);});
+   assert.equal(batch.mesh.instanceMatrix.version-versions[i],Number(changed),'unrelated material/LOD buffer uploaded');unchanged+=Number(!changed);
+   assert.equal(batch.mesh.count,expected.mesh.count);assert.equal(batch.mesh.visible,expected.mesh.visible);assert.deepEqual(batch.mesh.instanceMatrix.array,expected.mesh.instanceMatrix.array,'batch record order or transform changed');
+   uploads+=batch.mesh.instanceMatrix.version-versions[i];legacyUploads+=expected.mesh.instanceMatrix.version-oldVersions[i];
+  }
+ };
+ try{
+  for(let i=0;i<75;i++)run(i*.6,0);run(44.5,0);run(44.5,0,true);run(44.5,0,true,true);
+  for(let i=0;i<75;i++)run(44.5-i*.6,0,true);run(0,0,false);run(0,0,false,true);
+  assert(unchanged>0);assert(uploads<legacyUploads*.6,'single crossings still upload most unrelated LOD buffers');assert(writes<legacyWrites*.6,'unchanged instances are still rewritten');
+  t.diagnostic(`LOD path: buffer uploads ${legacyUploads} -> ${uploads}; matrix writes ${legacyWrites} -> ${writes}; identical rendered records and transforms.`);
+ }finally{cleanup(world);cleanup(reference);}
+});
+
 test('disposing one map releases its buffers and material clones once, restores fallbacks and preserves shared models and another map',()=>{
  const models=templates(),world=create('forest'),other=create('snow'),state=installEnvironmentAssets(world,models),otherState=installEnvironmentAssets(other,models);
  let sharedGeometry=0,sharedMaterial=0,buffers=0,materials=0;

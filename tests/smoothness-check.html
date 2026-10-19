@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REBORN 真实游玩流畅度检查</title>
+<style>body{margin:16px;background:#15251f;color:#e2eade;font:14px system-ui}button,select,input,textarea{padding:8px;background:#294638;color:inherit;border:1px solid #82957d;border-radius:5px}button:disabled{opacity:.45}label{display:inline-block;margin:5px 12px 5px 0}textarea{display:block;width:100%;box-sizing:border-box;font:12px monospace}iframe{border:0;display:block;scroll-margin-top:55px}#viewport{overflow:auto;margin:12px 0}#status{position:sticky;top:0;z-index:2;padding:10px;background:#15251f}details{margin:10px 0}[hidden]{display:none!important}</style>
+<h1>真实游玩流畅度检查</h1>
+<p>固定地图 seed 522；游戏保留原生 requestAnimationFrame。帧间隔是浏览器回调实测，不是显示器呈现帧率。请只保留一个游戏测试页运行，并保持页面可见。</p>
+<label>目标 <select id="target"><option value="current">当前版本</option><option value="baseline">v219 基线</option></select></label>
+<label>尺寸 <select id="size"><option value="desktop">电脑 1180×720</option><option value="desktop-full">大屏 1920×1080</option><option value="mobile">手机布局 844×390</option></select></label>
+<label>画质 <select id="quality"><option value="high">高画质</option><option value="balanced">均衡</option><option value="mobile">移动</option><option value="auto">自动</option></select></label>
+<label>视角 <select id="view"><option value="first">第一人称</option><option value="third">第三人称</option></select></label>
+<label>地图 <select id="map"><option value="forest">翡翠幽林</option><option value="confluence">五境大远征</option><option value="snow">霜月峡谷</option><option value="ash">赤烬荒原</option><option value="sand">风蚀遗城</option><option value="coast">幽潮遗港</option></select></label>
+<label>角色（第一武器） <select id="hero"><option value="silver">霜影</option><option value="scout">林地游侠</option><option value="wraith">影裔</option><option value="tide">潮行者</option><option value="lingya">铃芽</option><option value="wuling">雾苓</option><option value="mirage">雾苓·蜃影</option></select></label>
+<label>连续游玩 <select id="duration"><option value="60">60 秒</option><option value="150">150 秒（观察首领）</option></select></label>
+<label><input type="checkbox" id="menus" checked>包含人物、武器、地图切换</label>
+<label><input type="checkbox" id="previews">首次近看 / 全身切换</label>
+<label><input type="checkbox" id="profile" checked>记录 update / render 提交耗时</label>
+<details><summary>目标地址与测试条件</summary><label>基线目录 <input id="baseline" value="/baseline/" size="55"></label><p>只修改 iframe 内存中的地图 seed 与计时包装，使用内存 localStorage，不清除缓存，也不注册离线服务。浏览器 HTTP / 角色资源缓存保留。角色免伤；敌人、碰撞、经验和攻击照常运行。升级出现时点击正式“稍后选择”，保留成长次数。手机只模拟尺寸与触控分支，移动/攻击仍由测试输入驱动。</p></details>
+<p>每轮最后通过正式按钮暂停、结束、确认返回、再次入场并复测攻击。150 秒采用真实墙钟；报告会注明实际游戏时间与是否看见首领，五境首领仍需满足地标条件。</p>
+<button id="run-startup">运行准备与首次攻击</button> <button id="run-play">运行完整检查 + 60 秒走动攻击</button> <button id="stop" disabled>停止并导出</button>
+<p id="status" role="status">就绪。每次运行创建一个全新的游戏 iframe。</p>
+<div id="report-panel"><label for="report">测试结果 JSON（完成或失败后生成）</label><textarea id="report" rows="12" readonly></textarea></div>
+<div id="viewport"></div>
+<script type="module">
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const assert=(value,message)=>{if(!value)throw Error(message);};
+let frame,win,g,aborted=false,report,visibilityObserver,visibilityStarted,shellVisibilityListener;
+const status=text=>$('#status').textContent=text;
+const stats=values=>{const a=[...values].sort((x,y)=>x-y),q=f=>a.length?a[Math.min(a.length-1,Math.floor(a.length*f))]:null;return{samples:a.length,medianMs:q(.5),p95Ms:q(.95),p99Ms:q(.99),maxMs:a.at(-1)??null,over33ms:a.filter(x=>x>1000/30).length,over50ms:a.filter(x=>x>50).length,over100ms:a.filter(x=>x>100).length,over250ms:a.filter(x=>x>250).length};};
+function health(checkLoading=true){assert(!aborted,'用户停止了测试');assert(!document.hidden&&!win?.document.hidden,'页面进入后台，测试已停止，不能将后台节流算作游戏帧率');assert(!g||window.qaSmoothVisibility?.intersecting!==false,'游戏 iframe 完全离屏，测量已停止；这些间隔不能作为正常可见游玩的结果');assert(!win?.qaErrors?.length,win?.qaErrors?.join('\n'));if(checkLoading)assert(win?.document.querySelector('#asset-loading')?.dataset.state!=='error','正式游戏准备界面报告失败');}
+async function waitFor(test,message,timeout=180000){const started=performance.now();while(!test()){health();assert(performance.now()-started<timeout,message);await sleep(40);}health();}
+const nextFrames=()=>new Promise(resolve=>win.qaNativeFrame(()=>win.qaNativeFrame(resolve)));
+async function fetchText(url){const response=await fetch(url,{cache:'no-store'});assert(response.ok,url+' HTTP '+response.status);return response.text();}
+function patchOnce(text,before,after){assert(text.split(before).length===2,'测试注入锚点缺失或不唯一：'+before);return text.replace(before,after);}
+function observeViewport(){
+ if(!window.IntersectionObserver)return;
+ visibilityObserver=new IntersectionObserver(entries=>{for(const entry of entries){const ratio=entry.intersectionRatio,intersecting=entry.isIntersecting&&ratio>0;window.qaSmoothVisibility={ratio,intersecting};report.visibility.events.push({atMs:performance.now()-visibilityStarted,iframeMs:win?.performance.now()??null,phase:win?.qaProbe?.phase?.label??null,ratio,intersecting,visibleWidth:entry.intersectionRect.width,visibleHeight:entry.intersectionRect.height});if(!intersecting)report.visibility.everOffscreen=true;}},{threshold:[0,.01,.1,.25,.5,.75,1]});visibilityObserver.observe(frame);
+}
+function boot(config){
+ window.qaErrors=[];
+ addEventListener('error',e=>{if(e.message||e.target?.tagName==='SCRIPT')qaErrors.push(e.message||'Script failed: '+e.target.src);},true);
+ addEventListener('unhandledrejection',e=>qaErrors.push(String(e.reason)));
+ const oldError=console.error.bind(console);console.error=(...args)=>{qaErrors.push(args.map(String).join(' '));oldError(...args);};
+ const memory=new Map([['forest3d-reborn-render-quality',config.quality],['forest3d-reborn-view',config.view],['forest-echoes-reborn-attack-mode','manual'],['forest-echoes-reborn-mobile-attack-mode','manual']]);
+ Object.defineProperty(window,'localStorage',{value:{getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,String(v)),removeItem:k=>memory.delete(k),clear:()=>memory.clear(),key:i=>[...memory.keys()][i]??null,get length(){return memory.size;}}});
+ const media=matchMedia.bind(window);window.matchMedia=q=>/pointer:\s*coarse/.test(q)?{matches:config.mobile,media:q,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}}:media(q);
+ let seed=522;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const native=requestAnimationFrame.bind(window);window.qaNativeFrame=native;
+ const p=window.qaProbe={phase:null,phases:[],longTasks:[],stages:[],renders:0,gameFrames:0,profile:config.profile,visibilityEvents:[]};
+ p.visibility=()=>({iframeVisibleRatio:parent.qaSmoothVisibility?.ratio??null,iframeIntersecting:parent.qaSmoothVisibility?.intersecting??null,documentVisibility:document.visibilityState,parentDocumentVisibility:parent.document.visibilityState});
+ const visibilityChanged=()=>p.visibilityEvents.push({at:performance.now(),phase:p.phase?.label??null,...p.visibility()});document.addEventListener('visibilitychange',visibilityChanged);visibilityChanged();
+ p.begin=label=>{if(p.phase)throw Error('测量阶段重叠');const phase={label,start:performance.now(),observerGaps:[],gameGaps:[],gameCpu:[],updateCpu:[],renderCpu:[],worst:[],firstObserverDelayMs:null,lastObserver:null,lastGame:null,visibilityAtStart:p.visibility()};p.phase=phase;p.phases.push(phase);return phase;};
+ p.end=()=>{if(!p.phase)return null;p.drain();const result=p.phase;result.end=performance.now();p.phase=null;return result;};
+ const accept=list=>{for(const e of list)p.longTasks.push({at:e.startTime,durationMs:e.duration});};
+ let observer;if(window.PerformanceObserver?.supportedEntryTypes?.includes('longtask')){observer=new PerformanceObserver(list=>accept(list.getEntries()));observer.observe({type:'longtask',buffered:true});}
+ p.longTaskSupported=!!observer;p.drain=()=>{if(observer)accept(observer.takeRecords());};
+ const watchStage=new MutationObserver(()=>{const element=document.querySelector('#asset-loading-stage');if(!element)return;watchStage.disconnect();const changed=()=>{const stage=element.textContent;if(stage&&p.stages.at(-1)?.stage!==stage)p.stages.push({at:performance.now(),stage});};changed();new MutationObserver(changed).observe(element,{childList:true,subtree:true,characterData:true});});watchStage.observe(document,{childList:true,subtree:true});
+ const wrapped=new WeakMap();window.requestAnimationFrame=callback=>{
+  if(callback.name!=='frame')return native(callback);
+  if(!wrapped.has(callback))wrapped.set(callback,timestamp=>{const phase=p.phase,at=performance.now();p.gameFrames++;if(phase){if(phase.lastGame!==null)phase.gameGaps.push(at-phase.lastGame);phase.lastGame=at;}try{return callback(timestamp);}finally{if(phase)phase.gameCpu.push(performance.now()-at);}});
+  return native(wrapped.get(callback));
+ };
+ const observeFrame=()=>{const phase=p.phase,at=performance.now();if(phase){if(phase.lastObserver!==null){const gap=at-phase.lastObserver;phase.observerGaps.push(gap);if(gap>1000/30)phase.worst.push({atMs:at-phase.start,gapMs:gap,...p.visibility()});}else phase.firstObserverDelayMs=at-phase.start;phase.lastObserver=at;}native(observeFrame);};
+ p.begin('initial-preparation');native(observeFrame);
+}
+function endPhase(extra={}){
+ const p=win.qaProbe,phase=p.end();if(!phase)return;
+ const longTasks=p.longTasks.filter(e=>e.at<phase.end&&e.at+e.durationMs>phase.start).map(e=>({atMs:e.at-phase.start,durationMs:e.durationMs}));
+ const stages=p.stages.filter(e=>e.at>=phase.start&&e.at<=phase.end).map((e,i,a)=>({stage:e.stage,atMs:e.at-phase.start,durationMs:(a[i+1]?.at??phase.end)-e.at}));
+ const item={label:phase.label,wallMs:phase.end-phase.start,firstObserverDelayMs:phase.firstObserverDelayMs,firstGameplayRenderCompletedMs:phase.firstGameplayRenderCompletedMs??null,callbackIntervals:stats(phase.observerGaps),gameCallbackIntervals:stats(phase.gameGaps),gameCallbackCpu:stats(phase.gameCpu),updateCpu:stats(phase.updateCpu),renderCpu:stats(phase.renderCpu),worstIntervals:phase.worst.sort((a,b)=>b.gapMs-a.gapMs).slice(0,12),longTaskSupported:p.longTaskSupported,longTasks,stages,visibilityAtStart:phase.visibilityAtStart,visibilityAtEnd:p.visibility(),...extra};report.phases.push(item);return item;
+}
+function details(){const renderer=g.renderer;return{qualityMode:g.renderQualityMode,qualityScale:g.renderQuality,pixelWidth:renderer.domElement.width,pixelHeight:renderer.domElement.height,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,shaderPrograms:renderer.info.programs.length};}
+async function ready(state){await waitFor(()=>win.game3d&&win.game3d.state===state&&!win.document.querySelector('#start').disabled&&win.document.querySelector('#asset-loading').hidden,'正式游戏 '+state+' 准备超时');g=win.game3d;}
+async function load(config){
+ const base=new URL(config.target==='baseline'?$('#baseline').value:'../',location.href);if(!base.pathname.endsWith('/'))base.pathname+='/';assert(base.origin===location.origin,'基线必须与检查页同源');report.targetURL=base.href;
+ const sourceStart=performance.now(),html=await fetchText(new URL('index.html',base)),mainMatch=html.match(/<script\b[^>]*src=["']((?:\.\/)?main\.js[^"']*)["'][^>]*><\/script>/i);assert(mainMatch,'找不到正式 main.js');
+ const [mainText,css]=await Promise.all([fetchText(new URL(mainMatch[1],base)),config.mobile?fetchText(new URL('style.css',base)):Promise.resolve('')]);report.sourceFetchMs=performance.now()-sourceStart;report.mainScript=mainMatch[1];
+ let main=patchOnce(mainText,'world=buildWorld(mapId,Math.floor(Math.random()*1e8));','world=buildWorld(mapId,522);');
+ // These wrappers only observe the in-memory module; runtime files stay untouched.
+ main=patchOnce(main,'await prepareLobby();',`const qaOriginalUpdate=update;update=function(dt){const p=window.qaProbe,phase=p.phase,at=p.profile&&phase?performance.now():0;try{return qaOriginalUpdate(dt);}finally{if(p.profile&&phase)phase.updateCpu.push(performance.now()-at);}};
+ const qaOriginalRender=cinema.render;cinema.render=function(...args){const p=window.qaProbe,phase=p.phase,at=p.profile&&phase?performance.now():0;p.renders++;try{return qaOriginalRender.apply(this,args);}finally{if(p.profile&&phase)phase.renderCpu.push(performance.now()-at);if(phase&&state==='playing'&&phase.firstGameplayRenderCompletedMs===undefined)phase.firstGameplayRenderCompletedMs=performance.now()-phase.start;}};
+ await prepareLobby();`);
+ const injected='<base href="'+base.href+'"><script>('+boot.toString()+')('+JSON.stringify(config)+');<\/script>'+(css?'<style>'+css.replaceAll(/\(pointer:\s*coarse\)/g,'(min-width:0px)')+'</style>':'');
+ const source=html.replace(/<script\b[^>]*src=["'](?:\.\/)?offline\.js[^"']*["'][^>]*><\/script>/gi,'').replace(mainMatch[0],()=>'<script type="module">'+main.replaceAll('<'+'/script','<\\/script')+'\n//# sourceURL='+base.href+'main.js?smoothness-fixture\n<\/script>').replace('<head>',()=>'<head>'+injected);
+ frame=document.createElement('iframe');frame.title='真实游戏流畅度测试';frame.width=config.width;frame.height=config.height;$('#viewport').append(frame);frame.scrollIntoView({block:'start',inline:'nearest',behavior:'auto'});frame.srcdoc=source;win=frame.contentWindow;observeViewport();
+ await ready('menu');assert(await g.surfaceReady,'地表资源准备失败');await nextFrames();
+ endPhase({render:details(),memoryStorage:true,serviceWorker:win.navigator.serviceWorker?.controller?.scriptURL??null});
+ g.audio.setMuted(true);assert(g.renderQualityMode===config.quality,'画质设置与测试条件不一致');
+ report.viewport={width:win.innerWidth,height:win.innerHeight,dpr:win.devicePixelRatio,mobileSimulation:config.mobile};
+}
+async function measureClick(label,selector,state='menu'){
+ const element=typeof selector==='string'?win.document.querySelector(selector):selector;assert(element&&!element.disabled,'找不到可点击的正式控件：'+selector);status(label);win.qaProbe.begin(label);
+ const start=win.performance.now();element.click();const clickHandlerMs=win.performance.now()-start,afterClick={state:g.state,loading:!win.document.querySelector('#asset-loading').hidden,startDisabled:win.document.querySelector('#start').disabled};await ready(state);const readyMs=win.performance.now()-start;await nextFrames();await sleep(200);health();
+ return endPhase({clickHandlerMs,readyMs,afterClick,render:details()});
+}
+function key(type,key){win.dispatchEvent(new win.KeyboardEvent(type,{key,code:'Key'+key.toUpperCase(),bubbles:true}));}
+function attack(held){if(held)g.renderer.domElement.dispatchEvent(new win.MouseEvent('mousedown',{button:0,buttons:1,bubbles:true}));else win.dispatchEvent(new win.MouseEvent('mouseup',{button:0,bubbles:true}));}
+async function firstAttack(label='first-attack'){
+ status('真实攻击 · 记录触发等待与 2 秒动画');win.qaProbe.begin(label);const start=win.performance.now(),serial=g.hero.userData.shotSerial||0,renderBefore=win.qaProbe.renders;attack(true);
+ try{await waitFor(()=>(g.hero.userData.shotSerial||0)>serial,'未观察到首次攻击',5000);const observedAttackMs=win.performance.now()-start;attack(false);await sleep(2000);health();return endPhase({observedAttackMs,pollResolutionMs:40,attacks:(g.hero.userData.shotSerial||0)-serial,renderSubmissions:win.qaProbe.renders-renderBefore,render:details()});}finally{attack(false);}
+}
+async function play60(config){
+ const forestPoints=g.world.forestJourney?.points||g.world.forestHabitats?.approach?.points,routes=(g.world.explorationRoutes||[]).filter(r=>r.points.length>1).sort((a,b)=>Math.hypot(a.points[0].x-g.player.x,a.points[0].z-g.player.z)-Math.hypot(b.points[0].x-g.player.x,b.points[0].z-g.player.z));
+ const points=forestPoints?.length>1?forestPoints:routes[0]?.points||[{x:g.player.x,z:g.player.z},{x:g.player.x+4,z:g.player.z},{x:g.player.x+4,z:g.player.z+4},{x:g.player.x,z:g.player.z+4}],routeSource=forestPoints?.length>1?'forest-route':routes.length?'exploration-route':'spawn-loop-fallback';
+ const duration=config.duration,start=win.performance.now(),gameStart=g.time,serial=g.hero.userData.shotSerial||0;let target=0,direction=1,travelled=0,last={x:g.player.x,z:g.player.z},nextSample=0,lastProgress=-1,changedView=false,inputsHeld=false,firstBossSeen=null;const samples=[],dialogs=[];
+ win.qaProbe.begin('play-'+duration+'-seconds');
+ await new Promise((resolve,reject)=>{const tick=()=>{try{
+  health(false);const elapsed=win.performance.now()-start;
+  for(let choices=0;choices<3&&['upgrade','relic','event-choice'].includes(g.state);choices++){const selector=g.state==='upgrade'?'#upgrade-later':g.state==='relic'?'[data-relic]':win.document.querySelector('#camp-later')?'#camp-later':'[data-hunt-boon]',button=win.document.querySelector(selector);assert(button,'没有可处理的正式成长/奖励按钮：'+g.state);dialogs.push({wallSeconds:elapsed/1000,state:g.state,pending:g.player.pending,action:selector,choice:button.dataset.relic||button.dataset.huntBoon||null});button.click();inputsHeld=false;}
+  assert(g.state==='playing','游玩被未处理状态中断：'+g.state);
+  g.player.inv=2; // Fixture-only immunity; enemies and actor collisions remain active.
+  travelled+=Math.hypot(g.player.x-last.x,g.player.z-last.z);last={x:g.player.x,z:g.player.z};
+  let point=points[target];if(Math.hypot(point.x-g.player.x,point.z-g.player.z)<.65){target+=direction;if(target>=points.length){direction=-1;target=points.length-2;}else if(target<0){direction=1;target=1;}point=points[target];}
+  g.adventureCamera.yaw=Math.atan2(point.x-g.player.x,point.z-g.player.z);
+  if(elapsed>=duration*500&&!changedView){win.document.querySelector('#view-toggle').click();changedView=true;inputsHeld=false;}
+  if(!inputsHeld){key('keydown','w');attack(true);inputsHeld=true;}
+  assert([g.player.x,g.player.y,g.player.z,...g.camera.position.toArray()].every(Number.isFinite),'出现非有限角色或相机坐标');
+  if(g.boss?.alive&&!firstBossSeen)firstBossSeen={wallSeconds:elapsed/1000,gameSeconds:g.time,kind:g.boss.kind};
+  if(elapsed>=nextSample){samples.push({wallSeconds:elapsed/1000,gameSeconds:g.time-gameStart,position:{x:g.player.x,y:g.player.y,z:g.player.z},aliveEnemies:g.enemies.filter(e=>e.alive).length,attacks:(g.hero.userData.shotSerial||0)-serial,pending:g.player.pending,view:g.adventureCamera.mode,boss:g.boss?.alive?{kind:g.boss.kind,hp:g.boss.hp}:null,render:details()});nextSample+=5000;}
+  const progress=Math.min(duration,Math.floor(elapsed/1000));if(progress!==lastProgress){status('真实走动与攻击：'+progress+' / '+duration+' 秒');lastProgress=progress;}
+  if(elapsed>=duration*1000)resolve();else win.qaNativeFrame(tick);
+ }catch(error){reject(error);}};win.qaNativeFrame(tick);});
+ key('keyup','w');attack(false);const result=endPhase({wallSeconds:(win.performance.now()-start)/1000,gameSeconds:g.time-gameStart,travelled,attacks:(g.hero.userData.shotSerial||0)-serial,changedView,dialogs,samples,requestedDurationSeconds:duration,routeSource,firstBossSeen,bossObserved:!!firstBossSeen,finalGameSeconds:g.time,bossCoverageReason:firstBossSeen?'observed':config.map==='confluence'?'landmark-conditions-not-met':g.time<120?'game-clock-below-120-seconds':'not-observed',fixture:{playerImmune:true,enemiesRemoved:false,enemyCollisionActive:true,upgradesDeferred:true,keyboardMovement:true,mouseAttack:true,manualCameraSteering:true,rewardsChosenThroughUI:dialogs.some(d=>d.choice)}});
+ assert(travelled>1,'没有观察到实际行走');assert(result.attacks>0,'连续测试没有实际攻击');return result;
+}
+function verifyEntry(config,phase){
+ assert(phase.gameCallbackCpu.samples>0&&phase.firstGameplayRenderCompletedMs!==null,'没有观察到原生游戏回调及正式渲染');assert(g.player.heroId===config.hero,'实际角色与选择不一致');assert(win.document.querySelector('[data-map].selected')?.dataset.map===config.map,'实际地图选择不一致');g.player.inv=999;g.setView(config.view);phase.mapSeed=522;
+ if(config.map==='forest'){const pond=g.world.ponds.at(-1);assert(pond&&Math.hypot(pond.x-15.54115152240663,pond.z-18.737410155021003)<1e-5,'地图几何与 seed 522 不符');phase.seedVerified=true;}else phase.seedVerification='fixed-in-memory-buildWorld-argument';
+}
+async function restartThroughUI(config){
+ const dialogButton=text=>[...win.document.querySelectorAll('#dialog button')].find(button=>button.textContent.trim()===text);
+ await measureClick('pause-before-return','#pause','paused');await measureClick('end-run-confirmation',dialogButton('结束本局'),'paused');
+ const previousWorld=g.world,previousTime=g.time,returned=await measureClick('return-menu-preparation',dialogButton('确认结束'),'menu');returned.worldRebuilt=g.world!==previousWorld;returned.combatTimeUnchanged=g.time===previousTime;assert(returned.worldRebuilt&&returned.combatTimeUnchanged,'返回准备未重建地图，或准备时推进了战斗');
+ const restart=await measureClick('restart-preparation','#start','playing');verifyEntry(config,restart);restart.level=g.player.level;assert(g.player.level===1&&g.time<2,'再次开始未重置对局');await firstAttack('restart-first-attack');
+}
+function cleanup(){visibilityObserver?.disconnect();visibilityObserver=null;if(shellVisibilityListener)document.removeEventListener('visibilitychange',shellVisibilityListener);shellVisibilityListener=null;if(!win)return;try{key('keyup','w');attack(false);g.audio.stopMusic();g.cinema?.dispose();g.renderer.dispose();g.renderer.forceContextLoss();}catch{}frame?.remove();frame=null;win=null;g=null;}
+async function run(full){
+ aborted=false;$('#run-startup').disabled=$('#run-play').disabled=true;$('#stop').disabled=false;$('#report').value='';$('#report-panel').hidden=true;
+ const size=$('#size').value,mobile=size==='mobile',config={target:$('#target').value,mobile,width:size==='desktop-full'?1920:mobile?844:1180,height:size==='desktop-full'?1080:mobile?390:720,quality:$('#quality').value,view:$('#view').value,profile:$('#profile').checked,map:$('#map').value,hero:$('#hero').value,duration:Number($('#duration').value),previews:$('#previews').checked};
+ report={type:'native-game-smoothness',fixtureVersion:3,createdAt:new Date().toISOString(),config,mapSeed:522,full60Seconds:full&&config.duration===60,playDurationSeconds:full?config.duration:0,result:'running',phases:[],errors:[],notes:['Native game rAF receives the original browser timestamps; the fixture never calls frame or step.','Callback intervals and CPU submission times are not presented-frame FPS or GPU timings.','First load includes module loading and real preparation, but retains browser HTTP and model caches; source text fetch is recorded separately.','Same seed does not guarantee identical combat across different real frame timing. Dynamic resolution is retained and sampled.','Player immunity, automated steering and deferred upgrades apply only to this test. No enemies or actor collisions are removed.','Audio is muted after initial preparation; actual start follows the normal audio initialization path.','The iframe is removed at completion to release its GPU load. Mobile layout is not a physical-device benchmark.','Camp growth is deferred; mandatory relic/hunt rewards use their first official UI choice and are recorded.','The 150-second option uses wall time, never accelerates game time; boss coverage is reported from actual observation.','Fixture v3 hides the report while running and scrolls the unchanged-size iframe into view. v2 did not monitor offscreen visibility, so its interval distributions are not directly comparable to v3.','Intersection ratios describe geometric viewport intersection, not actual screen presentation or occlusion. Offscreen/hidden intervals must not be attributed solely to game cost.']};
+ visibilityStarted=performance.now();window.qaSmoothVisibility={ratio:null,intersecting:null};report.visibility={observerSupported:!!window.IntersectionObserver,events:[],documentEvents:[],everOffscreen:false};shellVisibilityListener=()=>report.visibility.documentEvents.push({atMs:performance.now()-visibilityStarted,phase:win?.qaProbe?.phase?.label??null,state:document.visibilityState});document.addEventListener('visibilitychange',shellVisibilityListener);shellVisibilityListener();
+ try{
+  status('加载真实游戏并完成大厅准备…');await load(config);
+  if($('#menus').checked){for(const [label,selector]of[['menu-hero-wraith','[data-hero="wraith"]'],['menu-weapon-second','#weapons button:nth-child(2)'],['menu-hero-silver','[data-hero="silver"]'],['menu-weapon-first','#weapons button:first-child'],['menu-map-snow','[data-map="snow"]'],['menu-map-forest','[data-map="forest"]']])await measureClick(label,selector);}
+  if(config.hero!=='silver'){await measureClick('selected-hero-'+config.hero,'[data-hero="'+config.hero+'"]');await measureClick('selected-weapon-first','#weapons button:first-child');}
+  if(config.map!=='forest')await measureClick('selected-map-'+config.map,'[data-map="'+config.map+'"]');
+  if(config.previews){await measureClick('menu-preview-detail-first','#preview-detail');await measureClick('menu-preview-full-return','#preview-full');}
+  const start=await measureClick('start-preparation','#start','playing');verifyEntry(config,start);
+  await firstAttack();if(full)await play60(config);
+  await restartThroughUI(config);
+  assert(g.renderer.info.programs.every(p=>p.diagnostics?.runnable!==false),'着色器编译失败');assert(g.renderer.getContext().getError()===0,'WebGL 错误');health();report.result='passed';status('检查完成，JSON 已导出；游戏画面已停止。');
+ }catch(error){if(win?.qaProbe?.phase)endPhase({incomplete:true});report.result=aborted?'aborted':'failed';report.errors.push(error.stack||String(error));status('检查失败：'+error.message);}
+ finally{report.errors.push(...(win?.qaErrors||[]));report.visibility.iframeDocumentEvents=win?.qaProbe?.visibilityEvents||[];report.finishedAt=new Date().toISOString();cleanup();$('#report').value=JSON.stringify(report,null,2);$('#report-panel').hidden=false;$('#run-startup').disabled=$('#run-play').disabled=false;$('#stop').disabled=true;}
+}
+$('#run-startup').onclick=()=>run(false);$('#run-play').onclick=()=>run(true);$('#stop').onclick=()=>{aborted=true;};
+$('#duration').onchange=()=>$('#run-play').textContent='运行完整检查 + '+$('#duration').value+' 秒走动攻击';
+addEventListener('error',e=>{status('检查器脚本失败：'+e.message);$('#report').value=JSON.stringify({result:'shell-error',message:e.message,stack:e.error?.stack},null,2);});
+</script></html>

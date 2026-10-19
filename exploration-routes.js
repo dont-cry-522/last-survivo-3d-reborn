@@ -1,14 +1,14 @@
 import * as T from './vendor/three.module.js';
-import {segmentDistance} from './rules.js?v=216';
-import {waterDepth} from './water.js?v=216';
-import {bridgeContains} from './coast.js?v=216';
+import {segmentDistance} from './rules.js?v=227';
+import {waterDepth} from './water.js?v=227';
+import {bridgeContains} from './coast.js?v=227';
 
 const STEP=2,CLEARANCE=.60,MAX_POINTS=40;
 const directions=[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
 
 // Build-time only. The fixed 2m grid has at most 19,600 nodes at the current
 // 140m map bound; shared point/edge caches serve every landmark in this world.
-function navigator(world){
+export function createExplorationNavigator(world){
  const half=Math.min(140,world.half||96),origin=-half+1,count=Math.floor((half-1-origin)/STEP)+1,total=count*count;
  const obstacles=world.obstacles||[],vents=(world.patches||[]).filter(p=>p.kind==='vent');
  const solids=[...obstacles,...vents].map(o=>{const r=o.r+CLEARANCE;return{x:o.x,z:o.z,r,r2:r*r,minX:o.x-r,maxX:o.x+r,minZ:o.z-r,maxZ:o.z+r};});
@@ -180,7 +180,7 @@ function throughPlace(navigation,world,site,start,end,direct){
  * empty geometry means no misleading guide when no complete safe route exists. */
 export function installExplorationRoutes(world){
  if(world.explorationRoutes)return world.explorationRoutes;
- const navigation=navigator(world),routes=[];
+ const navigation=createExplorationNavigator(world),routes=[];
  const approach=forestApproach(world,navigation);
  if(approach)world.forestHabitats.approach=approach;
  for(const site of world.sites||[]){

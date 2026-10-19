@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import{enemySurface}from'./enemy-surfaces.js?v=216';
+import{enemySurface}from'./enemy-surfaces.js?v=227';
 // Strength, settle time, lean and torsion: a bullet pricks, a bolt drives, a
 // blade turns the body, and slower magic releases pressure over a longer beat.
 const REACTIONS={rifle:[.065,.16,.35,0],shotgun:[.19,.26,.85,.10],crossbow:[.12,.22,.60,0],shuriken:[.075,.18,.40,.55],fire:[.14,.26,.65,.08],dark:[.11,.32,.45,-.35],shade:[.085,.24,.40,-.25],shadowblade:[.13,.24,.65,.85],grimoire:[.16,.34,.70,-.45],harpoon:[.12,.23,.65,.10],boomerang:[.095,.18,.50,.15],sporelantern:[.055,.20,.30,.10],miasmalantern:[.075,.28,.40,-.15],hammer:[.19,.30,.75,0],shield:[.19,.30,.75,0],arcstaff:[.045,.13,.22,.12],briarpot:[.095,.21,.46,-.08],mycelialwhip:[.085,.20,.38,.38],venomfan:[.045,.25,.25,-.10]};
@@ -40,7 +40,9 @@ export function restoreEnemyHit(mesh){const d=mesh.userData,b=d.hitBase;if(b){d.
 export function animateEnemyHit(mesh,dt){
  const d=mesh.userData,h=d.hitReaction;if(!h)return;h.age+=dt;if(h.age>=.10)tintContact(mesh,false);if(h.age>=h.duration){d.hitReaction=null;return;}
  const rig=d.rig,u=h.age/h.duration,v=Math.max(0,(u-.18)/.82),push=1-v*v*(3-2*v),a=h.angle-mesh.rotation.y;
- d.hitBase={position:rig.position.clone(),rotation:rig.quaternion.clone(),scale:rig.scale.clone()};
+ // Keep the snapshot per actor; restore still clears the active pose each frame.
+ const base=d.hitBaseCache??={position:new T.Vector3(),rotation:new T.Quaternion(),scale:new T.Vector3()};
+ base.position.copy(rig.position);base.rotation.copy(rig.quaternion);base.scale.copy(rig.scale);d.hitBase=base;
  const amount=u<.18?T.MathUtils.lerp(h.start,h.strength,Math.sin(u/.18*Math.PI/2)):h.strength*push;h.amount=amount;rig.position.x+=Math.sin(a)*amount;rig.position.z+=Math.cos(a)*amount;rig.rotation.x+=Math.cos(a)*amount*h.lean;rig.rotation.z-=Math.sin(a)*amount*h.lean;rig.rotation.y+=amount*h.turn;
 }
 export class EnemyDeaths{

@@ -1,13 +1,13 @@
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=216';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=227';
 import * as T from './vendor/three.module.js';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=216';
-import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=216';
-import {sporePod} from './wuling-appearance.js?v=216';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=227';
+import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=227';
+import {sporePod} from './wuling-appearance.js?v=227';
 import {poseSlingshot} from './slingshot-model.js';
 
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=216';
-import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=216';
+import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=227';
+import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=227';
 
 // Camera-space equipment assembled from the actual weapon plus a small procedural hand rig.
 // This is not a new authored arm-animation asset. Layer 1 gets a small depth-correct overlay pass.

@@ -1,13 +1,13 @@
-import {applyFernSurface} from './fern-surfaces.js?v=216';
-import {applyTreeLeafSurface,TREE_LEAF_UVS} from './tree-scenery.js?v=216';
-import{sceneryRhythmAt}from'./exploration-composition.js?v=216';
+import {applyFernSurface} from './fern-surfaces.js?v=227';
+import {applyTreeLeafSurface,TREE_LEAF_UVS} from './tree-scenery.js?v=227';
+import{sceneryRhythmAt}from'./exploration-composition.js?v=227';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {seeded,segmentDistance} from './rules.js?v=216';
-import {forestHabitatAt} from './forest-habitats.js?v=216';
-import {bridgeContains} from './coast.js?v=216';
-import {naturalRockGeometry} from './biome-scenery.js?v=216';
-import {surfaceUniforms} from './surface-textures.js?v=216';
+import {seeded,segmentDistance} from './rules.js?v=227';
+import {forestHabitatAt} from './forest-habitats.js?v=227';
+import {bridgeContains} from './coast.js?v=227';
+import {naturalRockGeometry} from './biome-scenery.js?v=227';
+import {surfaceUniforms} from './surface-textures.js?v=227';
 
 const profiles={
  forest:{count:1200,grass:.83,height:1,tuft:[0x6e8650,0x87985a],litter:[0x827561,0x66685c]},
@@ -240,7 +240,7 @@ function placementFilter(world,footprint=FOOTPRINT,shoulder=false){
  const FOOTPRINT=footprint;
  const regions=world.regions||[],routes=routesFor(world),districts=[...(world.districts||[]),...regions.flatMap(r=>r.districts||[])];
  const passages=(world.biomePlaces||[]).map(p=>({...p,c:Math.cos(p.angle||0),s:Math.sin(p.angle||0)}));
- const paths=[...routes.map(r=>({...r,width:shoulder?(r.width===5.8?4.2:1.65):r.width})),...(world.explorationRoutes||[]).map(r=>({...r,width:2}))].flatMap(r=>r.points.slice(1).map((b,i)=>{
+ const paths=[...routes.map(r=>({...r,width:shoulder?(r.width===5.8?4.2:1.65):r.width})),...[...(world.explorationRoutes||[]),...(world.biomeJourneys||(world.biomeJourney?[world.biomeJourney]:[]))].map(r=>({...r,width:2}))].flatMap(r=>r.points.slice(1).map((b,i)=>{
   const a=r.points[i],width=r.width+FOOTPRINT;return{a,b,width,minX:Math.min(a.x,b.x)-width,maxX:Math.max(a.x,b.x)+width,minZ:Math.min(a.z,b.z)-width,maxZ:Math.max(a.z,b.z)+width};
  }));
  const clearings=[{...world.spawn,r:4},...regions.map(r=>({x:r.x,z:r.z,r:6})),
@@ -458,8 +458,52 @@ function connectLandscapeCover(world,mapId,records,footprint,allowed){
   const all=records.filter(p=>p.biome===biome);if(!all.length)continue;
   const region=world.regions?.find(r=>r.id===biome),start=region||world.spawn,sources=[];
   const anchors=(world.obstacles||[]).filter(o=>!o.tactic&&!o.place&&!o.environmentCluster&&!o.climateLandform&&!world.breakables?.includes(o)&&(!region||region.contains(o.x,o.z))&&!protectedPlant(o)).sort((a,b)=>Math.hypot(a.x-start.x,a.z-start.z)-Math.hypot(b.x-start.x,b.z-start.z));
-  if(biome==='forest')for(const o of anchors.filter(o=>o.mesh?.userData.treeBiome==='forest')){
-   if(sources.some(s=>near(o.x,o.z,s,12)))continue;sources.push({...o,kind:'woodland-edge',angle:Math.atan2(o.x-start.x,o.z-start.z)+Math.PI/2});if(sources.length===4)break;
+  const climateJourney=world.biomeJourneys?.find(j=>j.biome===biome)||(world.biomeJourney?.biome===biome?world.biomeJourney:null);
+  // Give each scenic station a rooted pocket of its own climate's existing
+  // cover. Keep the view opening empty and spend the same instanced population.
+  for(const node of climateJourney?.landmarks||[]){
+   const choices=anchors.filter(o=>near(o.x,o.z,node,24)&&!sources.some(s=>near(o.x,o.z,s,11))).map(o=>{
+    let d=Infinity,heading=0;
+    for(let i=1;i<climateJourney.points.length;i++){const a=climateJourney.points[i-1],b=climateJourney.points[i],at=segmentDistance(o.x,o.z,a.x,a.z,b.x,b.z);if(at<d){d=at;heading=Math.atan2(b.x-a.x,b.z-a.z);}}
+    if((o.x-node.x)*Math.cos(heading)-(o.z-node.z)*Math.sin(heading)<0)heading+=Math.PI;
+    return {...o,angle:heading,score:Math.abs(d-7)+Math.hypot(o.x-node.x,o.z-node.z)*.35};
+   }).sort((a,b)=>a.score-b.score);
+   if(choices[0])sources.push({...choices[0],kind:biome+'-margin',journeyNode:node.id});
+  }
+  if(biome==='forest'){
+   const trees=anchors.filter(o=>o.mesh?.userData.treeBiome==='forest'),journey=world.forestJourney,edgeAllowed=placementFilter(world,1.15);
+   // Spend the existing forest-edge quota along the walk, rather than using
+   // its four closest trees at the entrance and leaving every later view bare.
+   for(const node of journey?.landmarks||[]){
+    let target=node;const pond=node.lookAt;
+    if(pond?.rx&&node.id!=='entry'){
+     // At a water opening the visible tree line is across the pool, not
+     // behind the player. Keep this bank framing out of the open water.
+     const d=Math.hypot(pond.x-node.x,pond.z-node.z)||1,nx=(pond.x-node.x)/d,nz=(pond.z-node.z)/d,c=Math.cos(pond.angle||0),s=Math.sin(pond.angle||0);
+     const bank=1/Math.hypot((c*nx-s*nz)/pond.rx,(s*nx+c*nz)/pond.rz)*1.12+4;
+     target={x:pond.x+nx*bank,z:pond.z+nz*bank};
+    }
+    let choices=trees.filter(o=>!sources.some(s=>near(o.x,o.z,s,10))&&near(o.x,o.z,target,24));
+    if(!choices.length)choices=trees.filter(o=>!sources.some(s=>near(o.x,o.z,s,10))&&near(o.x,o.z,node,24));
+    const candidates=choices.map(tree=>{
+     let segment,best=Infinity;
+     for(let i=1;i<journey.points.length;i++){const a=journey.points[i-1],b=journey.points[i],d=segmentDistance(tree.x,tree.z,a.x,a.z,b.x,b.z);if(d<best){best=d;segment={a,b};}}
+     let angle=segment?Math.atan2(segment.b.x-segment.a.x,segment.b.z-segment.a.z):0;
+     if((tree.x-node.x)*Math.cos(angle)-(tree.z-node.z)*Math.sin(angle)<0)angle+=Math.PI;
+     // A close tree squeezed between a reward and the water cannot carry a
+     // woodland margin. Prefer a nearby root with actual dry, protected room.
+     let open=0;for(const along of[-4,0,4])for(const depth of[.65,3.2]){
+      const across=tree.r+1.15+depth,x=tree.x+Math.sin(angle)*along+Math.cos(angle)*across,z=tree.z+Math.cos(angle)*along-Math.sin(angle)*across;
+      if(edgeAllowed(x,z)&&!protectedPlant({x,z}))open++;
+     }
+     return{...tree,kind:'woodland-edge',angle,journeyNode:node.id,score:Math.hypot(tree.x-target.x,tree.z-target.z)-open*2.5};
+    });
+    candidates.sort((a,b)=>a.score-b.score);if(candidates[0])sources.push(candidates[0]);
+   }
+   for(const o of trees){
+    if(sources.length>=4)break;if(sources.some(s=>near(o.x,o.z,s,12)))continue;
+    sources.push({...o,kind:'woodland-edge',angle:Math.atan2(o.x-start.x,o.z-start.z)+Math.PI/2});
+   }
   }
   if(biome==='snow'||biome==='ash')for(const p of world.climateLandforms?.records||[])if(p.biome===biome&&p.solids.length)sources.push({...p,kind:biome==='snow'?'ridge-scree':'flow-scree'});
   if(biome==='sand')for(const p of (world.climateLandforms?.records||[]).filter(p=>p.biome===biome&&p.kind==='dune').sort((a,b)=>Math.hypot(a.x-start.x,a.z-start.z)-Math.hypot(b.x-start.x,b.z-start.z)).slice(0,3))sources.push({...p,kind:'dune-foot'});
@@ -470,19 +514,23 @@ function connectLandscapeCover(world,mapId,records,footprint,allowed){
   // retain a gap on one side instead of forming rings around every obstacle.
   for(const o of anchors){if(sources.some(s=>near(o.x,o.z,s,10)))continue;sources.push({...o,kind:'shelter-edge',angle:Math.atan2(o.x-start.x,o.z-start.z)+Math.PI/2});if(sources.length>=8)break;}
   if(!sources.length)continue;
-  const donors=new Map(),key=p=>p.kind+':'+quadrant(p),kinds=low?['tuft','litter']:biome==='forest'?['shrub']:biome==='snow'||biome==='ash'?['stone']:['reed'];
+  const journeyEdge=biome==='forest'&&!!world.forestJourney||!!climateJourney;
+  const donors=new Map(),key=p=>p.kind+':'+quadrant(p),kinds=low?['tuft','litter']:biome==='forest'?(journeyEdge?['shrub','fern']:['shrub']):biome==='snow'||biome==='ash'?['stone']:['reed'];
   for(const p of all){if(!kinds.includes(p.kind)||p.shoulder||p.transition||p.edge||near(p.x,p.z,world.spawn,20))continue;const k=key(p);if(!donors.has(k))donors.set(k,[]);donors.get(k).push(p);}
-  const budget=Math.min(Math.floor(all.length*(biome==='forest'?.12:.18)),[...donors.values()].reduce((n,a)=>n+a.length,0));let moved=0;
+  // The scenic forest spends more of its existing scattered plants on visible
+  // edges. Preserve kinds/quadrants and near-camp growth: this moves instances,
+  // never adds a draw, a triangle, or a plant to the renderer.
+  const budget=Math.min(Math.floor(all.length*(journeyEdge?.30:biome==='forest'?.12:.18)),[...donors.values()].reduce((n,a)=>n+a.length,0));let moved=0;
   for(const [index,source]of sources.entries()){
    // Main edges get enough instances to read as a connected band. Late
    // shelter sources fill only the unspent budget when these are obstructed.
-   const primary=source.kind!=='shelter-edge',quota=Math.min(budget-moved,Math.ceil(budget/(primary?Math.min(3,sources.filter(s=>s.kind!=='shelter-edge').length):2)));let planted=0;
+   const primary=source.kind!=='shelter-edge',primaryCount=sources.filter(s=>s.kind!=='shelter-edge').length,quota=Math.min(budget-moved,Math.ceil(budget/(primary?(journeyEdge?primaryCount:Math.min(3,primaryCount)):2)));let planted=0;
    // Candidates stay inside one fixed source envelope. Narrow the existing
    // collision and cover lists once, then keep moved records in this local list.
    const reach=source.kind==='shore-reeds'?Math.max(source.baseRx??source.rx,source.baseRz??source.rz)*1.19*1.12+footprint*1.42+5:source.kind==='dune-foot'?Math.hypot(source.length*.42,source.width*.49)+1:(source.r||0)+footprint+10;
    const centers=source.solids?.length?source.solids:[source],minX=Math.min(...centers.map(p=>p.x-(p.r||0)))-reach,maxX=Math.max(...centers.map(p=>p.x+(p.r||0)))+reach,minZ=Math.min(...centers.map(p=>p.z-(p.r||0)))-reach,maxZ=Math.max(...centers.map(p=>p.z+(p.r||0)))+reach;
    const nearby=records.filter(p=>p.x>minX-1&&p.x<maxX+1&&p.z>minZ-1&&p.z<maxZ+1),obstacles=(world.obstacles||[]).filter(p=>{const r=(p.r||0)+footprint+.2;return p.x+r>=minX&&p.x-r<=maxX&&p.z+r>=minZ&&p.z-r<=maxZ;});
-   const attempts=Math.min(512,quota*12);
+   const attempts=Math.min(journeyEdge?1024:512,quota*(journeyEdge?16:12));
    for(let attempt=0;attempt<attempts&&planted<quota&&moved<budget;attempt++){
     const t=random(),depth=random(),side=attempt%7===6?-1:1;let x,z,angle=source.angle||0;
     if(source.kind==='ridge-scree'||source.kind==='flow-scree'){
@@ -494,16 +542,24 @@ function connectLandscapeCover(world,mapId,records,footprint,allowed){
      const turn=source.arc+(t-.5)*1.35+(attempt%2?Math.PI:0),k=source.baseRx===undefined?1:1.19,pad=footprint*1.42+1.05+depth*3.5,rx=(source.baseRx??source.rx)*k*1.12+pad,rz=(source.baseRz??source.rz)*k*1.12+pad,c=Math.cos(angle),s=Math.sin(angle),u=Math.sin(turn)*rx,v=Math.cos(turn)*rz;
      x=source.x+c*u+s*v;z=source.z-s*u+c*v;angle=angle-turn;
     }else{
-     const along=(t-.5)*10,across=(source.r||.7)+footprint+.35+depth*3.2,c=Math.cos(angle),s=Math.sin(angle);
+     // Two overlapping pockets form a tapered forest margin, with a quieter
+     // gap between them. The same anchors shape both low and middle layers.
+     const clustered=source.journeyNode,along=clustered?(t<.63?-5+t/.63*7:3.2+(t-.63)/.37*5):(t-.5)*10;
+     const across=(source.r||.7)+footprint+.35+(clustered?depth*depth*5.4:depth*3.2),c=Math.cos(angle),s=Math.sin(angle);
      x=source.x+s*along+c*across*side;z=source.z+c*along-s*across*side;
     }
     let inside=true;if(region)for(let i=0;i<8;i++){const a=i*Math.PI/4;if(!region.contains(x+Math.cos(a)*footprint,z+Math.sin(a)*footprint)){inside=false;break;}}
     if(!inside||protectedPlant({x,z})||!allowed(x,z,obstacles)||nearby.some(p=>near(x,z,p,low?.64:.62)))continue;
-    const available=kinds.map(kind=>donors.get(kind+':'+quadrant({x,z}))).filter(a=>a?.length);if(!available.length)continue;
+    // Ferns form the short outer apron; shrubs collect nearer the tree line.
+    // If that kind is exhausted in this culling cell, reuse the other safely.
+    const preferred=!low&&journeyEdge&&biome==='forest'?[depth>.43?'fern':'shrub']:kinds;
+    let available=preferred.map(kind=>donors.get(kind+':'+quadrant({x,z}))).filter(a=>a?.length);
+    if(!available.length&&journeyEdge)available=kinds.map(kind=>donors.get(kind+':'+quadrant({x,z}))).filter(a=>a?.length);if(!available.length)continue;
     const record=available[Math.floor(random()*available.length)].pop();record.x=x;record.z=z;record.landscape=source.kind;record.landscapeIndex=index;record.landscapeDepth=depth;
+    if(source.journeyNode)record.journeyNode=source.journeyNode;
     if(!nearby.includes(record))nearby.push(record);
     if(biome==='sand')record.angle=-.7+Math.sin(x*.31+z*.17)*.16;else if(biome==='coast')record.angle=angle+(random()-.5)*.42;
-    if(!low&&['forest','sand','coast'].includes(biome)){
+    if(!low&&['forest','sand','coast'].includes(biome)&&record.kind!=='fern'){
      const patch=.5+.5*Math.sin(x*.37+Math.sin(z*.21)*1.2),growth=(1-depth)*.55+patch*.45;
      record.landscapeHeight=biome==='forest'?.90+growth*.31:biome==='sand'?.50+growth*.32:.70+growth*.45;
     }
