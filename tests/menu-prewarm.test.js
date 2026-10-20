@@ -85,9 +85,9 @@ test('default heroes share fullbody/portrait programs, retain caches and restore
    assert.equal(world.layers.mask,1<<3);assert.equal(light.layers.mask,1);f.scene.remove(world);restored(f,true,true);
    assert(f.hero.position.equals(old)&&f.hero.quaternion.equals(quaternion));
    const compiles=f.events.filter(e=>e.type==='compile');assert.equal(compiles.length,enabled?2:1);
-   for(const e of compiles)assert.equal(e.actors.length,7);
-   assert.equal(f.drawn.size,7);for(const sample of f.created){const draws=f.events.filter(e=>e.type==='draw'&&e.sample===sample);assert.equal(draws.length,enabled?2:1);f.context.sample=sample;assert(vm.runInContext('preparedMenuHeroes.has(sample)&&preparedPortraits.has(sample)',f.context));}
-   await run();assert.equal(f.events.filter(e=>e.type==='compile').length,compiles.length);assert.equal(f.created.length,7);
+   for(const e of compiles)assert.equal(e.actors.length,Object.keys(HERO_LOADOUTS).length);
+   assert.equal(f.drawn.size,Object.keys(HERO_LOADOUTS).length);for(const sample of f.created){const draws=f.events.filter(e=>e.type==='draw'&&e.sample===sample);assert.equal(draws.length,enabled?2:1);f.context.sample=sample;assert(vm.runInContext('preparedMenuHeroes.has(sample)&&preparedPortraits.has(sample)',f.context));}
+   await run();assert.equal(f.events.filter(e=>e.type==='compile').length,compiles.length);assert.equal(f.created.length,Object.keys(HERO_LOADOUTS).length);
   }finally{world.geometry.dispose();world.material.dispose();f.cleanup();}
  }
 });

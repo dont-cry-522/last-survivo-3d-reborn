@@ -5,7 +5,7 @@ import {MAP_ROSTERS,REGIONAL_ENEMIES,regionalEnemy} from '../map-enemies.js';
 import {ENEMIES,seeded} from '../rules.js';
 import {ENEMY_MOTION} from '../enemy-motion.js';
 
-test('all five biomes have three deterministic native formations with a clear retreat side',()=>{
+test('each independent map has three deterministic formations with a clear retreat side',()=>{
  const names=new Set();
  for(const biome of Object.keys(MAP_ROSTERS)){
   const random=seeded(204),again=seeded(204),seen=new Set();let previous=-1,other=-1;
@@ -16,11 +16,11 @@ test('all five biomes have three deterministic native formations with a clear re
    assert(f.squad.filter(s=>['spitter','shaman'].includes(s.role)).length<=2);
    assert(Math.max(...f.squad.map(s=>s.offset))-Math.min(...f.squad.map(s=>s.offset))<Math.PI-.5);
    assert.equal(f.squad.filter(s=>s.role!=='shaman').filter(s=>s.elite).length,1,'opening wave retains its elite when shamans are withheld');
-   for(const slot of f.squad){const kind=regionalEnemy(biome,slot.role);assert(ENEMIES[kind]);assert(ENEMY_MOTION[kind]);if(biome!=='forest')assert.equal(REGIONAL_ENEMIES[kind].map,biome);assert((slot.delay||0)>=0&&(slot.delay||0)<=1.5);}
+   for(const slot of f.squad){const kind=regionalEnemy(biome,slot.role);assert(ENEMIES[kind]);assert(ENEMY_MOTION[kind]);if(['snow','ash','sand','coast'].includes(biome))assert.equal(REGIONAL_ENEMIES[kind].map,biome);assert((slot.delay||0)>=0&&(slot.delay||0)<=1.5);}
   }
   assert.equal(seen.size,3);
  }
- assert.equal(names.size,15);
+ assert.equal(names.size,Object.keys(MAP_ROSTERS).length*3);
  assert.equal(nextHuntFormation(0,()=>0),1);assert.equal(nextHuntFormation(0,()=>1),2);
 });
 

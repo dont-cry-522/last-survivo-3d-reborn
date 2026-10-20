@@ -1,6 +1,6 @@
 import {LoadingManager,AnimationClip,MathUtils} from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {CHARACTER_ASSETS as assets} from './character-assets.js?v=227';
+import {CHARACTER_ASSETS as assets} from './character-assets.js?v=228';
 
 const base=new URL('./assets/characters/',import.meta.url);
 // A resolved Promise only yields to more microtasks. Give input and rendering

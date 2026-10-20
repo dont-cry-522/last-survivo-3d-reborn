@@ -141,7 +141,7 @@ test('grimoire release pairs dark folded pages with thin delayed bright edges un
 
 test('point route accents follow elevated contacts and compact views without changing floor effects',()=>{
  const v=new SkillVFX(new T.Scene()),contact=Object.freeze({x:8,y:3.7,z:-6,normal:Object.freeze({x:0,y:0,z:-1}),direction:Object.freeze({x:0,y:.3,z:1}),compact:true});
- const pointRoutes=[['rifle_pierce','hit'],['shotgun_fan','hit'],['shotgun_slug','hit'],['fire_burn','hit'],['crossbow_pierce','hit'],['crossbow_hunt','hit'],['shuriken_fan','hit'],['shuriken_return','hit'],['dark_seek','hit'],['shade_blight','mark'],['shadowblade_fan','hit'],['shadowblade_return','hit'],['harpoon_reef','hit'],['harpoon_tow','hit'],['boomerang_pincer','pet']];
+ const pointRoutes=[['windbow_pierce','hit'],['windbow_fan','hit'],['resonator_focus','hit'],['resonator_chorus','hit'],['rifle_pierce','hit'],['shotgun_fan','hit'],['shotgun_slug','hit'],['fire_burn','hit'],['crossbow_pierce','hit'],['crossbow_hunt','hit'],['shuriken_fan','hit'],['shuriken_return','hit'],['dark_seek','hit'],['shade_blight','mark'],['shadowblade_fan','hit'],['shadowblade_return','hit'],['harpoon_reef','hit'],['harpoon_tow','hit'],['boomerang_pincer','pet']];
  for(const[id,phase]of pointRoutes){
   v.clear();assert(cast(v,id,phase,{...event,contact}));
   assert(v.active.length>0&&v.active.length<=6);

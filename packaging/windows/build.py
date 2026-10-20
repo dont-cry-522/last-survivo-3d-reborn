@@ -76,7 +76,7 @@ def verify_host(executable, manifest, payload, port):
         for path in ('/../Launcher.cs', '/%2e%2e/asset-paths.txt', '/asset-paths.txt', '/missing.js'):
             assert request(path)[0] == 404, path
         assert request('/play.html', headers={'Host': 'example.com'})[0] == 400
-        assert request('/play.html?v=227')[2] == payload['game/play.html']
+        assert request('/play.html?v=228')[2] == payload['game/play.html']
         assert request('/offline-package.json')[2] == payload['game/offline-package.json']
         process.wait(timeout=max(1, 34 - (time.monotonic() - started)))
         assert process.returncode == 0, 'Host did not shut down cleanly'
@@ -103,7 +103,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     manifest_data = (ROOT / 'offline-package.json').read_bytes()
     manifest = json.loads(manifest_data)
-    assert manifest['version'] == '227', 'Update and verify launcher URL/version before a new release'
+    assert manifest['version'] == '228', 'Update and verify launcher URL/version before a new release'
     payload = {}
     for item in manifest['files']:
         path = (ROOT / item['path']).resolve()
@@ -116,7 +116,7 @@ def main():
     assert sum(len(content) for content in payload.values()) == manifest['bytes']
     payload['game/offline-package.json'] = manifest_data
     payload['asset-paths.txt'] = ('\n'.join([item['path'] for item in manifest['files']] + ['offline-package.json']) + '\n').encode('utf-8')
-    payload['先看这里-启动说明.txt'] = '''异境回响 REBORN v227 · Windows 电脑离线版
+    payload['先看这里-启动说明.txt'] = '''异境回响 REBORN v228 · Windows 电脑离线版
 
 1. 在电脑上将整个 ZIP “全部解压”到自己选择的目录。
 2. 双击根目录的“启动异境回响.exe”。游戏以独立全屏窗口打开，无地址栏。
@@ -156,7 +156,7 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
         checks = verify_host(exe, manifest, payload, args.test_port)
-        target = output / '异境回响-REBORN-v227-电脑离线包.zip'
+        target = output / '异境回响-REBORN-v228-电脑离线包.zip'
         with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for name, data in payload.items():
                 archive.writestr(name, data)
@@ -167,7 +167,7 @@ def main():
                 assert archive.read(name) == data, name
         report = {'version': manifest['version'], 'offlineBuild': manifest['build'], 'path': str(target),
                   'bytes': target.stat().st_size, 'sha256': digest(target.read_bytes()),
-                  'launcherBytes': len(payload[exe.name]), 'manifestFiles': len(manifest['files']),
+                  'launcherBytes': len(payload[exe.name]), 'launcherSHA256': digest(payload[exe.name]), 'manifestFiles': len(manifest['files']),
                   'allGameFilesByteIdenticalToVerifiedManifest': True, 'zipCrcAndEveryEntry': True,
                   'nativeHost': checks, 'buildLog': compile_log,
                   'browserGameScreenshotTested': False, 'realPhonePerformanceTested': False,

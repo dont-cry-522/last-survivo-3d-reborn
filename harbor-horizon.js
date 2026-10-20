@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{groundWindTime}from'./adventure-ground-detail.js?v=227';
+import{groundWindTime}from'./adventure-ground-detail.js?v=228';
 
 // Match the far coastal shoulders to the real bridge-side reveal. These are
 // distant, out-of-bounds landforms; playable banks are shaped by the terrain

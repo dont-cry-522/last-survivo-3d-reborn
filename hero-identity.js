@@ -1,9 +1,10 @@
 import * as T from './vendor/three.module.js';
-import {HERO_SIGNATURES,makeIdentityMark} from './identity-motifs.js?v=227';
+import {HERO_SIGNATURES,makeIdentityMark} from './identity-motifs.js?v=228';
 
 // One identifying fitting per outfit. Measurements use the authored bind pose;
 // the fitting is then attached to a real bone, never to a SkinnedMesh container.
 const placements={
+ minstrel:{bone:'spine_03',x:-.103,y:1.36,size:.033,roll:-.12},
  scout:{bone:'pelvis',x:0,y:1.145,size:.042,roll:-.18,replace:'SM_Hero_Buckle_scout'},
  silver:{bone:'spine_03',x:-.110,y:1.415,size:.043,roll:-.48},
  wraith:{bone:'spine_03',x:.018,y:1.365,size:.039,roll:0},
@@ -19,7 +20,7 @@ function surfaceProbe(root,hair){
  const geometry=[];
  root.traverse(o=>{
   if(!o.isSkinnedMesh||!o.visible)return;
-  if(hair?o.userData.mirageLongHair||o.userData.hairstyle:!o.userData.hairstyle&&(o.userData.rangerRebuild||o.userData.rebuiltPart||o.userData.wildMistPart||o.name.endsWith('_Body')))geometry.push(o.geometry);
+  if(hair?o.userData.mirageLongHair||o.userData.hairstyle:!o.userData.hairstyle&&(o.userData.rangerRebuild||o.userData.rebuiltPart||o.userData.wildMistPart||o.userData.minstrelPart||o.name.endsWith('_Body')))geometry.push(o.geometry);
  });
  const probes=geometry.map(g=>{const m=new T.Mesh(g,probeMaterial);m.updateMatrixWorld(true);return m;}),ray=new T.Raycaster();
  return(x,y)=>{ray.set(new T.Vector3(x,y,1),new T.Vector3(0,0,-1));return ray.intersectObjects(probes,false)[0];};

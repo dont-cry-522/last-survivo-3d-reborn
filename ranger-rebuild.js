@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {smoothSeams} from './hero-finish.js?v=227';
+import {smoothSeams} from './hero-finish.js?v=228';
 
 // These garments replace the old Ranger torso, keeping its authored skin binding.
 // All coordinates are in the existing shared T-pose, not attached rigid props.
@@ -37,7 +37,7 @@ function indexedSkin(geometry){
  const p=geometry.attributes.position,used=[...new Set(geometry.index?.array||Array.from({length:p.count},(_,i)=>i))];
  points=used.map((i,order)=>[p.getX(i),p.getY(i),p.getZ(i),i,order]).sort((a,b)=>a[0]-b[0]||a[4]-b[4]);skinPoints.set(geometry,points);return points;
 }
-function skinFrom(geometry,source){
+export function skinFrom(geometry,source){
  const p=geometry.attributes.position,si=source.geometry.attributes.skinIndex,sw=source.geometry.attributes.skinWeight,points=indexedSkin(source.geometry),indices=[],weights=[];
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i),nearest=[];let lo=0,hi=points.length;

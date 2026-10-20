@@ -1,11 +1,12 @@
 import * as T from './vendor/three.module.js';
-import {waterDepth} from './water.js?v=227';
-import {onBridge} from './coast.js?v=227';
-import {onIce} from './map-tactics.js?v=227';
-import {bodyContact} from './adventure-combat.js?v=227';
+import {waterDepth} from './water.js?v=228';
+import {onBridge} from './coast.js?v=228';
+import {onIce} from './map-tactics.js?v=228';
+import {bodyContact} from './adventure-combat.js?v=228';
 
 // Visual units are metres/seconds; these profiles never apply damage or status.
 export const ENVIRONMENT_IMPACTS={
+ windbow:{mark:'pierce',color:0x5c6247,size:.24,life:4.5,ripple:.31,splash:.65},
  arcstaff:{mark:'rune',color:0x776a91,size:.26,life:2,ripple:.42,splash:.18},
  briarpot:{mark:'stain',color:0x8a7950,size:.48,life:3,ripple:.82,splash:.78},
  mycelialwhip:{mark:'slash',color:0x8c9b59,size:.46,life:3,ripple:.55,splash:.32,poison:true},

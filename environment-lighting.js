@@ -1,10 +1,12 @@
-import{installHarborHorizon,harborBayLayout,harborBayCut,harborHeadlandSilhouette}from'./harbor-horizon.js?v=227';
-import{installForestBackdrop}from'./tree-scenery.js?v=227';
-import{environmentDetailTexture}from'./biome-scenery.js?v=227';
+import{installHarborHorizon,harborBayLayout,harborBayCut,harborHeadlandSilhouette}from'./harbor-horizon.js?v=228';
+import{installForestBackdrop}from'./tree-scenery.js?v=228';
+import{environmentDetailTexture}from'./biome-scenery.js?v=228';
 import * as T from './vendor/three.module.js';
 
 // The same three lights serve every climate; transitions do not allocate lights or shadow maps.
 export const CLIMATE_LIGHT={
+ bellvale:{sky:0xa2b9c6,bounce:0x75816c,sun:0xffe4b4,rim:0xc9d8d8,fog:0x9bafb0,ambient:1.14,key:3.05,edge:.64,density:.0076,exposure:1.02,ridge:0x536b68,height:27},
+ crystalcave:{sky:0x97b2cb,bounce:0x596175,sun:0xc6e1ef,rim:0xa7a4da,fog:0x242e40,ambient:1.36,key:1.65,edge:.66,density:.014,exposure:1.03,ridge:0x3a475e,height:24},
  forest:{sky:0x91b6cd,bounce:0x657560,sun:0xffdfa8,rim:0x99b8c0,fog:0x8fa99d,ambient:1.12,key:3.25,edge:.58,density:.0078,exposure:1.02,ridge:0x385249,height:20},
  snow:{sky:0xb4d4ed,bounce:0x7891a1,sun:0xffe9d0,rim:0xb4d7ef,fog:0xb4cedd,ambient:1.22,key:3.10,edge:.82,density:.0105,exposure:1.02,ridge:0x678797,height:23},
  ash:{sky:0x8d98ad,bounce:0x3d302b,sun:0xffb77f,rim:0xc5a08a,fog:0x716966,ambient:.96,key:3.4,edge:.82,density:.0125,exposure:1.08,ridge:0x493e3a,height:17},
@@ -178,6 +180,7 @@ function indexRidgeQueries(mesh,segments,rows){
 // Unequal massifs leave real low valleys between groups. These are heights on
 // the existing two radial surfaces, not extra rocks stacked around the arena.
 const rangeGroups={
+ bellvale:[[.25,.62,1.1],[1.8,.58,.66],[3.7,.69,1.2],[5.2,.51,.73]],
  forest:[[.30,.93,.86],[2.02,.70,.63],[3.73,.86,1.02],[5.37,.59,.73]],
  snow:[[.20,.62,.63],[1.93,.88,1.08],[3.81,.65,.76],[5.35,.73,.93]],
  ash:[[.37,.79,1.12],[2.67,.95,.76],[4.80,.81,.97]],
@@ -200,6 +203,7 @@ function rangeMass(biome,angle,ring){
 
 // Opaque foothill silhouettes live beyond the playable square. No new collision or rewards.
 export function installDistantLandscape(world,id,biomeAt=()=>id){
+ if(id==='crystalcave')return null; // The authored, collidable cavern vault owns its silhouette.
  const positions=[],colors=[],indices=[],climates=[],layers=[],segments=192,rows=9,half=world.half;
  const bay=harborBayLayout(world,id,biomeAt);
  const coastHeadlands=id==='coast'||id==='confluence'?harborHeadlandSilhouette(world):null;

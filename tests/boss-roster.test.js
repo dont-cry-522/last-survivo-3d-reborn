@@ -12,10 +12,10 @@ import {SkillVFX} from '../skill-vfx.js';
 import {installCreatureEmission} from '../creature-surface.js';
 
 test('fifteen unique local bosses have complete names, guides, map order and audible cues',()=>{
- const ids=Object.values(BOSS_ROUTES).flat();assert.equal(ids.length,15);assert.equal(new Set(ids).size,15);
+ const original=['forest','snow','ash','sand','coast'],ids=original.flatMap(id=>BOSS_ROUTES[id]);assert.equal(ids.length,15);assert.equal(new Set(ids).size,15);
  for(const [map,route]of Object.entries(BOSS_ROUTES)){
   const brief=mapBrief(map);assert.equal(brief.name,BOSS_STYLES[route[0]].name);
-  for(const id of route){const cfg=BOSS_STYLES[id],guide=ENEMY_GUIDE[id];assert.equal(guide.name,cfg.name);assert(brief.goal.includes(cfg.name));assert(guide.traits&&guide.tip&&guide.attack);if(ADDITIONAL_BOSSES[id])assert.equal(guide.map,map);
+  for(const id of route){const cfg=BOSS_STYLES[id],guide=ENEMY_GUIDE[id];assert.equal(guide.name,cfg.name);assert(brief.goal.includes(cfg.name));assert(guide.traits&&guide.tip&&guide.attack);if(ADDITIONAL_BOSSES[id]&&original.includes(map))assert.equal(guide.map,map);
    for(const event of ['wind','attack','impact','death'])for(const sample of[creatureSample(id,event,8000),creatureFoleySample(id,event,8000)]){assert(sample?.length);assert(sample.every(Number.isFinite));assert(sample.some(v=>Math.abs(v)>.001));}
   }
  }

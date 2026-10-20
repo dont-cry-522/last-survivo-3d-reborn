@@ -23,7 +23,7 @@ test('prewarm covers each local roster, all three expedition bosses and local ai
   assert(list.includes(AIR_ROSTERS[map]));
  }
  const all=combatSampleKinds('confluence');assert.equal(all.length,35);
- for(const map of Object.keys(MAP_ROSTERS))for(const kind of [...Object.values(MAP_ROSTERS[map]),AIR_ROSTERS[map]])assert(all.includes(kind));
+ for(const map of ['forest','snow','ash','sand','coast'])for(const kind of [...Object.values(MAP_ROSTERS[map]),AIR_ROSTERS[map]])assert(all.includes(kind));
  assert.deepEqual(combatSampleKinds('unknown'),combatSampleKinds('forest'));
 });
 
@@ -47,7 +47,7 @@ test('real models, all shared particle shapes and a ground warning remain render
 });
 
 test('selected projectiles and both routes warm reusable resources without creating combat or mutating the player',async()=>{
- const projectileIds=['rifle','shotgun','fire','crossbow','shuriken','dark','shade','boomerang','miasmalantern'];
+ const projectileIds=['rifle','shotgun','fire','crossbow','shuriken','dark','shade','boomerang','miasmalantern','windbow'];
  for(const weaponId of Object.keys(WEAPONS)){
   const f=fixture(),selected=Object.freeze({...player,weaponId,upgrades:Object.freeze({power:2,haste:1})}),calls=[],reports=[],projectile=f.vfx.projectile.bind(f.vfx);
   f.vfx.projectile=w=>{calls.push(w);return projectile(w);};

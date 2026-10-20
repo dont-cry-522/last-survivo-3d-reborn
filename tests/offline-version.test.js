@@ -4,6 +4,7 @@ import{readFile,writeFile,mkdir,mkdtemp,rm}from'node:fs/promises';
 import{tmpdir}from'node:os';
 import{join,dirname,basename}from'node:path';
 import{pathToFileURL}from'node:url';
+import{roomRuntimeFixture}from'./helpers/offline-room-fixture.js';
 
 const root=new URL('../',import.meta.url),read=path=>readFile(new URL(path,root),'utf8');
 test('offline build aligns static/lazy module and HTML versions before hashing; check never writes',async()=>{
@@ -24,6 +25,7 @@ test('offline build aligns static/lazy module and HTML versions before hashing; 
   'scripts/build-offline.mjs':await read('scripts/build-offline.mjs'),
   'scripts/offline-worker.txt':await read('scripts/offline-worker.txt')
  };
+ for(const [path,text] of Object.entries(roomRuntimeFixture(root)))if(!Object.hasOwn(files,path))files[path]=text;
  // The builder's explicit environment bundle is required even in this isolated
  // version-alignment fixture. Preserve binary GLBs as bytes, not UTF-8 strings.
  for(const name of ['weathered-rock-a.glb','weathered-rock-b.glb','old-stump.glb','sources.json','LICENSE.txt','CC0-1.0.txt']){

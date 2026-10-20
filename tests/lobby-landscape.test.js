@@ -18,6 +18,13 @@ test('forest entry looks along the first safe bend instead of directly at the la
  assert.equal(entryLandscapeYaw(world),Math.atan2(2,6));assert.equal(JSON.stringify(world),before);
  world.forestHabitats.approach.start={x:50,z:50};assert.equal(entryLandscapeYaw(world),-Math.PI/2,'a remote biome approach stole the player entry view');
 });
+test('authored valley and cavern face their playable route instead of the empty rear boundary',()=>{
+ for(const id of ['bellvale','crystalcave']){
+  const world=buildWorld(id,42),route=world.newScenery.layout.route,before=JSON.stringify({spawn:world.spawn,route});
+  assert.equal(entryLandscapeYaw(world),Math.atan2(route[1].x-world.spawn.x,route[1].z-world.spawn.z));
+  assert.equal(JSON.stringify({spawn:world.spawn,route}),before);
+ }
+});
 
 test('lobby views use dry clear ground in real maps without changing gameplay or discovery',()=>{
  for(const id of['forest','snow','ash','sand','coast','confluence'])for(const seed of[7,522,43837033]){

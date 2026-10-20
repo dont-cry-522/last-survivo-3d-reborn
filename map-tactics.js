@@ -1,7 +1,9 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{MAP_HALF}from'./map-layout.js?v=227';
+import{MAP_HALF}from'./map-layout.js?v=228';
 export const TERRAIN_TIPS={
+ bellvale:'两侧是可行走的宽缓山坡，中间溪流会减慢双方。古钟门下可以穿行，立柱和岩脊会挡住移动与投射；绕过岩脊能从侧翼接近。',
+ crystalcave:'三座地下洞厅由宽晶廊相连；岩壁与晶簇是实体，可从侧面的开口绕行。高处石顶会挡住射向上方的投射；水潭减慢地面单位，空中怪物可以从上方接近。',
  forest:'浅色裂口的枯木可以打倒。倒木短暂挡路约 8 秒，可跳过低矮树干或从两端绕行；追来的怪物也会破坏它，不能永久堵怪。',
  snow:'浅蓝裂纹冰面会保留一点滑行惯性，人和地面怪物都会滑。提前转向、借冰面拉开距离；离开冰面立即恢复普通移动。',
  ash:'地火喷发前会冒烟并发出低鸣，提前 1.25 秒预告。把怪物引进裂隙后撤开，喷发会同时伤害双方，重型首领受到较少伤害。',
@@ -119,7 +121,7 @@ export function damageTerrain(o,damage,from){
  if(o.hp>0){o.mesh.scale.y=.92+.08*Math.max(0,o.hp)/(o.tactic==='wall'?90:42);return true;}
  o.state=o.tactic==='timber'?'falling':'crumbling';o.age=0;o.angle=Math.atan2(o.x-from.x,o.z-from.z);return true;
 }
-export function updateTactics(w,dt,{player,foes,clear,fx}){
+export function updateTactics(w,dt,{player,actors=[player],foes,clear,fx}){
  if(dt<=0)return;
  for(const f of w.fords||[])f.mesh.scale.y=1-(w.tide?.rise||0)*.92;
  for(const o of w.breakables||[]){
@@ -136,7 +138,7 @@ export function updateTactics(w,dt,{player,foes,clear,fx}){
     o.mesh.updateWorldMatrix(true,true);
     const height=Math.max(.15,fallenBounds.setFromObject(o.mesh,true).max.y);
     for(let i=0;i<5;i++){const d=.35+i*.66,x=o.x+Math.sin(o.angle)*d,z=o.z+Math.cos(o.angle)*d;
-     if(clear(x,z,.35)&&[player,...foes.filter(e=>e.alive)].every(p=>Math.hypot(p.x-x,p.z-z)>(p.size||.45)+.65))w.obstacles.push({x,z,r:.34,height,sceneryHeight:height,mesh:o.mesh,owner:o});
+     if(clear(x,z,.35)&&[...actors,...foes.filter(e=>e.alive)].every(p=>Math.hypot(p.x-x,p.z-z)>(p.size||.45)+.65))w.obstacles.push({x,z,r:.34,height,sceneryHeight:height,mesh:o.mesh,owner:o});
     }fx(o,'fall');
    }
   }else if(o.state==='crumbling'){

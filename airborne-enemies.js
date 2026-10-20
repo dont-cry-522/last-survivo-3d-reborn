@@ -1,11 +1,11 @@
-import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=227';
+import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=228';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {prepareCreatureSurface,installCreatureSurface} from './creature-surface.js?v=227';
-import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=227';
-import {segmentHitsBody} from './adventure-combat.js?v=227';
+import {prepareCreatureSurface,installCreatureSurface} from './creature-surface.js?v=228';
+import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=228';
+import {segmentHitsBody} from './adventure-combat.js?v=228';
 
-export const AIR_ROSTERS={forest:'duskbat',snow:'frostwing',ash:'cinderwing',sand:'sunscarab',coast:'skyray'};
+export const AIR_ROSTERS={forest:'duskbat',snow:'frostwing',ash:'cinderwing',sand:'sunscarab',coast:'skyray',bellvale:'frostwing',crystalcave:'duskbat'};
 export const AIR_ENEMIES={
  duskbat:{name:'暮翼蝠',color:0x8278a3,accent:0xd0bde2,voice:'wolf',hp:46,speed:3.4,damage:12,xp:5,altitude:2.7,pass:1.4,windTime:.85,strikeTime:1.0,span:1,shape:'bat',tip:'收拢双翼后高位俯冲，蹲下或横移；回升前可以近战反击。'},
  frostwing:{name:'霜羽蛾',color:0xaacbd2,accent:0xe4f4f4,voice:'snowtotem',hp:54,speed:2.8,damage:14,xp:6,altitude:3.1,pass:1.4,windTime:1.1,strikeTime:1.15,span:1.15,shape:'moth',tip:'展开冰蓝双翼蓄力，然后直线高位滑翔；蹲下避开。'},

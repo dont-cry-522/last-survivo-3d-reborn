@@ -1,13 +1,13 @@
-import {applyFernSurface} from './fern-surfaces.js?v=227';
-import {applyTreeLeafSurface,TREE_LEAF_UVS} from './tree-scenery.js?v=227';
-import{sceneryRhythmAt}from'./exploration-composition.js?v=227';
+import {applyFernSurface} from './fern-surfaces.js?v=228';
+import {applyTreeLeafSurface,TREE_LEAF_UVS} from './tree-scenery.js?v=228';
+import{sceneryRhythmAt}from'./exploration-composition.js?v=228';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {seeded,segmentDistance} from './rules.js?v=227';
-import {forestHabitatAt} from './forest-habitats.js?v=227';
-import {bridgeContains} from './coast.js?v=227';
-import {naturalRockGeometry} from './biome-scenery.js?v=227';
-import {surfaceUniforms} from './surface-textures.js?v=227';
+import {seeded,segmentDistance} from './rules.js?v=228';
+import {forestHabitatAt} from './forest-habitats.js?v=228';
+import {bridgeContains} from './coast.js?v=228';
+import {naturalRockGeometry} from './biome-scenery.js?v=228';
+import {surfaceUniforms} from './surface-textures.js?v=228';
 
 const profiles={
  forest:{count:1200,grass:.83,height:1,tuft:[0x6e8650,0x87985a],litter:[0x827561,0x66685c]},
@@ -102,6 +102,9 @@ habitatStoneMaterial.onBeforeCompile=shader=>{
 };
 habitatStoneMaterial.customProgramCacheKey=()=> 'habitat-low-mineral';
 export function animateAdventureGroundDetail(time){if(Number.isFinite(time))windTime.value=time;}
+// Authored biomes share the same tapered blades, grounded roots and paused
+// wind clock; only the placement batch belongs to the new world.
+export function createAuthoredGrassPatch(){return{geometry:tuftGeometry('forest'),material:grassMaterial};}
 const near=(x,z,p,r)=>(x-p.x)**2+(z-p.z)**2<r*r;
 
 function dryTuftGeometry(biome){

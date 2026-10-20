@@ -1,18 +1,23 @@
-import{SCYTHE}from'./scythe-combat.js?v=227';
-import{REGIONAL_ENEMIES}from'./map-enemies.js?v=227';
-import{EXTRA_SKILLS,EXTRA_BY_ID}from'./skill-catalog.js?v=227';
-import{POISON}from'./poison-config.js?v=227';
-import{MIRAGE}from'./mirage-config.js?v=227';
-import{MYCELIAL_WHIP,VENOM_FAN}from'./herbal-weapons.js?v=227';
-import{ARCSTAFF,BRIARPOT}from'./wild-weapons.js?v=227';
+import{WINDBOW,RESONATOR,minstrelWeaponStats}from'./minstrel-weapons.js?v=228';
+import{SCYTHE}from'./scythe-combat.js?v=228';
+import{REGIONAL_ENEMIES}from'./map-enemies.js?v=228';
+import{EXTRA_SKILLS,EXTRA_BY_ID}from'./skill-catalog.js?v=228';
+import{POISON}from'./poison-config.js?v=228';
+import{MIRAGE}from'./mirage-config.js?v=228';
+import{MYCELIAL_WHIP,VENOM_FAN}from'./herbal-weapons.js?v=228';
+import{ARCSTAFF,BRIARPOT}from'./wild-weapons.js?v=228';
 export const MAPS={confluence:{name:'五境大远征',subtitle:'林地、雪山、裂谷、遗城与海港无缝相连，沿古道挑战五境守卫',ground:0x536a48,fog:0x526b61,leaf:0x427657,accent:0xdaca96,slow:'地形'},coast:{name:'幽潮遗港',subtitle:'穿过曲折水湾与岛地，走栈桥或退潮浅滩，打捞货箱、点亮古灯塔',ground:0x586e70,fog:0x344f5c,leaf:0x508582,accent:0x8cdde0,slow:'潮湿滩地'},sand:{name:'风蚀遗城',subtitle:'绕开沙暴流沙，风息挖掘古匣、开启遗城机关',ground:0xafa080,fog:0x928a77,leaf:0x938363,accent:0xe6ca87,slow:'流沙'},forest:{name:'翡翠幽林',subtitle:'穿过古木与遗迹，追寻林心的回声',ground:0x284b3b,fog:0x173d39,leaf:0x287456,accent:0xecc988,slow:'泥地'},snow:{name:'霜月峡谷',subtitle:'冰晶照亮雪路，寒风掩藏猎手',ground:0x96b7bd,fog:0x769daa,leaf:0x456e7d,accent:0x9ae9ff,slow:'深雪'},ash:{name:'赤烬荒原',subtitle:'越过熔岩裂隙，唤醒沉睡的守卫',ground:0x5c4544,fog:0x382e3c,leaf:0x69545d,accent:0xffa25d,slow:'灰烬'}};
+MAPS.bellvale={name:'雾钟山谷',subtitle:'沿溪谷穿过古钟门，在宽坡回廊与开阔钟庭之间迎战三位守卫',ground:0x687a66,fog:0x94a9ab,leaf:0x687f72,accent:0xd8bf85,slow:'湿草地'};
+MAPS.crystalcave={name:'星辉晶窟',subtitle:'穿过弯曲晶廊与地下水潭，在三座相连的洞厅中追寻星辉',ground:0x465464,fog:0x52677e,leaf:0x747aa1,accent:0x98d9ec,slow:'碎晶地'};
 // Legacy boomerang ID now identifies the slingshot; save and route keys remain compatible.
 export const WEAPONS={miasmalantern:{id:'miasmalantern',name:'蜃花灯',rate:MIRAGE.rate,damage:MIRAGE.impact,count:1,speed:MIRAGE.speed,range:MIRAGE.range,color:MIRAGE.color,needleDamage:MIRAGE.needleDps,needleDuration:MIRAGE.needleDuration,burstRadius:MIRAGE.burstRadius,splashDamage:MIRAGE.splashDamage,poisonScale:1,lureRank:0,venomRank:0},sporelantern:{id:'sporelantern',name:'孢灯',rate:POISON.rate,damage:POISON.impact,count:1,speed:POISON.speed,range:POISON.range,color:POISON.color,cloudDamage:POISON.dps,cloudRadius:POISON.radius,cloudDuration:POISON.duration,cloudMax:POISON.maxClouds,stillRank:0,roamRank:0},boomerang:{id:'boomerang',name:'芽铃弹弓',rate:1.5,damage:30,count:1,speed:28,range:11,color:0xe2d2aa,petDamage:30,petCooldown:2.35},harpoon:{id:'harpoon',name:'潮汐长叉',rate:1.6,damage:36,count:1,speed:1,range:3.8,color:0x8ad9da,melee:true,width:.48,pull:.85,slow:.6},rifle:{id:'rifle',name:'游侠连发枪',rate:3,damage:12,count:1,speed:27,range:14,color:0xffdc91},shotgun:{id:'shotgun',name:'碎岩霰弹枪',rate:1,damage:10,count:5,speed:25,range:8,color:0xffbe69},fire:{id:'fire',name:'烬火法杖',rate:.9,damage:30,count:1,speed:14,range:11,color:0xff743b},crossbow:{id:'crossbow',name:'夜翎短弩',rate:2.05,damage:20,count:1,speed:35,range:16,color:0xd8edff},shuriken:{id:'shuriken',name:'月刃飞镖',rate:1.4,damage:13,count:3,speed:22,range:12,color:0x95fff0},dark:{id:'dark',name:'夜幕法杖',rate:1,damage:26,count:1,speed:12,range:10,color:0xc5a2ff},shade:{id:'shade',name:'牵影咒',rate:1.6,damage:18,count:1,speed:20,range:8,color:0xf4f3ee},shadowblade:{id:'shadowblade',name:'断魂战镰',rate:SCYTHE.rate,damage:SCYTHE.damage,count:1,speed:1,range:SCYTHE.range,arc:SCYTHE.arc,melee:true,color:0xc6c8c6},grimoire:{id:'grimoire',name:'悬影魔典',rate:.8,damage:34,count:1,speed:1,range:10,color:0xe7e4db}};
 WEAPONS.arcstaff={id:'arcstaff',name:'潮鸣导雷杖',rate:ARCSTAFF.rate,damage:ARCSTAFF.damage,count:1,speed:1,range:ARCSTAFF.range,color:0xcbb8ff,chainCount:2,chainRange:ARCSTAFF.jump};
 WEAPONS.briarpot={id:'briarpot',name:'荆果投壶',rate:BRIARPOT.rate,damage:BRIARPOT.damage,count:1,speed:12,range:BRIARPOT.range,color:0xd6b77a,slow:BRIARPOT.slow,petDamage:30,petCooldown:2.35};
 WEAPONS.mycelialwhip={id:'mycelialwhip',name:'菌丝长鞭',...MYCELIAL_WHIP,count:1,speed:1,melee:true,color:0xc8dca0,cloudMax:3,stillRank:0,roamRank:0};
 WEAPONS.venomfan={id:'venomfan',name:'蚀梦折扇',...VENOM_FAN,count:1,color:0xcfb6e7,poisonScale:1,lureRank:0,venomRank:0};
-export const HERO_LOADOUTS={scout:['rifle','shotgun','fire'],silver:['crossbow','shuriken','dark'],wraith:['shade','shadowblade','grimoire'],tide:['harpoon','arcstaff'],lingya:['boomerang','briarpot'],wuling:['sporelantern','mycelialwhip'],mirage:['miasmalantern','venomfan']};
+WEAPONS.windbow={id:'windbow',name:'风弦长弓',...WINDBOW,count:1,color:0xb8e4cf};
+WEAPONS.resonator={id:'resonator',name:'回音战铃',...RESONATOR,count:1,color:0xe9cf94};
+export const HERO_LOADOUTS={scout:['rifle','shotgun','fire'],silver:['crossbow','shuriken','dark'],wraith:['shade','shadowblade','grimoire'],tide:['harpoon','arcstaff'],lingya:['boomerang','briarpot'],wuling:['sporelantern','mycelialwhip'],mirage:['miasmalantern','venomfan'],minstrel:['windbow','resonator']};
 export function weaponFor(hero,index){const ids=Object.hasOwn(HERO_LOADOUTS,hero)?HERO_LOADOUTS[hero]:HERO_LOADOUTS.scout;return WEAPONS[ids[index]||ids[0]];}
 export function registerCrossbowHit(player,targetId,now){const mark=player.crossbowMark;if(!mark||mark.target!==targetId||now-mark.time>2.5)player.crossbowMark={target:targetId,time:now,hits:1};else{mark.time=now;mark.hits++;if(mark.hits===3){mark.hits=0;return true;}}return false;}
 export const CROSSBOW_HUNT={distance:3,window:4,burst:[0,2.2,2.4,2.6],slow:1.2,dodgeRefund:.6};
@@ -39,9 +44,14 @@ export function experienceNeeded(level){return Math.round(48+(level-1)*7);}
 export function grantExperience(p,n){p.xp+=n;while(p.xp>=experienceNeeded(p.level)){p.xp-=experienceNeeded(p.level);p.level++;p.pending++;p.maxHp+=4;p.hp=Math.min(p.maxHp,p.hp+4);}}
 export const UPGRADES=[{id:'power',name:'磨砺锋芒',text:'武器伤害 +18%',icon:'✦',max:5},{id:'haste',name:'疾风节拍',text:'射速 +15%',icon:'»',max:4},{id:'fire',name:'陨火降临',text:'周期召唤陨火，轰击附近怪群',icon:'☄',max:3},{id:'ice',name:'霜华绽放',text:'周期释放冰晶环，伤害并减速',icon:'❄',max:3},{id:'storm',name:'雷霆回响',text:'周期落雷，连锁附近敌人',icon:'ϟ',max:3},{id:'veil',name:'暗幕',text:'周期展开暗幕，遮蔽并削弱逼近的敌人',icon:'◐',max:3},{id:'chain',name:'缚影',text:'周期甩出影链，束缚前方怪物',icon:'⛓',max:3},{id:'rift',name:'裂隙',text:'周期唤出影之裂隙，重创附近怪物',icon:'✺',max:3},{id:'vitality',name:'坚韧之心',text:'生命上限 +24，并恢复 24',icon:'♡',max:4},{id:'stride',name:'轻盈步伐',text:'移动速度 +8%，闪避冷却缩短',icon:'➶',max:3},{id:'magnet',name:'灵光牵引',text:'经验吸取范围增加',icon:'◎',max:3}];
 UPGRADES.push(...EXTRA_SKILLS.map(s=>({...s,text:s.describe(1),category:'skill'})));
-const heroSpell=(hero,id,weapon)=>EXTRA_BY_ID[id]?EXTRA_BY_ID[id].hero===(hero||'scout')&&(!EXTRA_BY_ID[id].weapon||EXTRA_BY_ID[id].weapon===weapon):['tide','lingya'].includes(hero)?['power','haste','vitality','stride','magnet'].includes(id):hero==='wraith'?!['fire','ice','storm'].includes(id):!['veil','chain','rift'].includes(id);
+const heroSpell=(hero,id,weapon)=>EXTRA_BY_ID[id]?EXTRA_BY_ID[id].hero===(hero||'scout')&&(!EXTRA_BY_ID[id].weapon||EXTRA_BY_ID[id].weapon===weapon):['tide','lingya','minstrel'].includes(hero)?['power','haste','vitality','stride','magnet'].includes(id):hero==='wraith'?!['fire','ice','storm'].includes(id):!['veil','chain','rift'].includes(id);
 const route=(weapon,name,icon,steps)=>({weapon,name,icon,steps});
 export const WEAPON_PATHS={
+ windbow_pierce:route('windbow','穿林长歌','➤',['贯穿 2 个目标，伤害 +12%，射程 15.5 米','贯穿 3 个目标，伤害 +24%，射程 16 米','贯穿 4 个目标，伤害 +36%，射程 16.5 米；树石仍会挡住箭矢']),
+ windbow_fan:route('windbow','散羽和鸣','⋔',['每次三箭，每箭为基础伤害 48%，射程缩短至 9 米','每箭为基础伤害 54%，箭路略微展开','每箭为基础伤害 60%，更宽的三箭覆盖；每箭仍只命中一名敌人']),
+ resonator_focus:route('resonator','聚音长廊','◆',['扇面缩至 29°，射程 6.3 米，主波伤害 +16%，回声为主波 52%','射程 6.6 米，主波 +32%，回声 62%','射程 6.9 米，主波 +48%，回声 72%；适合让敌人排成直线']),
+ resonator_chorus:route('resonator','环谷合奏','♬',['扇面约 78°，射程 5.85 米，主波伤害 -12%，回声为主波 50%','扇面约 92°，射程 5.7 米，回声 58%','扇面约 105°，射程 5.55 米，回声 66%；主波与回声各命中每敌一次']),
+
  mycelialwhip_tip:route('mycelialwhip','鞭梢凝毒','➤',['半角缩至 16°，距离 +0.3 米；外半段抽击 +25%，毒区每秒 12 伤害','距离 +0.6 米；外半段抽击 +50%，毒区每秒 14 伤害','距离 +0.9 米；外半段抽击 +75%，毒区每秒 16 伤害；需保持鞭梢距离']),
  mycelialwhip_sweep:route('mycelialwhip','菌幕横扫','♧',['半角扩至 52°，直接伤害 -12%；鞭梢毒区半径 1.25 米','半角扩至 62°，毒区半径 1.4 米','半角扩至 72°，毒区半径 1.55 米；每次仍只留一片毒区，最多三片、重叠取强']),
  venomfan_return:route('venomfan','回岚蚀梦','↶',['毒岚到达外缘后回流至释放位置，去回程各命中一次、每次为基础伤害 65%；半角扩至 33°','去回程每次为基础伤害 75%，半角扩至 38°','去回程每次为基础伤害 85%，半角扩至 42°；附毒只刷新，不叠层']),
@@ -78,6 +88,11 @@ export const WEAPON_PATHS={
  grimoire_echo:route('grimoire','复诵禁咒','◈',['裂口延迟再次爆发，造成 40% 伤害','再次爆发造成 55% 伤害','再次爆发造成 70% 伤害'])
 };
 export const WEAPON_PATH_PLAYS={
+ windbow_pierce:'沿窄路排线拉弓，让同一箭穿过前后目标；遇到树石仍停止。',
+ windbow_fan:'靠近后再张弓，用较短射程换三箭覆盖，远处目标要重新走位。',
+ resonator_focus:'把目标引进窄声道；主波过后留住敌人，等待第二次回声。',
+ resonator_chorus:'扇面铺开追兵，边退边摇铃，让回声覆盖刚刚经过的空地。',
+
  mycelialwhip_tip:'保持外半段距离抽中目标；窄鞭梢更强，贴脸命中没有额外增伤。',
  mycelialwhip_sweep:'横抽接近的敌群，把鞭梢小毒区留在退路，再用牵瘴步搬走。',
  venomfan_return:'让敌人留在扇波路径，等毒岚回流；回到原释放点，不追踪自己。',
@@ -213,9 +228,13 @@ export function weaponStats(p){
  case'grimoire_wide':w.radius=1.7+.4*r;w.damage*=1+.08*r;w.riftSlow=.4+.2*r;break;
  case'grimoire_echo':w.echo=.25+.15*r;break;
  }
+ minstrelWeaponStats(w);
  w.damage*=1+.18*(p.upgrades?.power||0);if(['miasmalantern','venomfan'].includes(w.id)){w.poisonScale=1+.18*(p.upgrades?.power||0);w.needleDamage*=w.poisonScale;if(w.splashDamage!==undefined)w.splashDamage*=w.poisonScale;}if(w.cloudDamage!==undefined)w.cloudDamage*=1+.18*(p.upgrades?.power||0);if(w.petDamage)w.petDamage*=1+.18*(p.upgrades?.power||0);w.rate*=1+.15*(p.upgrades?.haste||0);if(p.huntBoon==='rush'&&p.huntRush>0){w.damage*=1.25;if(w.petDamage)w.petDamage*=1.25;}return w;
 }
 export function weaponReachText(w){
+ if(w.id==='windbow')return `拉弦后放箭 · 射程 ${Number(w.range.toFixed(1))} 米 · 每箭伤害 ${Number(w.damage.toFixed(1))} · ${w.count} 箭 / ${w.pierce} 目标贯穿 · 闪避取消未放出的箭`;
+ if(w.id==='resonator')return `向前声波 ${Number(w.range.toFixed(2))} 米 · 扇面 ${Math.round(w.arc*360/Math.PI)}° · 主波 ${Number(w.damage.toFixed(1))} 伤害 · 抵达外缘 ${w.echoDelay} 秒后再发 ${Math.round(w.echoScale*100)}% 回声 · 遇遮挡截断`;
+
  if(w.id==='mycelialwhip')return `抽击距离 ${Number(w.range.toFixed(1))} 米 · 鞭梢毒区 ${Number(w.cloudRadius.toFixed(2))} 米 · 每秒 ${Number(w.cloudDamage.toFixed(1))} 伤害、${w.cloudDuration} 秒 · 三片上限、可闪避搬运`;
  if(w.id==='venomfan')return `毒岚距离 ${Number(w.range.toFixed(1))} 米 · 扇面 ${Math.round(w.arc*360/Math.PI)}° · 附毒每秒 ${Number(w.needleDamage.toFixed(1))} 伤害、${w.needleDuration} 秒 · ${w.returning?'去回程各命中一次':'波前每敌命中一次'} · 附毒刷新不叠层`;
  if(w.id==='arcstaff')return '导雷距离 '+w.range+' 米 · 最多 '+w.chainCount+' 个目标 · 跳电 '+Number(w.chainRange.toFixed(1))+' 米 · 松手停火、遇障碍断流';

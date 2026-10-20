@@ -35,6 +35,17 @@ test('fallen timber proxies retain their layout and use the real rotated mesh he
   updateTactics(w,7,context);assert(!w.obstacles.some(b=>b.owner===o));dispose(w);
  }
 });
+
+test('falling timber avoids every supplied player without treating players as tree-damaging foes',()=>{
+ const w=buildWorld('forest',9),o=w.breakables[0],player={x:o.x+20,z:o.z+20,size:.45},guest={x:o.x,z:o.z+.35,size:.45};
+ const context={player,actors:[player,guest],foes:[],clear:()=>true,fx(){}};
+ updateTactics(w,1,context);assert.equal(o.hp,42,'nearby guest must not damage a standing tree');assert.equal(o.state,'standing');
+ damageTerrain(o,100,{x:o.x,z:o.z-2});updateTactics(w,.75,context);
+ const proxies=w.obstacles.filter(b=>b.owner===o);assert(proxies.length>0&&proxies.length<5,'only unoccupied portions should gain colliders');
+ for(const b of proxies)for(const p of context.actors)assert(Math.hypot(b.x-p.x,b.z-p.z)>p.size+.65,'a falling log trapped a player');
+ updateTactics(w,1,context);assert.equal(o.age,1,'players do not accelerate the enemy-contact wear timer');
+ updateTactics(w,7,context);assert.equal(o.state,'spent');assert(!w.obstacles.some(b=>b.owner===o));dispose(w);
+});
 test('broken timber has a broad fractured end, bounded roots and shared bark detail across world rebuilds',()=>{
  const first=buildWorld('forest',9),second=buildWorld('forest',31),model=first.breakables[0].mesh.getObjectByName('breakable-dead-timber'),geometry=model.geometry,material=model.material;
  assert(geometry.index.count/3<=800,'a six-log detail pass exceeded the small shared geometry budget');

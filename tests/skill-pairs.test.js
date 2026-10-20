@@ -27,7 +27,7 @@ test('pause freezes pair states and prevents triggers; restart clears every pair
  const r=rig('lingya');r.p.upgrades={bond:1,briar:1};const e=r.foe(0,0);r.n.dodge(.4);r.step(.5);assert(r.n.snared.has(e));r.pause();const hp=e.hp,now=r.s.now,snared=r.n.snared.get(e);r.step(20);r.n.petHit(e);r.n.dodge(.4);assert.equal(e.hp,hp);assert.equal(r.s.now,now);assert.equal(r.n.snared.get(e),snared);assert.equal(r.n.pending.length,0);
  r.s.reset();assert.equal(r.n.marks.size,0);assert.equal(r.n.snared.size,0);assert.equal(r.n.fields.length,0);
 });
-test('all seven pairing guides show missing pieces and only new hero pairs claim bonuses',()=>{
- assert.equal(Object.keys(SKILL_PAIRS).length,7);for(const heroId of ['guardian','unknown','constructor','__proto__'])assert.equal(skillPairState({heroId}),null);assert.equal(skillPairHint({heroId:'guardian'},'fault'),'');
+test('all eight pairing guides show missing pieces and only new hero pairs claim bonuses',()=>{
+ assert.equal(Object.keys(SKILL_PAIRS).length,8);for(const heroId of ['guardian','unknown','constructor','__proto__'])assert.equal(skillPairState({heroId}),null);assert.equal(skillPairHint({heroId:'guardian'},'fault'),'');
  for(const [hero,q]of Object.entries(SKILL_PAIRS)){const p={heroId:hero,upgrades:{}};assert.equal(skillPairState(p).missing.length,2);assert(skillPairHint(p,q.ids[0]).includes(q.name));p.upgrades[q.ids[0]]=1;assert.equal(skillPairState(p).missing.length,1);assert(skillPairHint(p,q.ids[1]).includes('选取后'));p.upgrades[q.ids[1]]=1;assert(skillPairState(p).active);assert(skillPairHint(p,q.ids[0]).includes('已成型'));assert.equal(skillPairHint(p,'power'),'');assert.equal(q.bonus,['tide','lingya'].includes(hero));}
 });

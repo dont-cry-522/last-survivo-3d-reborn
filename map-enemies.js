@@ -1,6 +1,10 @@
-import{ADDITIONAL_BOSSES}from'./boss-roster.js?v=227';
+import{ADDITIONAL_BOSSES}from'./boss-roster.js?v=228';
 // Reuse locomotion roles while giving each biome its own species and attacks.
 export const MAP_ROSTERS={coast:{mushroom:'foamling',wolf:'tidecrab',golem:'reefturtle',spitter:'jellyseer',shaman:'tidestar',boss:'wreckwarden'},sand:{mushroom:'sandworm',wolf:'clawbeetle',golem:'sandguard',spitter:'sandspitter',shaman:'duneoracle',boss:'dunescorpion'},forest:{mushroom:'mushroom',wolf:'wolf',golem:'golem',spitter:'spitter',shaman:'shaman',boss:'boss'},snow:{mushroom:'snowhare',wolf:'frostwolf',golem:'yeti',spitter:'icewitch',shaman:'snowtotem',boss:'frostking'},ash:{mushroom:'emberling',wolf:'ashstalker',golem:'lavabrute',spitter:'cinderwisp',shaman:'ashseer',boss:'cinderlord'}};
+Object.assign(MAP_ROSTERS,{
+ bellvale:{mushroom:'mushroom',wolf:'wolf',golem:'sandguard',spitter:'icewitch',shaman:'shaman',boss:'icephoenix'},
+ crystalcave:{mushroom:'snowhare',wolf:'clawbeetle',golem:'golem',spitter:'jellyseer',shaman:'snowtotem',boss:'obeliskwarden'}
+});
 export const REGIONAL_ENEMIES={
  foamling:{map:'coast',role:'mushroom',hp:30,speed:2.9,damage:11,xp:7,size:.5,name:'海沫跳灵',traits:'青蓝卷浪软体、内凹浪窝和白色泡缘；压低后跳扑，落地回弹。',attack:'锁定方向后短距离跳扑',tip:'看到身体压低，侧移避开。'},
  tidecrab:{map:'coast',role:'wolf',hp:40,speed:3.7,damage:13,xp:10,size:.65,name:'钳潮蟹',traits:'低扁分片甲壳、外展关节足和长螯；交替撑地前进，张螯后夹击。',attack:'短蓄力后前冲夹击',tip:'不要直线后退，横向闪过钳口。'},

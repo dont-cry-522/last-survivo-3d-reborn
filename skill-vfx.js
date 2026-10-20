@@ -1,8 +1,9 @@
-import{meleeSwing}from'./weapon-performance.js?v=227';
+import{meleeSwing}from'./weapon-performance.js?v=228';
 import * as T from './vendor/three.module.js';
-import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=227';
-import{shadowCrescentGeometry}from'./shadow-weapons.js?v=227';
-import{spellShapes,streakTexture,crestTexture}from'./spell-shapes.js?v=227';
+import {flatGround,fitGroundSurface,disposeGroundSurface} from './ground-cues.js?v=228';
+import{shadowCrescentGeometry}from'./shadow-weapons.js?v=228';
+import{spellShapes,streakTexture,crestTexture}from'./spell-shapes.js?v=228';
+import{windArrow,minstrelMuzzle,minstrelWave,minstrelHit,minstrelSkill}from'./minstrel-vfx.js?v=228';
 
 // Three bowed tongues share one draw and one texture. A ground-level viewer
 // never sees the whole flame disappear edge-on, as with a single flat card.
@@ -209,6 +210,9 @@ export class SkillVFX{
    if(mist){mist.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),r);mist.rotateZ(i*.27);}
   }
  }
+ minstrelWave(origin,points,options={}){minstrelWave(this,origin,points,options);}
+ minstrelHit(id,contact,options={}){minstrelHit(this,id,contact,options);}
+ minstrelSkill(kind,x,z,angle=0){minstrelSkill(this,kind,x,z,angle);}
  herbalHit(id,contact,{angle=0,combo=0}={}){
   if(!contact||![contact.x,contact.y,contact.z].every(Number.isFinite))return;
   const whip=id==='mycelialwhip',f=contactFrame(contact.x,contact.z,angle,contact,contact.y),sign=combo%2?-1:1,p=f.at();
@@ -351,6 +355,7 @@ export class SkillVFX{
   for(let i=0;i<count;i++){const a=i/count*Math.PI*2,chip=this.particle('crystal',i%3?0xa7c9d8:0xdce8e7,p.x,p.y,p.z,{life:strong?.26:.20,size:[.018*f.scale,(strong?.10:.066)*f.scale,.018*f.scale],velocity:f.velocity(Math.sin(a)*(strong?1.3:.8),Math.cos(a)*.65,.75+i%2*.2),gravity:3,spin:7,opacity:.75,additive:false});if(chip){chip.quaternion.copy(f.rotation);chip.rotateZ(a);}}
  }
  skill(e){
+  if(['minstrelWake','minstrelChord','minstrelGuard'].includes(e.kind)){this.minstrelSkill(e.kind,e.x,e.z,e.angle||0);return;}
   const {kind,x,z}=e,point=(x,y,z)=>new T.Vector3(x,y,z);
   if(kind==='faultAim'||kind==='surgeAim'){
    const a=e.angle||0,dx=Math.sin(a),dz=Math.cos(a),stone=kind==='faultAim',color=stone?(e.charged?0xf1cb7f:0xbbaa87):0x91cac7;
@@ -429,6 +434,7 @@ export class SkillVFX{
  }
  muzzle(w,x,z,angle,height=this.groundHeight(x,z)+1.15,exact=false){
   const dx=Math.sin(angle),dz=Math.cos(angle),px=x+dx*(exact?0:.65),pz=z+dz*(exact?0:.65),path=w.pathId,rank=w.pathRank||0;
+  if(w.id==='windbow'){minstrelMuzzle(this,w,px,height,pz,angle);return;}
   if(w.id==='miasmalantern'){
    const p=this.particle('sweep',0x9676b5,px,height-.05,pz,{life:.25,size:[.31,.28,1],opacity:.43,additive:false,motion:'lash',roll:-1.2,velocity:[dx*.4,.05,dz*.4]});if(p)p.rotation.set(-.7,angle,.4);
   }else if(w.id==='rifle'||w.id==='shotgun'){
@@ -454,7 +460,9 @@ export class SkillVFX{
   if(b.mesh.userData.aura){const aura=b.mesh.userData.aura,elapsed=b.elapsed||0,wave=1+Math.sin(elapsed*(b.kind==='miasmalantern'?7:18))*(b.kind==='miasmalantern'?.04:.07);aura.scale.setScalar(wave);if(b.kind==='dark')aura.rotation.z=b.pathId==='dark_seek'?Math.sin(elapsed*8)*.14:elapsed*(b.pathId==='dark_gravity'?-5:2);if(b.kind==='miasmalantern')aura.rotation.z=Math.sin(elapsed*3)*.25;}
   if(b.trail>0)return;b.trail=['fire','dark'].includes(b.kind)?.075:.095;
   const len=Math.hypot(b.vx,b.vz)||1,dx=b.vx/len,dz=b.vz/len,y=b.height??(this.groundHeight(b.x,b.z)+1.15),path=b.pathId;
-  if(b.kind==='boomerang'){
+  if(b.kind==='windbow'){
+   this.segment(new T.Vector3(b.x-dx*.30,y,b.z-dz*.30),new T.Vector3(b.x-dx*.62,y,b.z-dz*.62),path==='windbow_pierce'?0xe2d6ac:0xb7d1b2,.012,.10,false,0,.35);
+  }else if(b.kind==='boomerang'){
    this.segment(new T.Vector3(b.x-dx*.08,y,b.z-dz*.08),new T.Vector3(b.x-dx*.28,y,b.z-dz*.28),0xd5c7ad,.012,.08,false,0,.28);
   }else if(['shuriken','shadowblade'].includes(b.kind)){
    const bone=b.kind==='boomerang',shadow=b.kind==='shadowblade',color=bone?(b.returning?0xa9c995:0xe3cf9f):shadow?0xc6c8c6:0x9bdace;
@@ -478,6 +486,7 @@ export class SkillVFX{
  }
  projectile(w){
   const path=w.pathId,rank=w.pathRank||0;
+  if(w.id==='windbow')return windArrow(this,w);
   if(w.id==='boomerang'){
    this.geometry.slingStone||=new T.IcosahedronGeometry(1,1);
    if(!this.materials.has('sling-stone'))this.materials.set('sling-stone',new T.MeshStandardMaterial({color:0xd3c4a8,roughness:.92}));

@@ -11,20 +11,23 @@ const main=readFileSync(new URL('../main.js',import.meta.url),'utf8');
 const shotStart=main.indexOf('function shoot('),shotEnd=main.indexOf('player.weaponCue=0;',shotStart)+'player.weaponCue=0;'.length;
 assert(shotStart>0&&shotEnd>shotStart,'shot initialization boundary changed');
 const shotSetup=main.slice(shotStart,shotEnd)+'}',cooldown=main.match(/const attackOverrun=[^;]+;player\.attack=Math\.max\(0,player\.attack-dt\);/)?.[0];
-const fireGate=main.match(/if\(\(attackMode==='auto'\?[\s\S]*?\)shoot\(dt,attackOverrun\);/)?.[0];
+const fireGate=main.match(/if\([^\n]*?\)shoot\(dt,attackOverrun\);/)?.[0];
 assert(cooldown&&fireGate,'production attack timing boundary changed');
-const stepAttack=new Function('context','dt','with(context){'+shotSetup+cooldown+fireGate+'}');
+const targetsCode=main.slice(main.indexOf('function combatTargets('),main.indexOf('function aliveRoomOwners('));
+const victimsCode=main.slice(main.indexOf('function forRoomVictims('),main.indexOf('function updateRemoteCamera('));
+const stepAttack=new Function('context','dt','with(context){'+targetsCode+shotSetup+cooldown+fireGate+'}');
 const noop=()=>{};
 function attackContext(weaponId,extra={}){
  return{player:{weaponId,attack:0,dashTime:0,upgrades:{},...extra},hero:{userData:{}},aimInput:{angle:0,held:true},
   attackMode:'manual',aligned:true,autoTarget:{},touch:false,mirage:{hidden:false,modifyShot:w=>w},
-  enemies:[],boss:null,companion:null,state:'playing',time:0,weaponStats,shotInterval,
+  heroSkills:{prepareShot:w=>w},
+  enemies:[],boss:null,companion:null,roomSession:null,roomOwner:null,state:'playing',time:0,weaponStats,shotInterval,
   visibleEnemy:()=>true,relicEvent:()=>null,applyFieldShot:noop,impactChips:noop};
 }
 function advanceShots(c,fps,seconds){for(let i=0;i<Math.round(fps*seconds);i++){c.time+=1/fps;stepAttack(c,1/fps);}}
 
 test('real short-bow, rifle and sling firing rates stay consistent at 30/60/high-refresh updates',()=>{
- for(const weaponId of['crossbow','rifle','boomerang']){
+ for(const weaponId of['crossbow','rifle','boomerang','windbow','resonator']){
   const counts=[];
   for(const fps of[30,60,90,120,144,179]){
    const c=attackContext(weaponId),w=weaponStats(c.player),damage=w.damage;advanceShots(c,fps,60);
@@ -76,10 +79,10 @@ test('cooldown overrun only shortens the next deadline, not the authored reload 
 
 const pounceStart=main.indexOf('function lungeEase('),pounceEnd=main.indexOf('// Footfall feedback',pounceStart);
 assert(pounceStart>0&&pounceEnd>pounceStart,'production pounce boundary changed');
-const stepPounce=new Function('context','e','dt','with(context){'+main.slice(pounceStart,pounceEnd)+'return enemyPounce(e,dt);}');
+const stepPounce=new Function('context','e','dt','with(context){'+victimsCode+main.slice(pounceStart,pounceEnd)+'return enemyPounce(e,dt);}');
 function pounceContext(speed=1){
  const c={T,world:{},terrainAt:()=>({speed}),moveActor:(_world,e,dx,dz)=>{e.x+=dx;e.z+=dz;},
-  mirage:{},companion:null,player:{x:100,z:100},segmentDistance,hits:0,
+  mirage:{},companion:null,roomSession:null,player:{x:100,z:100},segmentDistance,hits:0,
   ENEMY_MOTION:{wolf:{recover:.3},mushroom:{recover:.3}},enemyRecovery:(_e,recover)=>recover,
   enemySound:noop,addZone:noop,impactChips:noop};
  c.hitPlayer=()=>{c.hits++;return true;};return c;
@@ -122,7 +125,7 @@ test('pause/resume and finished preparation restart the actual pacing clock',()=
  const pause=main.match(/^function pause\(\)[^\n]+/m)?.[0],resume=main.match(/^function resume\(\)[^\n]+/m)?.[0];
  const start=main.indexOf('function unlockPreparation(){'),end=main.indexOf('async function warmCurrentScene',start);
  assert(pause&&resume&&start>0&&end>start,'lifecycle boundary changed');
- const c={state:'playing',preparing:true,last:0,keys:new Set(),performance:{now:()=>456},resets:[],
+ const c={state:'playing',roomSession:null,preparing:true,last:0,keys:new Set(),performance:{now:()=>456},resets:[],
   sound:{stopWeapons:noop,stopCreatures:noop},releaseStick:noop,clearAttack:noop,showPauseDialog:noop,
   restorePauseControls:noop,syncViewUI:noop,unlockAudio:noop,$:()=>({close:noop}),
   loadingScreen:{hide:noop},renderBudget:{reset:noop}};

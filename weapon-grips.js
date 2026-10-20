@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
-import {crossbowMechanism} from './weapon-performance.js?v=227';
+import {crossbowMechanism} from './weapon-performance.js?v=228';
 
 // Weapon-space contact points: the wrapped handle, not the model's origin.
-export const GRIP_POINTS={mycelialwhip:[0,0,0],venomfan:[0,.035,0],shade:[0,0,0],shadowblade:[0,-.035,.02],grimoire:[0,0,0],miasmalantern:[0,.015,0],sporelantern:[0,.015,0],briarpot:[-.235,.105,0],rifle:[0,-.065,.075],shotgun:[0,-.065,.075],crossbow:[0,-.08,.01],fire:[0,0,.045],dark:[0,0,.045],arcstaff:[0,0,.045],shuriken:[-.07,0,.06],boomerang:[0,-.13,0],harpoon:[0,0,-.08],hammer:[0,.015,0]};
+export const GRIP_POINTS={windbow:[0,0,0],resonator:[0,0,0],mycelialwhip:[0,0,0],venomfan:[0,.035,0],shade:[0,0,0],shadowblade:[0,-.035,.02],grimoire:[0,0,0],miasmalantern:[0,.015,0],sporelantern:[0,.015,0],briarpot:[-.235,.105,0],rifle:[0,-.065,.075],shotgun:[0,-.065,.075],crossbow:[0,-.08,.01],fire:[0,0,.045],dark:[0,0,.045],arcstaff:[0,0,.045],shuriken:[-.07,0,.06],boomerang:[0,-.13,0],harpoon:[0,0,-.08],hammer:[0,.015,0]};
 export const BRIARPOT_SUPPORT=[0,-.15,.035];
 export const SCYTHE_SUPPORT=[.008,.345,.02];
 const palm=side=>new T.Vector3(side==='r'?-.036:.036,.097,0);
@@ -64,7 +64,7 @@ export function supportGripTarget(d,target){
   h.contact.copy(target);h.offset.copy(palm('l')).multiply(h.scale).applyQuaternion(h.supportWorld);target.sub(h.offset);
   // Slide along the long foregrip when turning would otherwise overextend the arm.
   d.offArm.getWorldPosition(h.origin);const reach=(d.offForearm.position.length()+d.support.hand.position.length())*h.scale.y*.985;
-  if(d.weaponId!=='crossbow'&&d.weaponId!=='shadowblade'&&d.weaponId!=='boomerang'&&d.weaponId!=='briarpot'){
+  if(d.weaponId!=='crossbow'&&d.weaponId!=='shadowblade'&&d.weaponId!=='boomerang'&&d.weaponId!=='briarpot'&&d.weaponId!=='windbow'){
     d.gun.getWorldQuaternion(h.scratch);h.axis.set(0,0,1).applyQuaternion(h.scratch);
     const limit=d.weaponId==='harpoon'?.25:.10;
     for(let travel=0;target.distanceTo(h.origin)>reach&&travel<limit;travel+=.01){target.addScaledVector(h.axis,-.01);h.contact.addScaledVector(h.axis,-.01);}
@@ -81,15 +81,15 @@ export function aimShadeGuide(d,blend){
 }
 
 export function poseGripFingers(d,motion={}){
-  const id=d.weaponId,h=d.handGrips,hasSupport=['rifle','shotgun','crossbow','harpoon','hammer','shadowblade','boomerang','briarpot'].includes(id);
+  const id=d.weaponId,h=d.handGrips,hasSupport=['rifle','shotgun','crossbow','harpoon','hammer','shadowblade','boomerang','briarpot','windbow','resonator'].includes(id);
   const herbal=id==='mycelialwhip'||id==='venomfan',lantern=id==='sporelantern'||id==='miasmalantern'||id==='briarpot',caster=herbal||['fire','dark','arcstaff','shade','grimoire'].includes(id),gun=['rifle','shotgun','crossbow'].includes(id),pole=id==='harpoon'||id==='shadowblade';
   const kick=motion.kick||0,gather=motion.gather||0,latch=id==='crossbow'?crossbowMechanism(d.reloadPhase??1).hand:0;
   const released=id==='shuriken'?(motion.kick||0):0;
   for(const {bone,side,name,i}of h.fingers){
     if(side==='l'&&!hasSupport&&id!=='sporelantern'&&!caster)continue;
-    const release=side==='r'?released:id==='boomerang'||id==='sporelantern'?(motion.open||0):0;
+    const release=side==='r'?released:id==='boomerang'||id==='sporelantern'||id==='windbow'?(motion.open||0):0;
     const trigger=side==='r'&&gun&&name==='index';
-    const profile=side==='r'&&lantern?lanternHook[name]:side==='l'&&id==='boomerang'?pouchPinch[name]:side==='l'&&(id==='sporelantern'||id==='briarpot')?podCup[name]:
+    const profile=id==='resonator'?(side==='r'?staffWrap:fireGuide)[name]:side==='r'&&lantern?lanternHook[name]:side==='l'&&(id==='boomerang'||id==='windbow')?pouchPinch[name]:side==='l'&&(id==='sporelantern'||id==='briarpot')?podCup[name]:
       gun?(side==='r'?handleWrap: id==='shotgun'?pumpWrap:stockCradle)[name]:pole?(side==='r'?shaftBrace:shaftGuide)[name]:
       id==='shade'?shadowGuide[name]:id==='grimoire'?(side==='r'?bookSupport:bookRead)[name]:
       herbal?(side==='r'?(id==='venomfan'?dartPinch:handleWrap):id==='venomfan'?fireGuide:darkGuide)[name]:['fire','dark','arcstaff'].includes(id)?(side==='r'?staffWrap:id==='fire'?fireGuide:id==='arcstaff'?arcGuide:darkGuide)[name]:side==='r'&&id==='shuriken'?dartPinch[name]:null;

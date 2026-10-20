@@ -1,7 +1,12 @@
-import{waterDepth}from'./water.js?v=227';
+import{waterDepth}from'./water.js?v=228';
 
 // New-run composition only. Resume and free-look never call this function.
 export function entryLandscapeYaw(world){
+ const authored=world.newScenery?.layout?.route;
+ if(authored?.length>1&&Math.hypot(authored[0].x-world.spawn.x,authored[0].z-world.spawn.z)<.01){
+  const ahead=authored.find(p=>Math.hypot(p.x-world.spawn.x,p.z-world.spawn.z)>.01);
+  if(ahead)return Math.atan2(ahead.x-world.spawn.x,ahead.z-world.spawn.z);
+ }
  const approach=world.forestHabitats?.approach;
  if(approach?.points.length>1&&Math.hypot(approach.start.x-world.spawn.x,approach.start.z-world.spawn.z)<.01){
   let ahead=8;

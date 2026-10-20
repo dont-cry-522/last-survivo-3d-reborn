@@ -9,11 +9,11 @@ import {FramePacer} from '../frame-pacing.js';
 
 const source=readFileSync(new URL('../main.js',import.meta.url),'utf8');
 const locks=source.slice(source.indexOf('function lockPreparation('),source.indexOf('async function warmCurrentScene('));
-const entry=source.slice(source.indexOf('async function prepareStart('),source.indexOf('await prepareLobby();'));
+const entry=source.slice(source.indexOf('async function prepareStart('),source.indexOf('// Private room adapter:'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};};
 function fixture(){
  const nodes={'#menu':{inert:false},'#start':{disabled:false},'#dialog':{close(){}},'#touch':{hidden:false}},events=[],gate=deferred(),reached=deferred();
- const context=vm.createContext({framePacer:new FramePacer(),preparing:false,state:'menu',last:0,surfaceReady:Promise.resolve(),document:{hidden:false},performance:{now:()=>123},
+ const context=vm.createContext({framePacer:new FramePacer(),preparing:false,roomSession:null,state:'menu',last:0,surfaceReady:Promise.resolve(),document:{hidden:false},performance:{now:()=>123},
   renderer:{},async waitForGPUPreparation(renderer){assert.equal(renderer,context.renderer);events.push('gpu-ready');},
   $:id=>nodes[id],keys:{clear(){}},releaseStick(){},clearAttack(){},unlockAudio(){events.push('audio');},restorePauseControls(){},
   player:{weaponId:'crossbow'},mapId:'forest',combatSampleKinds:map=>{assert.equal(map,'forest');return['wolf','duskbat','boss'];},AIR_ENEMIES:{duskbat:{voice:'wolf'}},

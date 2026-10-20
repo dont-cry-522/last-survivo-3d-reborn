@@ -12,13 +12,13 @@ test('Wuling has one poison weapon and a bounded base area attack, leaving other
  assert.match(weaponReachText(w),/毒雾半径 2 米/);assert.match(weaponReachText(w),/最多 3 片/);
 });
 
-test('poison skills belong only to Wuling while all six hero draft pools retain their legal spells',()=>{
+test('poison skills belong only to Wuling while all hero draft pools retain their legal spells',()=>{
  const elemental=['fire','ice','storm'],shadow=['veil','chain','rift'];
  for(const heroId of Object.keys(HERO_LOADOUTS)){
   const p=player(heroId),own=EXTRA_SKILLS.filter(s=>s.hero===heroId&&(!s.weapon||s.weapon===p.weaponId)).map(s=>s.id),seen=new Set(),rng=seeded(92);
   for(let i=0;i<120;i++)for(const card of chooseUpgrades(p,rng)){seen.add(card.id);if(EXTRA_BY_ID[card.id])assert.equal(EXTRA_BY_ID[card.id].hero,heroId);assert(!card.id.startsWith('path:'));}
   assert(own.every(id=>seen.has(id)));
-  const legal=heroId==='wraith'?shadow:['tide','lingya'].includes(heroId)?[]:elemental;
+  const legal=heroId==='wraith'?shadow:['tide','lingya','minstrel'].includes(heroId)?[]:elemental;
   for(const id of[...elemental,...shadow]){assert.equal(seen.has(id),legal.includes(id),heroId+' '+id);assert.equal(takeUpgrade(p,id),legal.includes(id));}
   for(const id of['power','haste','vitality','stride','magnet'])assert(takeUpgrade(p,id));
   for(const id of['poison_linger','poison_spread','poison_guard']){if(heroId==='wuling'){for(let rank=0;rank<3;rank++)assert(takeUpgrade(p,id));assert(!takeUpgrade(p,id));}else assert(!takeUpgrade(p,id));}

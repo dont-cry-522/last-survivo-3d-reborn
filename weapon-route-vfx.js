@@ -5,6 +5,10 @@ const look=(weapon,name,summary,phases)=>Object.freeze({weapon,name,summary,phas
 const groundRoutes=new Set(['briarpot_burst','briarpot_snare','miasmalantern_lure','miasmalantern_venom','sporelantern_still','sporelantern_roam','fire_blast','dark_gravity','grimoire_wide','grimoire_echo','boomerang_snare']);
 const contactHeights={shotgun_fan:.65,shotgun_slug:.86,fire_burn:.48,shade_blight:.5,harpoon_reef:.84,harpoon_tow:.20,boomerang_pincer:.4};
 export const WEAPON_ROUTE_LOOKS=Object.freeze({
+ windbow_pierce:look('windbow','穿林长歌','风羽穿出的细长针芯，沿实际射线向前散去',['hit']),
+ windbow_fan:look('windbow','散羽和鸣','接触点两侧张开的短羽痕，与三箭扇面相呼应',['hit']),
+ resonator_focus:look('resonator','聚音长廊','沿前推方向收拢的三道细压力纹；回声较淡',['hit']),
+ resonator_chorus:look('resonator','环谷合奏','两侧外展的短气纹与微尘，回声保留更薄余痕',['hit']),
  mycelialwhip_tip:look('mycelialwhip','鞭梢凝毒','短而凝实的菌丝沿鞭梢方向穿出，留下单点孢汁',['hit']),
  mycelialwhip_sweep:look('mycelialwhip','菌幕横扫','接触处的两缕菌丝横向展开，孢屑随抽鞭方向散落',['hit']),
  venomfan_return:look('venomfan','回岚蚀梦','只有返程命中时，淡紫蚀雾与短羽纹向施法者回流',['hit']),
@@ -79,6 +83,25 @@ export function weaponRouteEffect(vfx,w,phase,x,z,angle=0,detail={}){
  const chip=(shape,color,forward,side,y,size,speed,up=.7,priority=0)=>particle(shape,color,forward,side,y,{life:.25,size,velocity:velocity(speed,side*2,up),gravity:4,spin:6,priority});
 
  switch(id){
+ case'windbow_pierce':
+  line([-.13,0,1],[.32*level,0,1],0xe5e4be,.022,.17,1,.76);
+  line([-.06,.045,1],[.21*level,.045,1],0x91bfa1,.011,.23,0,.54);
+  break;
+ case'windbow_fan':
+  for(const side of[-1,1]){
+   line([-.06,side*.02,1],[.14,side*.17*level,1+side*.04],side<0?0x8fb69a:0xe2e4bd,.017,.19,side<0?0:1,.69);
+   chip('crystal',0xb9cfb2,.05,side*.06,1,[.015,.07,.015],.16,.22);
+  }
+  break;
+ case'resonator_focus':
+  for(const side of[-1,0,1])line([-.12,side*.055,1],[.19*level,side*.025,1],detail.echo?0xa1c7d4:side?0xcbbd8d:0xe9d9a6,side?.012:.023,.18,side?0:1,detail.echo?.39:.65);
+  break;
+ case'resonator_chorus':
+  for(const side of[-1,1]){
+   curl(detail.echo?0xa5c3cf:0xcfc49e,0,side*.10,1,.18*level,.065,{rotation:0,life:.24,opacity:detail.echo?.29:.46,priority:side<0?0:1,velocity:velocity(.10,side*.24,.06)});
+   particle('smoke',detail.echo?0x859fa9:0xa69c7a,.02,side*.05,1,{life:.26,size:[.042,.03,.04],velocity:velocity(.06,side*.30,.08),opacity:.28});
+  }
+  break;
  case'mycelialwhip_tip':
   line([-.10,0,1],[.24*level,0,1],0xc6d29a,.027,.17,1,.76);
   particle('droplet',0x879d5c,.04,0,1,{life:.25,size:[.045,.065,.04],velocity:velocity(.35,0,-.12),gravity:1.8,opacity:.65});

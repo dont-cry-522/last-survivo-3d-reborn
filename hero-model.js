@@ -1,9 +1,10 @@
-import {shadowFocus} from './shadow-gear.js?v=227';
-import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=227';
-import{miasmaLantern}from'./mirage-appearance.js?v=227';
-import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=227';
+import {isMinstrelWeapon,makeMinstrelWeapon} from './minstrel-weapon-models.js?v=228';
+import {shadowFocus} from './shadow-gear.js?v=228';
+import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=228';
+import{miasmaLantern}from'./mirage-appearance.js?v=228';
+import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=228';
 import * as T from './vendor/three.module.js';
-import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=227';
+import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=228';
 // Shared smooth geometry: detail is concentrated on the two heroes, not multiplied across the forest.
 const geometries=new Map(),materials=new Map();
 let woodGrain;
@@ -142,6 +143,7 @@ export function makeHero(kind,weapon){
 // Bone-driven actors need this held object, not a second, discarded fallback body.
 // Keep the fallback and live rig on exactly the same geometry and grip helpers.
 export function makeWeapon(kind,weapon){
+  if(isMinstrelWeapon(weapon))return nameWeapon(makeMinstrelWeapon(weapon),kind,weapon);
   const gun=new T.Group(),dark=0x15212c,trim=kind==='silver'?0xa4b9d2:0xba9358;
   if(isHerbalWeapon(weapon)){
     gun.add(makeHerbalWeapon(weapon));

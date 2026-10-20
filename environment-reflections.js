@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {HDRLoader} from './vendor/HDRLoader.js';
 
 export const REFLECTION_ASSETS={forest:'assets/environment/lighting/forest-1k.hdr',sky:'assets/environment/lighting/sky-1k.hdr'};
-export const REFLECTION_STRENGTH={forest:.30,snow:.36,ash:.17,sand:.29,coast:.38};
+export const REFLECTION_STRENGTH={forest:.30,snow:.36,ash:.17,sand:.29,coast:.38,bellvale:.28,crystalcave:.17};
 
 // Keep the photographed sky broad and soft. The existing directional sun owns
 // the sharp lighting and the only shadow map, rather than a second HDR sun.

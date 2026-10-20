@@ -9,26 +9,36 @@ import {shotgunVolley,shotgunHit,SHOTGUN_PUSH} from '../gun-handling.js';
 // render/audio/world adapters. The reference changes target-list construction
 // back to the previous query-per-use behavior; damage/order code is identical.
 const main=readFileSync(new URL('../main.js',import.meta.url),'utf8');
-const start=main.indexOf(' const projectileTargets='),end=main.indexOf(' updateShadowSpells(dt);',start);
+const start=main.indexOf('function updateOwnerProjectiles('),end=main.indexOf('function updateDangerZones(',start);
 assert(start>0&&end>start,'main projectile phase boundary changed');
-const phase=main.slice(start,end),snapshot='const projectileTargets=boss?.alive?[...enemies,boss]:enemies;';
+const phase=main.slice(start,end),snapshot='const projectileTargets=combatTargets();';
 assert(phase.includes(snapshot),'snapshot instrumentation needs updating');
-const current=phase.replace(snapshot,'const projectileTargets=boss?.alive?(listCopies++,[...enemies,boss]):enemies;inspectTargets(projectileTargets);').replace('?[...projectileTargets]:projectileTargets','?(listCopies++,[...projectileTargets]):projectileTargets');
+const targetsCode=main.slice(main.indexOf('function combatTargets('),main.indexOf('function aliveRoomOwners('));
+const victimsCode=main.slice(main.indexOf('function forRoomVictims('),main.indexOf('function updateRemoteCamera('));
+const zones=main.slice(end,main.indexOf('function updateOwnerSkills(',end));
+const skillsStart=main.indexOf('function updateOwnerSkills('),skillsEnd=main.indexOf(' updateShadowSpells(dt);',skillsStart);
+assert(skillsStart>end&&skillsEnd>skillsStart,'main spell phase boundary changed');
+const skills=main.slice(skillsStart,skillsEnd)+'}';
+const current=phase.replace(snapshot,'const projectileTargets=combatTargets();if(projectileTargets!==enemies)listCopies++;inspectTargets(projectileTargets);').replace('?[...projectileTargets]:projectileTargets','?(listCopies++,[...projectileTargets]):projectileTargets');
 const reference=phase.replace(snapshot,'const targets=()=>{listCopies++;return [...enemies,...(boss?.alive?[boss]:[])];};')
  .replace("b.kind==='crossbow'&&b.pathId==='crossbow_pierce'?[...projectileTargets]:projectileTargets",'targets()')
  .replaceAll('projectileTargets','targets()');
-const runCurrent=new Function('context','with(context){'+current+'}'),runReference=new Function('context','with(context){'+reference+'}');
+// The former monolithic phase is now split for host/guest ownership. Execute
+// the same production phases in their original single-player order, retaining
+// live body references across the companion, meteor and spell boundaries.
+const harness=code=>new Function('context','with(context){'+targetsCode+victimsCode+code+zones+skills+'updateOwnerProjectiles(dt);if(state==="playing"&&!projectilesOnly){updateDangerZones(dt);if(state==="playing")updateOwnerSkills(dt);}}');
+const runCurrent=harness(current),runReference=harness(reference);
 const noop=()=>{},effects=()=>new Proxy({},{get:()=>noop});
 const enemy=(id,z,extra={})=>({id,kind:'golem',alive:true,x:0,y:0,z,height:2,size:.5,hp:1000,mesh:{position:{set:noop}},...extra});
 const bullet=(id,extra={})=>({id,kind:'rifle',x:0,z:0,height:1,vx:0,vy:0,vz:100,speed:100,life:1,elapsed:0,spatial:true,damage:1,pierce:1,bounces:0,hitRadius:.09,waterContact:true,hits:new Set(),visualHits:new Set(),mesh:{position:{set:noop},rotation:{x:0,y:0}},...extra});
 function context(enemies,bullets,boss=null){
- const c={enemies,bullets,boss,zones:[],dt:.1,time:1,state:'playing',listCopies:0,hits:[],snapshots:[],currentBullet:null,
+ const c={enemies,bullets,boss,zones:[],dt:.1,time:1,state:'playing',roomSession:null,roomOwner:null,projectilesOnly:false,listCopies:0,hits:[],snapshots:[],currentBullet:null,
   player:{x:0,y:0,z:0,weaponId:'crossbow',upgrades:{},spell:{fire:0,ice:0,storm:0}},world:{obstacles:[],overhead:{firstHit:()=>null},groundHeightAt:()=>0},
   vfx:effects(),sound:effects(),scene:effects(),environmentImpacts:effects(),heroSkills:effects(),mirage:{hidden:false},companion:null,ENEMY_VOICES:{},
   segmentHitsBody,segmentBodyEntry,bodyContact,launchVelocity,segmentDistance,crossbowImpact,registerShadowHit,shotgunHit,SHOTGUN_PUSH,
   closeContact:x=>x,segmentGroundEntry:()=>null,mapHalf:()=>100,clearAt:()=>true,groundAt:()=>0,visibleWeaponRange:(_,range)=>range,weaponRouteEffect:noop,inflictStatus:noop,
   updateCompanion:noop,disposeCue:noop,addGravity:noop,moveActor:noop,lightning:noop,burst:noop,terrainHit:noop,bossZoneEffect:noop,
-  enemySound:noop,hitPlayer:noop,attackReachesPlayer:()=>false,addZone:noop
+  enemySound:noop,hitPlayer:noop,attackReachesPlayer:()=>false,addZone:noop,withZoneOwner:(_zone,fn)=>fn()
  };
  c.vfx=new Proxy({flight:b=>{c.currentBullet=b.id;}},{get:(o,key)=>o[key]||noop});
  c.inspectTargets=list=>c.snapshots.push(list);
@@ -83,7 +93,7 @@ test('special orbs receive live bodies and their kills are visible to following 
 
 test('80 projectiles against 60 enemies avoid repeated combined target-list copies',t=>{
  for(const withBoss of[false,true]){
-  const factory=()=>context(Array.from({length:60},(_,id)=>enemy(id,4,{x:20})),Array.from({length:80},(_,id)=>bullet(id)),withBoss?enemy(undefined,5,{x:20,kind:'boss'}):null);
+  const factory=()=>Object.assign(context(Array.from({length:60},(_,id)=>enemy(id,4,{x:20})),Array.from({length:80},(_,id)=>bullet(id)),withBoss?enemy(undefined,5,{x:20,kind:'boss'}):null),{projectilesOnly:true});
   const before=factory(),after=factory();runReference(before);runCurrent(after);
   assert.deepEqual(after.hits,before.hits);assert.equal(before.listCopies,80);assert.equal(after.listCopies,withBoss?1:0);
   if(!withBoss)assert.equal(after.snapshots[0],after.enemies);
@@ -114,4 +124,43 @@ test('the production phase retains per-volley counts across frames and moves aft
  c.bullets=pellets(3);runCurrent(c);assert.deepEqual(hitPositions,[2,2,2,2,2]);
  assert(Math.abs(target.z-3.1)<1e-10);assert.equal(target.stagger,.18);
  c.bullets=pellets(2);runCurrent(c);assert.equal(volley.hits.get(target),7);assert(Math.abs(target.z-3.1)<1e-10,'a later frame pushed the same volley again');
+});
+
+function bowContext({count=1,releaseAt=1.05}={}){
+ const w={id:'windbow',damage:52,range:15},windVolley={released:false},arrows=Array.from({length:count},(_,i)=>bullet('wind-'+i,{
+  kind:'windbow',w,windVolley,releaseDelay:.54,releaseAt,damage:52,speed:30,vz:30,life:.5,spread:(i-(count-1)/2)*.2
+ }));
+ const c=context([],arrows);Object.assign(c,{projectilesOnly:true,aimInput:{angle:Math.PI/2},fieldCount:0,
+  weaponLaunchPoint:()=>({x:2,y:1.4,z:4}),weaponAim:()=>({x:17,y:1.4,z:4})});
+ c.applyFieldShot=weapon=>{c.fieldCount++;weapon.damage*=1.5;};
+ for(const b of arrows)b.mesh.visible=false;
+ return c;
+}
+
+test('windbow release reads the current weapon socket and aim, then flies only the time after release',()=>{
+ const c=bowContext(),b=c.bullets[0];c.time=1;c.dt=.1;runCurrent(c);
+ assert.equal(b.mesh.visible,false);assert.equal(c.fieldCount,0);assert.equal(b.elapsed,0);
+ c.time=1.06;runCurrent(c);assert.equal(b.mesh.visible,true);assert.equal(c.fieldCount,1);
+ assert(Math.abs(b.elapsed-.01)<1e-9);assert(Math.abs(b.x-2.3)<1e-9);assert.equal(b.z,4);assert.equal(b.height,1.4);
+ assert(Math.abs(b.vx-30)<1e-9);assert(Math.abs(b.vz)<1e-9);assert.equal(b.damage,78);
+ c.time=1.16;runCurrent(c);assert(Math.abs(b.x-5.3)<1e-9);assert.equal(c.fieldCount,1);
+});
+
+test('windbow three-arrow release preserves spread and consumes a field boon only once per volley',()=>{
+ const c=bowContext({count:3});c.time=1.06;runCurrent(c);
+ assert.equal(c.fieldCount,1);assert.deepEqual(c.bullets.map(b=>b.damage),[78,78,78]);
+ const directions=c.bullets.map(b=>Math.atan2(b.vx,b.vz));assert(Math.abs(directions[1]-Math.PI/2)<1e-9);
+ assert(Math.abs(directions[0]-directions[1]+.2)<1e-9);assert(Math.abs(directions[2]-directions[1]-.2)<1e-9);
+ assert(c.bullets.every(b=>Math.abs(b.elapsed-.01)<1e-9));
+});
+
+test('windbow dodge during draw removes the held shot without damage, sound or field reward consumption',()=>{
+ const c=bowContext();c.player.dashTime=.3;c.time=1.02;runCurrent(c);
+ assert.equal(c.bullets.length,0);assert.equal(c.fieldCount,0);assert.equal(c.hits.length,0);
+ c.time=2;runCurrent(c);assert.equal(c.fieldCount,0);assert.equal(c.bullets.length,0);
+});
+
+test('windbow piercing resolves near bodies first without mutating shared enemy order',()=>{
+ const c=context([enemy(7,7),enemy(3,3),enemy(5,5)],[bullet('wind',{kind:'windbow',pathId:'windbow_pierce',pierce:2})]);
+ c.projectilesOnly=true;runCurrent(c);assert.deepEqual(c.hits.map(h=>h[1]),[3,5]);assert.deepEqual(c.enemies.map(e=>e.id),[7,3,5]);
 });

@@ -1,16 +1,32 @@
-import{NewHeroSkills}from'./new-hero-skills.js?v=227';
-import{segmentDistance}from'./rules.js?v=227';
+import{NewHeroSkills}from'./new-hero-skills.js?v=228';
+import{segmentDistance}from'./rules.js?v=228';
 // Gameplay records are bounded and independent from the recycled visual particles.
 export class HeroSkills{
  constructor(api){this.api=api;this.reset();}
- reset(){this.now=0;this.cool={};this.count={};this.mines=[];this.trails=[];this.bolts=[];this.pending=[];this.last=null;this.anchor=null;this.walked=0;this.mark=null;this.counterUntil=0;this.counterReady=0;if(this.newHeroes)this.newHeroes.reset();else this.newHeroes=new NewHeroSkills(this);}
+ reset(){const p=this.api.player?.();if(p?.heroId==='minstrel')p.minstrelGuard=0;this.now=0;this.cool={};this.count={};this.mines=[];this.trails=[];this.bolts=[];this.pending=[];this.last=null;this.anchor=null;this.walked=0;this.mark=null;this.counterUntil=0;this.counterReady=0;this.windReady=Infinity;this.windUntil=0;this.guardReady=Infinity;this.minstrelMark=null;this.minstrelShield={amount:0,until:0};if(this.newHeroes)this.newHeroes.reset();else this.newHeroes=new NewHeroSkills(this);}
  rank(id){return this.api.player().upgrades[id]||0;}
  fx(kind,x,z,extra={}){this.api.fx({kind,x,z,...extra});}
  foes(x=this.api.player().x,z=this.api.player().z,r=14){return this.api.foes().filter(e=>e.alive&&Math.hypot(e.x-x,e.z-z)<r).sort((a,b)=>Math.hypot(a.x-x,a.z-z)-Math.hypot(b.x-x,b.z-z));}
  canHit(x,z,e){return !this.api.blocked(x,z,e.x,e.z);}
  hit(e,damage){if(this.api.active()&&e.alive)this.api.damage(e,damage);}
  area(x,z,r,damage,slow=0){for(const e of this.foes(x,z,r)){if(!this.api.active())break;if(!this.canHit(x,z,e))continue;this.hit(e,damage);if(e.alive&&slow)e.slow=Math.max(e.slow||0,slow);}}
- onDodge(duration){this.newHeroes.dodge(duration);if(!this.api.active()||!this.rank('counter'))return;this.counterReady=this.now+duration;this.counterUntil=this.counterReady+2;}
+ onDodge(duration){this.newHeroes.dodge(duration);if(!this.api.active())return;
+  if(this.api.player().heroId==='minstrel'){
+   if(this.rank('windwake')){this.windReady=this.now+duration;this.windUntil=this.windReady+2.5;}
+   if(this.rank('quietguard')&&this.now>=(this.cool.quietguard||0)){this.cool.quietguard=this.now+5;this.guardReady=this.now+duration;}
+  }
+  if(!this.rank('counter'))return;this.counterReady=this.now+duration;this.counterUntil=this.counterReady+2;}
+ prepareShot(w){
+  if(this.api.active()&&this.api.player().heroId==='minstrel'&&['windbow','resonator'].includes(w.id)&&this.now>=this.windReady&&this.now<this.windUntil&&this.rank('windwake')){
+   this.windUntil=0;w.damage*=1+.15*this.rank('windwake');w.windEmpowered=true;
+   const p=this.api.player();this.fx('minstrelWake',p.x,p.z,{angle:p.aimAngle||0});
+  }
+  return w;
+ }
+ absorb(n){
+  if(this.api.player().heroId!=='minstrel'||this.now>=this.minstrelShield.until)return n;
+  const blocked=Math.min(n,this.minstrelShield.amount);this.minstrelShield.amount-=blocked;this.api.player().minstrelGuard=this.minstrelShield.amount;return n-blocked;
+ }
  onShot(angle,elapsed=0){
   if(!this.api.active())return;const p=this.api.player(),now=this.now+elapsed;
   if(this.rank('counter')&&this.counterUntil>now&&now>=this.counterReady){
@@ -29,6 +45,11 @@ export class HeroSkills{
  }
  onHit(e,brineWeight=1){
   this.newHeroes.hit(e,brineWeight);
+  if(this.api.active()&&this.api.player().heroId==='minstrel'&&this.rank('resonance_mark')&&e.alive&&this.now>=(this.cool.resonance_mark||0)){
+   if(!this.minstrelMark||this.minstrelMark.enemy!==e||this.now-this.minstrelMark.time>3)this.minstrelMark={enemy:e,count:0,time:this.now};
+   this.minstrelMark.time=this.now;
+   if(++this.minstrelMark.count>=3){this.minstrelMark=null;this.cool.resonance_mark=this.now+1;this.hit(e,16+8*this.rank('resonance_mark'));this.fx('minstrelChord',e.x,e.z);}
+  }
   if(!this.api.active()||!this.rank('pursuit')||!e.alive||this.now<(this.cool.pursuit||0))return;
   if(!this.mark||this.mark.enemy!==e||this.now-this.mark.time>2.5)this.mark={enemy:e,count:0,time:this.now};
   this.mark.count++;this.mark.time=this.now;
@@ -41,6 +62,11 @@ export class HeroSkills{
  }
  update(dt){
   if(!this.api.active()||dt<=0)return;this.now+=dt;const p=this.api.player();this.newHeroes.update(dt);if(!this.api.active())return;
+  if(p.heroId==='minstrel'){
+   if(this.now>=this.minstrelShield.until)this.minstrelShield.amount=0;
+   if(this.now>=this.guardReady){const ready=this.guardReady;this.guardReady=Infinity;const rank=this.rank('quietguard');if(rank&&p.hp>0&&this.now<ready+2){this.minstrelShield={amount:Math.max(this.minstrelShield.amount,4+4*rank),until:ready+2};this.fx('minstrelGuard',p.x,p.z);}}
+   p.minstrelGuard=this.minstrelShield.amount;
+  }
   for(const [id,cooldown]of [['mine',6],['rain',8],['spikes',7]]){
    if(!this.rank(id))continue;this.cool[id]=(this.cool[id]??1)-dt;if(this.cool[id]>0)continue;
    const near=this.foes(p.x,p.z,id==='mine'?14:12).filter(e=>this.canHit(p.x,p.z,e));if(!near.length){this.cool[id]=.3;continue;}this.cool[id]=cooldown;

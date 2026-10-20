@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {forestMacroLandforms} from './forest-macro-landform.js?v=227';
-import {biomeMacroLandforms} from './biome-macro-landform.js?v=227';
-import {biomeWeights} from './confluence.js?v=227';
+import {forestMacroLandforms} from './forest-macro-landform.js?v=228';
+import {biomeMacroLandforms} from './biome-macro-landform.js?v=228';
+import {biomeWeights} from './confluence.js?v=228';
 
 // Refine only triangles near the raised floor. Shared edge midpoints preserve
 // the existing colour/alpha falloff; the same mesh and material keep one draw.

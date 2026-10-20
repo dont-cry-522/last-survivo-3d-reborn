@@ -1,6 +1,9 @@
 // Stable IDs: each local expedition has three different inhabitants. The
 // connected expedition still uses the original five regional guardians.
 export const BOSS_ROUTES={
+ // New expeditions re-use these named inhabitants and their distinct attacks.
+ bellvale:['thornstag','obeliskwarden','icephoenix'],
+ crystalcave:['webmatriarch','abyssmedusa','obeliskwarden'],
  forest:['thornstag','webmatriarch','boss'],
  snow:['rimefang','frostking','icephoenix'],
  ash:['moltenrhino','cinderdrake','cinderlord'],

@@ -1,14 +1,16 @@
 import * as T from './vendor/three.module.js';
-import {actor} from './world.js?v=227';
-import {MAP_ROSTERS} from './map-enemies.js?v=227';
-import {BOSS_ROUTES} from './boss-expedition.js?v=227';
-import {AIR_ROSTERS, AIR_ENEMIES, makeAirborne} from './airborne-enemies.js?v=227';
-import {WEAPON_PATHS,weaponStats} from './rules.js?v=227';
-import {groundCue} from './ground-cues.js?v=227';
+import {actor} from './world.js?v=228';
+import {MAP_ROSTERS} from './map-enemies.js?v=228';
+import {BOSS_ROUTES} from './boss-expedition.js?v=228';
+import {AIR_ROSTERS, AIR_ENEMIES, makeAirborne} from './airborne-enemies.js?v=228';
+import {WEAPON_PATHS,weaponStats} from './rules.js?v=228';
+import {groundCue} from './ground-cues.js?v=228';
 
 // Models only: no enemy instances, encounters, random rolls, audio or game clocks.
 export function combatSampleKinds(mapId){
- const maps=mapId==='confluence'?Object.keys(MAP_ROSTERS):[Object.hasOwn(MAP_ROSTERS,mapId)?mapId:'forest'];
+ // Confluence remains the original five-region expedition. Standalone map
+ // additions must not silently increase its entry compilation budget.
+ const maps=mapId==='confluence'?['forest','snow','ash','sand','coast']:[Object.hasOwn(MAP_ROSTERS,mapId)?mapId:'forest'];
  return [...new Set(maps.flatMap(map=>[
   ...Object.values(MAP_ROSTERS[map]),
   ...(mapId==='confluence'?[]:BOSS_ROUTES[map]),
@@ -37,7 +39,7 @@ export async function prepareCombatSamples({scene,vfx,mapId,player,hero,mirageVF
  const kinds=combatSampleKinds(mapId);
  // Build the actual selected projectile and both route variants before firing.
  // Their geometries/materials are held by SkillVFX; these are visual samples only.
- const projectileIds=['rifle','shotgun','fire','crossbow','shuriken','dark','shade','boomerang','miasmalantern'];
+ const projectileIds=['rifle','shotgun','fire','crossbow','shuriken','dark','shade','boomerang','miasmalantern','windbow'];
  const projectiles=projectileIds.includes(player.weaponId)?[
   weaponStats(player),
   ...Object.entries(WEAPON_PATHS).filter(([,path])=>path.weapon===player.weaponId)

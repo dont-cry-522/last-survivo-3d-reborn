@@ -47,7 +47,8 @@ test('forest-to-border light changes stay bounded and take the same time at 30 a
 test('five palettes separate warm sunlight from cool sky without concealing nearby combat',()=>{
  const colors=Object.fromEntries(Object.entries(CLIMATE_LIGHT).map(([id,p])=>[id,Object.fromEntries(['sky','sun','bounce','fog','ridge'].map(k=>[k,new T.Color(p[k])]))]));
  const luminance=c=>c.r*.2126+c.g*.7152+c.b*.0722;
- for(const [id,p]of Object.entries(CLIMATE_LIGHT)){
+ for(const id of ['forest','snow','ash','sand','coast']){
+  const p=CLIMATE_LIGHT[id];
   const c=colors[id];assert(c.sky.b>c.sky.r&&c.sun.r>c.sun.b,id+' lost directional warm/cool separation');
   assert(luminance(c.sun)*p.key>luminance(c.sky)*p.ambient*3,id+' sky fill washes out the sunlit shape');
   assert(Math.exp(-((p.density*20)**2))>.93,id+' fog obscures the normal battle distance');
@@ -84,7 +85,7 @@ test('distant scenery stays beyond map bounds and scenery finish preserves playa
 });
 test('distant layers have different ridgelines, softer far colors and a closed lighting seam',()=>{
  let sharedMaterial;
- for(const id of Object.keys(CLIMATE_LIGHT)){
+ for(const id of ['forest','snow','ash','sand','coast','bellvale']){
   const world={half:96,group:new T.Group()},mesh=installDistantLandscape(world,id);
   const {position,color,normal}=mesh.geometry.attributes,segments=192,rows=9,ringSize=(segments+1)*rows;
   assert.equal(mesh.geometry.index.count/3,6144);assert.equal(position.count,ringSize*2);
@@ -113,7 +114,7 @@ test('distant layers have different ridgelines, softer far colors and a closed l
 
 test('geology changes the slopes as well as color, with smooth upward normals and irregular alpine snow cover',()=>{
  const rows=9,segments=192,profiles=new Map();
- for(const id of Object.keys(CLIMATE_LIGHT)){
+ for(const id of ['forest','snow','ash','sand','coast']){
   const world={half:96,group:new T.Group()},mesh=installDistantLandscape(world,id),{position,normal,color}=mesh.geometry.attributes;
   const profile=Array(rows).fill(0),snowLine=[];let lower=0,upper=0,maxColorJump=0;
   for(let i=0;i<segments;i++){

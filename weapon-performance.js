@@ -1,14 +1,14 @@
-import{SCYTHE}from'./scythe-combat.js?v=227';
-import{POISON}from'./poison-config.js?v=227';
-import{MIRAGE}from'./mirage-config.js?v=227';
+import{SCYTHE}from'./scythe-combat.js?v=228';
+import{POISON}from'./poison-config.js?v=228';
+import{MIRAGE}from'./mirage-config.js?v=228';
 const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=(a,b,t)=>{const x=clamp((t-a)/(b-a));return x*x*(3-2*x);};
 const pulse=(t,a,b,c)=>smooth(a,b,t)*(1-smooth(b,c,t));
-export const WEAPON_RECOVERY={mycelialwhip:.70,venomfan:.72,miasmalantern:.72,sporelantern:POISON.castRecovery,boomerang:.55,briarpot:.65,harpoon:.48,hammer:.7,rifle:.22,shotgun:.48,crossbow:.26,shuriken:.46,fire:.62,dark:.68,arcstaff:.18,shade:.36,shadowblade:SCYTHE.recovery,grimoire:.72};
+export const WEAPON_RECOVERY={windbow:1.30,resonator:.72,mycelialwhip:.70,venomfan:.72,miasmalantern:.72,sporelantern:POISON.castRecovery,boomerang:.55,briarpot:.65,harpoon:.48,hammer:.7,rifle:.22,shotgun:.48,crossbow:.26,shuriken:.46,fire:.62,dark:.68,arcstaff:.18,shade:.36,shadowblade:SCYTHE.recovery,grimoire:.72};
 // Combat compresses release with attack speed without a 120 ms animation floor.
 export const weaponDuration=(id,period=1)=>Math.min(WEAPON_RECOVERY[id]||.3,Math.max(.001,period*.9));
 // Cycle fractions also drive the audible mechanism cues, so haste preserves sync.
-export const WEAPON_CUES={mycelialwhip:[.74],venomfan:[.70],miasmalantern:[],sporelantern:[.73],boomerang:[],briarpot:[],harpoon:[],hammer:[],rifle:[],shotgun:[.25,.6],crossbow:[.22,.68],shuriken:[.68],fire:[.68],dark:[.68],arcstaff:[],shade:[],shadowblade:[],grimoire:[.58]};
+export const WEAPON_CUES={windbow:[],resonator:[],mycelialwhip:[.74],venomfan:[.70],miasmalantern:[],sporelantern:[.73],boomerang:[],briarpot:[],harpoon:[],hammer:[],rifle:[],shotgun:[.25,.6],crossbow:[.22,.68],shuriken:[.68],fire:[.68],dark:[.68],arcstaff:[],shade:[],shadowblade:[],grimoire:[.58]};
 export function mirageShotDelay(rate){return Math.min(MIRAGE.releaseDelay,.3/Math.max(.01,rate));}
 // One clock drives both held poses and their blade trails; damage timings stay unchanged.
 export function meleeSwing(id,age,period=1){
@@ -22,6 +22,11 @@ export function meleeSwing(id,age,period=1){
 }
 export function weaponGesture(id,age,cycle=1,period=1){
   const t=age/weaponDuration(id,period);
+  if(id==='windbow'){
+    const pull=smooth(0,.39,t)*(1-smooth(.42,.49,t)),handPull=smooth(0,.39,t)*(1-smooth(.53,.79,t));
+    return{pull,handPull,ready:smooth(0,.18,t)*(1-smooth(.66,1,t)),arrowVisible:t<.42||t>=.88,open:smooth(.42,.47,t)*(1-smooth(.72,.86,t)),kick:pulse(t,.30,.42,.78),sweep:0,draw:pull,gather:pull,body:smooth(0,.10,t)*(1-smooth(.78,1,t))};
+  }
+  if(id==='resonator')return{kick:pulse(t,.12,.32,.78),sweep:pulse(t,.16,.45,1),draw:0,gather:pulse(t,0,.14,.32),swing:-pulse(t,0,.14,.32)+pulse(t,.16,.45,1),body:smooth(0,.10,t)*(1-smooth(.78,1,t))};
   if(id==='mycelialwhip'||id==='venomfan')return herbalPose(id,age,period);
   // Rapid conduction has a small wrist pulse, with no overhead windup or sweep.
   if(id==='arcstaff')return{kick:pulse(t,0,.18,1),sweep:0,draw:0,gather:0};

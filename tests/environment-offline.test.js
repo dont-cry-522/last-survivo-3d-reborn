@@ -1,10 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,copyFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,copyFileSync,rmSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join,resolve,sep} from 'node:path';
+import {join,resolve,sep,dirname} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {roomRuntimeFixture} from './helpers/offline-room-fixture.js';
 
 const root=new URL('../',import.meta.url),prefix='assets/environment/models/',
  delivered=['weathered-rock-a.glb','weathered-rock-b.glb','old-stump.glb','sources.json','LICENSE.txt','CC0-1.0.txt'],
@@ -24,6 +25,7 @@ test('offline export includes approved models and all eight forest PBR resources
   put('hero-refinement-assets.js','export const HERO_REFINEMENTS={files:[]};');
   put('assets/characters/rebuilt-v215/sources.json','{}');put('assets/characters/rebuilt-v215/LICENSE.txt','CC0');
   for(const name of ['style.css','manifest.webmanifest','THIRD_PARTY_ASSETS.md','START_OFFLINE.cmd','start-offline.py','start-offline.mjs','OFFLINE_README.txt','assets/characters/motion.json','assets/characters/fallback.json'])put(name,'test fixture\n');
+  for(const [path,text] of Object.entries(roomRuntimeFixture(root)))if(!existsSync(join(folder,path))){mkdirSync(dirname(join(folder,path)),{recursive:true});put(path,text);}
   for(const file of delivered)copy(prefix+file);
   for(const file of ['forest-1k.hdr','sky-1k.hdr','sources.json'])copy('assets/environment/lighting/'+file);
   for(const file of forestFiles)copy(forestPrefix+file);

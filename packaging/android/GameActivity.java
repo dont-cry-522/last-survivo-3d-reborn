@@ -85,7 +85,7 @@ public final class GameActivity extends Activity {
         });
         setContentView(content);
         immersive();
-        web.loadUrl("https://" + HOST + "/game/play.html?v=227");
+        web.loadUrl("https://" + HOST + "/game/play.html?v=228");
     }
 
     private static boolean local(Uri uri) {

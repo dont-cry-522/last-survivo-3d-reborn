@@ -206,7 +206,7 @@ internal sealed class LocalHost : IDisposable {
     readonly HashSet<TcpClient> clients = new HashSet<TcpClient>();
     readonly object gate = new object();
     volatile bool stopping;
-    public string Url { get { return "http://127.0.0.1:" + port + "/play.html?v=227"; } }
+    public string Url { get { return "http://127.0.0.1:" + port + "/play.html?v=228"; } }
 
     public LocalHost(string folder, int requestedPort) {
         if (requestedPort < 1 || requestedPort > 65535) throw new ArgumentException("端口无效。");

@@ -21,7 +21,7 @@ const play=new URL('play.html',root);
 if(process.argv.includes('--check')){
  if((await readFile(play,'utf8')).replace(/\r\n/g,'\n')!==html.replace(/\r\n/g,'\n'))throw Error('Fresh online entry is stale. Run npm run offline:build.');
 }else await writeFile(play,html);
-const files=['index.html','play.html','style.css','manifest.webmanifest','THIRD_PARTY_ASSETS.md','START_OFFLINE.cmd','start-offline.py','start-offline.mjs','OFFLINE_README.txt'];
+const files=['index.html','play.html','style.css','multiplayer.css','manifest.webmanifest','THIRD_PARTY_ASSETS.md','START_OFFLINE.cmd','start-offline.py','start-offline.mjs','OFFLINE_README.txt'];
 files.push(...rootScripts);
 for(const dir of ['vendor','assets/bestiary','assets/icons','assets/audio','assets/environment'])for(const f of await readdir(new URL(dir+'/',root)))if(/\.(js|png|jpg|ogg|mp3)$/.test(f))files.push(dir+'/'+f);
 // Ship only prepared model derivatives and their provenance. Source downloads,

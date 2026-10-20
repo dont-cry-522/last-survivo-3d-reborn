@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
-import {CLIMATE_LIGHT} from './environment-lighting.js?v=227';
+import {CLIMATE_LIGHT} from './environment-lighting.js?v=228';
 
-const cloudStrength={forest:.90,snow:.82,ash:.90,sand:.54,coast:.88};
+const cloudStrength={forest:.90,snow:.82,ash:.90,sand:.54,coast:.88,bellvale:.72,crystalcave:.25};
 // Frequency / density edges: rounded woodland masses, cold wind sheets,
 // broad smoke banks, sparse high wisps and long maritime bands.
-const cloudProfiles={forest:[3.4,3.0,.43,.64],snow:[2.7,6.0,.36,.64],ash:[2.2,3.0,.30,.64],sand:[1.8,8.2,.57,.78],coast:[4.8,2.2,.39,.64]};
+const cloudProfiles={forest:[3.4,3.0,.43,.64],snow:[2.7,6.0,.36,.64],ash:[2.2,3.0,.30,.64],sand:[1.8,8.2,.57,.78],coast:[4.8,2.2,.39,.64],bellvale:[2.2,4.4,.46,.72],crystalcave:[1.4,2.6,.64,.88]};
 // Lower edge, full visibility, upper fade and brightness. These only shade the
 // background sphere; scene fog and the playable area's contrast stay untouched.
 const cloudLayers={forest:[.025,.13,.86,1.04],snow:[.025,.11,.90,1],ash:[.012,.09,.58,.58],sand:[.18,.34,.93,.94],coast:[.02,.12,.82,1.02]};
@@ -88,7 +88,7 @@ export class AdventureAtmosphere{
   // New runs use a new world but retain the scenery clock. Only a world change
   // resets cloud climate; crossing regions inside one world still blends.
   if(world!==undefined&&world!==this.world){this.world=world;this.lastTime=undefined;}
-  this.mesh.visible=!!visible;if(!visible)return;
+  this.mesh.visible=!!visible&&mapId!=='crystalcave';if(!visible)return;
   camera.getWorldPosition(this.mesh.position);this.scene.worldToLocal(this.mesh.position);
   const climate=CLIMATE_LIGHT[mapId]||CLIMATE_LIGHT.forest,u=this.mesh.material.uniforms;
   u.skyColor.value.set(skyColor??climate.sky).multiplyScalar(skyStrength);u.fogColor.value.set(fogColor??climate.fog);u.sunColor.value.set(sunColor??climate.sun);

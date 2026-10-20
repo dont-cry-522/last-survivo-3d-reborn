@@ -1,2 +1,4 @@
 # Keep authoring GLBs as well as runtime derivatives in this complete snapshot.
 /scripts/__pycache__/
+__pycache__/
+/node_modules/

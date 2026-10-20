@@ -1,6 +1,9 @@
-import{POISON}from'./poison-config.js?v=227';
-import{MIRAGE}from'./mirage-config.js?v=227';
+import{POISON}from'./poison-config.js?v=228';
+import{MIRAGE}from'./mirage-config.js?v=228';
 export const EXTRA_SKILLS=[
+ {id:'windwake',hero:'minstrel',name:'踏风引弦',icon:'↝',max:3,describe:r=>`踏风步结束后 2.5 秒内，第一次长弓或战铃主攻击伤害提高 ${15*r}%；开始出手即消耗，挥空也会消耗，不叠加。战铃回声沿用本次攻击强度。`},
+ {id:'resonance_mark',hero:'minstrel',name:'三叠和弦',icon:'♬',max:3,describe:r=>`连续三次主攻击命中同一目标（相邻间隔不超过 3 秒），追加 ${16+8*r} 点伤害；换目标重计，触发间隔 1 秒。回声和技能伤害不叠层，不递归触发。`},
+ {id:'quietguard',hero:'minstrel',name:'静音衣',icon:'◇',max:3,describe:r=>`踏风步结束后获得 ${4+4*r} 点护盾，持续 2 秒，独立触发间隔 5 秒；取高不相加，不回血、不增加无敌。`},
  {id:'scythe_mark',hero:'wraith',weapon:'shadowblade',name:'冥镰刻痕',icon:'⋀',max:3,describe:r=>`断魂战镰在同一目标身上连续命中三次（相邻间隔不超过 3 秒），第三次额外造成 ${18+10*r} 伤害，随后清空刻痕；不由其他技能叠层。`},
  {id:'scythe_step',hero:'wraith',weapon:'shadowblade',name:'影步斩',icon:'↝',max:3,describe:r=>`影步结束后 2 秒内第一次战镰攻击，伤害提高 ${20*r}%；空挥也会消耗机会，不提供额外无敌。`},
  {id:'scythe_reap',hero:'wraith',weapon:'shadowblade',name:'残月收割',icon:'☽',max:3,describe:r=>`断魂战镰命中生命不高于 30% 的敌人时，本次斩击伤害提高 ${15*r}%；对首领也有效，不直接处决。`},
@@ -30,6 +33,7 @@ export const EXTRA_BY_ID=Object.fromEntries(EXTRA_SKILLS.map(s=>[s.id,s]));
 
 // Tide and Lingya add bounded interactions; the others explain tactical combinations.
 export const SKILL_PAIRS={
+ minstrel:{name:'踏风成章',ids:['windwake','resonance_mark'],bonus:false,text:'侧滑调整射线后，用强化主攻击继续同一目标的三叠和弦；战铃回声负责补伤，不计入和弦。战术配合，无额外隐藏加成。',support:'长弓适合瞄准直线，战铃适合保持中近距离引敌经过回声；静音衣保护侧滑结束后的短暂调整。'},
  mirage:{name:'蜃影诱葬',ids:['mirage_residue','mirage_burial'],bonus:false,text:'让替身在追兵之间自然绽爆，借蜃雾控住原处，残蛊补足离区毒伤。区域毒与附着毒不叠加，替身被杀不会触发诱葬；战术搭配，无隐藏加成。',support:'幻瘴提高保住替身的收益；蚀影强化显形后的追击窗口；蜃衣仅在显形时短暂保护本体。'},
  wuling:{name:'余毒接种',ids:['poison_linger','poison_spread'],bonus:false,text:'主毒区击杀将传染交给最近的追兵，离开毒区的敌人承受余毒。两种离区毒只取较强的一份，不叠加，也不额外触发连锁。战术配合，无隐藏加成。',support:'沉瘴适合守住落点；游瘴便于搬运毒区改变路线；苔衣护身保护成功搬运后的短暂调整。'},
  tide:{name:'盐潮共鸣',ids:['wake','brine'],bonus:true,text:'每片潜潮余流首次伤害一名敌人时，额外叠一层盐蚀；同一敌人不会被该片余流反复叠层。',support:'长叉牵引便于把怪物拉进余流，导雷杖主电弧可持续叠盐蚀；疾风节拍加快主攻击。'},

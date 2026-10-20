@@ -394,7 +394,7 @@ test('camera equipment clears the near plane and idle crosshair in landscape and
 test('hand and sleeve palettes differ by hero without changing shared weapon colors',()=>{
  const view=new FirstPersonView(new T.PerspectiveCamera(60,1.6,.1,100)),palettes=new Set(),gun=weapon('rifle');
  try{for(const kind of Object.keys(HERO_LOADOUTS)){view.setHero({userData:{gun,kind}},'rifle');palettes.add(Array.from(view.arms[0].geometry.attributes.color.array.slice(0,9)).join(','));}
- assert.equal(palettes.size,7);
+ assert.equal(palettes.size,Object.keys(HERO_LOADOUTS).length);
  }finally{view.dispose();}
 });
 

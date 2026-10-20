@@ -5,10 +5,10 @@ import vm from 'node:vm';
 import {FramePacer} from '../frame-pacing.js';
 
 const source=readFileSync(new URL('../main.js',import.meta.url),'utf8');
-const targetCode=source.slice(source.indexOf('function closestAutoTarget('),source.indexOf('function inflictStatus('));
+const targetCode=source.slice(source.indexOf('function combatTargets('),source.indexOf('function aliveRoomOwners('))+source.slice(source.indexOf('function closestAutoTarget('),source.indexOf('function inflictStatus('));
 function targeting(enemies,lock=null){
  const metrics={terrain:0,obstacles:0};
- const context=vm.createContext({enemies,boss:null,player:{x:0,y:0,z:0},eyeHeight:1.5,autoTargetLock:lock,
+ const context=vm.createContext({enemies,boss:null,roomSession:null,roomOwner:null,player:{x:0,y:0,z:0},eyeHeight:1.5,autoTargetLock:lock,
   world:{groundHeightAt:()=>0,obstacles:[{}],breakables:[]},visibleEnemy:e=>e.alive!==false,
   segmentGroundEntry(from,to){metrics.terrain++;return to.y<0?0:null;},
   segmentHitsBody(x,y,z,tx,ty,tz){metrics.obstacles++;return tx<0;},Math});

@@ -5,7 +5,7 @@ import * as T from '../vendor/three.module.js';
 import {HERO_SIGNATURES,makeIdentityMark} from '../identity-motifs.js';
 import {finishHeroSurface} from '../hero-finish.js';
 
-test('seven compact reliefs have distinct silhouettes and bounded shared geometry',()=>{
+test('hero reliefs have distinct silhouettes and bounded shared geometry',()=>{
  const hashes=new Set();
  for(const kind of Object.keys(HERO_SIGNATURES)){
   const a=makeIdentityMark(kind,.05),b=makeIdentityMark(kind,.05),hash=createHash('sha256');let triangles=0;
@@ -14,7 +14,7 @@ test('seven compact reliefs have distinct silhouettes and bounded shared geometr
   assert(triangles<2200,'a small mark must not become a large model');const box=new T.Box3().setFromObject(a);assert(box.max.z-box.min.z<.02,'relief protrudes too far from a garment');assert(box.max.x-box.min.x<.11&&box.max.y-box.min.y<.11);
   hashes.add(hash.digest('hex'));a.position.x=2;assert.equal(b.position.x,0);
  }
- assert.equal(hashes.size,7,'identities must not be the same recoloured stamp');assert.throws(()=>makeIdentityMark('unknown'));
+ assert.equal(hashes.size,Object.keys(HERO_SIGNATURES).length,'identities must not be the same recoloured stamp');assert.throws(()=>makeIdentityMark('unknown'));
 });
 
 test('surface finishing keeps the sprout bell metal and does not modify its shared template',()=>{

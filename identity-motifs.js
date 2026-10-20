@@ -4,6 +4,7 @@ import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
 // One small maker's mark per identity, echoed on functional weapon surfaces.
 // These are relief fittings, not spell effects: no light, billboard or aura.
 export const HERO_SIGNATURES=Object.freeze({
+ minstrel:{primary:0x527b80,accent:0xe5ddc7,metal:0xb79961,motif:'wind-lyre',label:'风弦',description:'栗铜长发、象牙白宽袖与青灰开襟旅行衣，一枚风弦扣、反曲长弓与悬铃组成巡风乐师的轮廓。'},
  scout:{primary:0x4c654c,accent:0xa79361,metal:0x726044,motif:'woodland-leaf',label:'林叶',description:'林绿叶裁领、棕皮护具与旧铜林叶扣，木质枪托呼应林地游侠。'},
  silver:{primary:0x304455,accent:0xc2d7df,metal:0x718c9a,motif:'frost-feather',label:'霜羽',description:'白短发与黑面具，深靛衣装用冰蓝灰翻领和渐淡霜边呼应霜影。'},
  wraith:{primary:0x24252a,accent:0xe7e4db,metal:0x999f9f,motif:'soul-rift',label:'魂痕',description:'墨黑兜帽与完整贴背披巾，窄白衣缘、无面魂痕、黑刃白锋和黑封白页呼应影裔。'},
@@ -18,7 +19,11 @@ function shape(draw){const s=new T.Shape();draw(s);return new T.ExtrudeGeometry(
 function stroke(points,radius=.026){return new T.TubeGeometry(new T.CatmullRomCurve3(points.map(([x,y,z=.045])=>new T.Vector3(x,y,z))),Math.max(8,points.length*4),radius,5,false);}
 function relief(kind){
  const pieces=[[],[]],add=(g,tone=0)=>pieces[tone].push(g),line=(p,r=.026,tone=1)=>add(stroke(p,r),tone);
- if(kind==='scout'){
+ if(kind==='minstrel'){
+  line([[-.48,.67],[-.38,-.35],[0,-.65],[.38,-.35],[.48,.67]],.072,0);
+  line([[-.48,.64],[0,.42],[.48,.64]],.045,0);
+  for(const x of[-.21,0,.21])line([[x,.46],[x,-.30]],.018,1);
+ }else if(kind==='scout'){
   add(shape(s=>{s.moveTo(0,-.8);s.bezierCurveTo(-.13,-.49,-.56,-.37,-.47,-.13);s.bezierCurveTo(-.78,.08,-.35,.22,-.40,.42);s.bezierCurveTo(-.23,.40,-.17,.66,0,.85);s.bezierCurveTo(.17,.66,.23,.40,.40,.42);s.bezierCurveTo(.35,.22,.78,.08,.47,-.13);s.bezierCurveTo(.56,-.37,.13,-.49,0,-.8);}));
   line([[0,-.88],[0,-.3],[0,.24],[0,.68]],.028);for(const sign of[-1,1]){line([[0,-.3],[sign*.22,-.2],[sign*.38,-.06]],.018);line([[0,.12],[sign*.16,.20],[sign*.30,.32]],.018);}
  }else if(kind==='silver'){

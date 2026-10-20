@@ -29,7 +29,7 @@ test('boss threat patterns have guaranteed escape space and different silhouette
  for(const[kind,cfg]of Object.entries(BOSS_STYLES))for(const move of cfg.moves){const plan=bossAttackPlan(kind,move,b,p);assert(plan.duration>0);assert(plan.zones.length<=9);}
 });
 test('remaining public loadouts and weapon routes are playable without guardian entries',()=>{
- assert.equal(HERO_LOADOUTS.guardian,undefined);assert.equal(Object.keys(HERO_LOADOUTS).length,7);
+ assert.equal(HERO_LOADOUTS.guardian,undefined);assert.equal(Object.keys(HERO_LOADOUTS).length,8);
  const player={heroId:'tide',weaponId:'harpoon',level:8,upgrades:{}};assert(!chooseUpgrades(player).some(s=>['fire','ice','storm','veil'].includes(s.id)));assert(takeUpgrade(player,'path:harpoon_tow'));assert(weaponStats(player).pull>1);assert(!takeUpgrade(player,'path:harpoon_reef'));assert(!takeUpgrade(player,'path:hammer_guard'));
 });
 test('desert generates dry terrain, visible destructible gate and accessible landmarks',()=>{

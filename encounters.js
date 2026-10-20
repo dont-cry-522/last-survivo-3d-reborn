@@ -122,6 +122,28 @@ const REGIONAL_HUNTS={
    {role:'wolf',offset:-1.1,flank:-1,elite:true,delay:0},{role:'wolf',offset:.9,flank:1,delay:.8},{role:'golem',offset:.1,delay:1.3},
    {role:'spitter',offset:-.5,delay:.4},{role:'shaman',offset:.45,delay:1.1},{role:'mushroom',offset:.7,delay:.6}]}
  ],
+ bellvale:[
+  {name:'钟门护送',tip:'盾卫沿谷底推进，巫灵从侧面封住落点；让盾卫先出手，再从空侧绕向后排。',squad:[
+   {role:'golem',offset:0,elite:true,delay:0},{role:'spitter',offset:-.65,delay:.65},{role:'shaman',offset:.55,delay:1.2},
+   {role:'wolf',offset:-1.05,flank:-1,delay:.3},{role:'wolf',offset:1.05,flank:1,delay:1},{role:'mushroom',offset:.3,delay:.5}]},
+  {name:'风谷双哨',tip:'两名巫灵错开放出冰区，狼群从中央穿插；向开阔坡肩撤开，别折回未消退的落点。',squad:[
+   {role:'spitter',offset:-.85,elite:true,delay:0},{role:'spitter',offset:.85,delay:1.1},{role:'wolf',offset:-.3,flank:-1,delay:.4},
+   {role:'wolf',offset:.35,flank:1,delay:1.3},{role:'mushroom',offset:0,delay:.7},{role:'golem',offset:.6,delay:.2}]},
+  {name:'回声狼袭',tip:'晶冠头狼先扑，第二只狼随后包侧；横移让头狼落空，利用停顿再处理萨满。',squad:[
+   {role:'wolf',offset:-.95,flank:-1,elite:true,delay:0},{role:'wolf',offset:.95,flank:1,delay:.8},{role:'golem',offset:.1,delay:1.2},
+   {role:'spitter',offset:-.4,delay:.4},{role:'shaman',offset:.45,delay:1},{role:'mushroom',offset:.7,delay:.6}]}
+ ],
+ crystalcave:[
+  {name:'晶壳推进',tip:'岩甲挡住洞厅中线，甲虫从两侧前冲；横移躲开重击，再沿洞壁缺口绕过前排。',squad:[
+   {role:'golem',offset:0,elite:true,delay:0},{role:'wolf',offset:-1,flank:-1,delay:.35},{role:'wolf',offset:1,flank:1,delay:1.1},
+   {role:'spitter',offset:-.45,delay:.7},{role:'shaman',offset:.4,delay:1.3},{role:'mushroom',offset:.7,delay:.2}]},
+  {name:'幽潭双灯',tip:'两只水母交替封锁洞厅，甲虫趁隙穿插；先退到干燥空侧，等水爆消退再靠近。',squad:[
+   {role:'spitter',offset:-.85,elite:true,delay:0},{role:'spitter',offset:.9,delay:1.15},{role:'wolf',offset:-.3,flank:-1,delay:.4},
+   {role:'wolf',offset:.3,flank:1,delay:1},{role:'mushroom',offset:0,delay:.7},{role:'golem',offset:.6,delay:1.4}]},
+  {name:'回晶钩爪',tip:'晶冠甲虫带头穿过晶柱间隙，晶核随后封路；闪开钳口，趁甲虫停顿清理后排。',squad:[
+   {role:'wolf',offset:-1.05,flank:-1,elite:true,delay:0},{role:'wolf',offset:.9,flank:1,delay:.8},{role:'golem',offset:.1,delay:1.3},
+   {role:'spitter',offset:-.5,delay:.4},{role:'shaman',offset:.45,delay:1.1},{role:'mushroom',offset:.7,delay:.6}]}
+ ],
  coast:[
   {name:'礁背护潮',tip:'海龟向前吐出两段浪涌，海星在后治疗；绕过龟壳侧面，优先处理海星。',squad:[
    {role:'golem',offset:0,elite:true,delay:0},{role:'shaman',offset:.4,delay:1.2},{role:'spitter',offset:-.45,delay:.65},

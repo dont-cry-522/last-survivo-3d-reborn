@@ -7,7 +7,7 @@ import {ADDITIONAL_BOSSES} from '../boss-roster.js';
 import {AIR_ENEMIES,makeAirborne,animateAirborne} from '../airborne-enemies.js';
 import {advanceEnemyLocomotion} from '../enemy-motion.js';
 
-const ground=[...Object.values(MAP_ROSTERS).flatMap(Object.values),...Object.keys(ADDITIONAL_BOSSES)];
+const ground=[...new Set([...Object.values(MAP_ROSTERS).flatMap(Object.values),...Object.keys(ADDITIONAL_BOSSES)])];
 const pose=g=>{const a=[];g.traverse(o=>a.push(...o.position.toArray(),...o.quaternion.toArray(),...o.scale.toArray(),...(o.morphTargetInfluences||[])));return a;};
 
 test('all 45 species retain independent finite anatomy through movement, windup, recovery and pause',()=>{

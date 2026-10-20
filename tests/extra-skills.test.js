@@ -10,8 +10,8 @@ function rig(hero='scout'){
  return{p,foes,events,api,skills,foe,advance:(n)=>{for(let t=0;t<n;t+=.02)skills.update(.02);},pause:()=>active=false};
 }
 test('each hero gains three exclusive, capped skills in a mixed random skill pool',()=>{
- assert.equal(EXTRA_SKILLS.length,24);assert.equal(new Set(EXTRA_SKILLS.map(s=>s.id)).size,24);
- for(const hero of ['scout','silver','wraith','tide','lingya','wuling','mirage']){
+ assert.equal(EXTRA_SKILLS.length,27);assert.equal(new Set(EXTRA_SKILLS.map(s=>s.id)).size,27);
+ for(const hero of ['scout','silver','wraith','tide','lingya','wuling','mirage','minstrel']){
   const own=EXTRA_SKILLS.filter(s=>s.hero===hero&&(!s.weapon||s.weapon===weaponFor(hero,0).id));assert.equal(own.length,3);
   const p={heroId:hero,weaponId:weaponFor(hero,0).id,level:2,upgrades:{}};
   const seen=new Set(),random=seeded(621);for(let i=0;i<50;i++)for(const s of chooseUpgrades(p,random))seen.add(s.id);assert(own.every(s=>seen.has(s.id)));

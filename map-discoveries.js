@@ -1,9 +1,11 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{sceneryAllowed}from'./biome-scenery.js?v=227';
-import{createDiscoveryScenery}from'./discovery-scenery.js?v=227';
-import{FIELD_SUPPLIES}from'./expedition.js?v=227';
+import{sceneryAllowed}from'./biome-scenery.js?v=228';
+import{createDiscoveryScenery}from'./discovery-scenery.js?v=228';
+import{FIELD_SUPPLIES}from'./expedition.js?v=228';
 export const SMALL_FINDS={
+ bellvale:{name:'遗落铜铃',tip:'安全时靠近拾取山谷旅人留下的铜铃，获得经验和少量治疗。',xp:15,heal:.08,color:0xd5bc85},
+ crystalcave:{name:'星辉晶簇',tip:'靠近采集松动晶簇；附近有敌人时先脱离战斗。',xp:20,heal:.04,color:0x9dd5e5},
  forest:{name:'蜜露花丛',tip:'靠近花心采集；附近有怪物时先脱离战斗。',xp:6,heal:.12,color:0xb8dc8f},
  snow:{name:'双霜晶',tip:'分别碰触两侧霜晶，点亮后领取。',xp:18,heal:.08,color:0xa5dbea},
  ash:{name:'余烬矿隙',tip:'亮红时灼热，暗下后靠近拾取；无需站在热区等待。',xp:22,heal:0,color:0xf5ad65},

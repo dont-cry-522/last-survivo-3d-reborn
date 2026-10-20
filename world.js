@@ -1,36 +1,37 @@
-import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=227';
-import{makeBossVariant,animateBossVariant}from'./boss-variants.js?v=227';
-import{polishRegionalEnemy}from'./regional-enemy-appearance.js?v=227';
-import{forestStreamLayout}from'./forest-stream-layout.js?v=227';
-import{bodyTravel}from'./actor-collision.js?v=227';
-import{followNaturalGround}from'./adventure-mobility.js?v=227';
-import{canMoveBelowOverhead}from'./adventure-overheads.js?v=227';
-import{buildConfluenceSteps,biomeWeights}from'./confluence.js?v=227';
-import{addTree,updateTreeCanopies}from'./tree-scenery.js?v=227';
-import{installTactics}from'./map-tactics.js?v=227';
-import{installRoaming}from'./roaming-events.js?v=227';
-import{installDiscoveries}from'./map-discoveries.js?v=227';
-import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=227';
-import{groveCenters,installScenerySteps,animateScenery}from'./biome-scenery.js?v=227';
-import{districtLayout,buildDistricts}from'./map-districts.js?v=227';
-import{makeCoastEnemy,animateCoastEnemy,coastProp}from'./coast-models.js?v=227';
-import{installCoast}from'./coast.js?v=227';
-import{coastLayout as buildCoastLayout}from'./coast-layout.js?v=227';
-import{makeBoss,animateBoss,makeSandEnemy,animateSandEnemy}from'./expansion-models.js?v=227';
-import{BOSS_COMBAT_HEIGHTS,makeBossAppearance,animateBossAppearance}from'./boss-appearance.js?v=227';
-import{siteSchedule}from'./site-discovery.js?v=227';
-import{MAP_EVENTS,biomeEvent,eventNodes}from'./map-events.js?v=227';
-import{MAP_HALF,MAP_SCALE}from'./map-layout.js?v=227';
-import{buildPondsSteps,animateWater,waterDepth,restoreWaterPose,animateWaterPose}from'./water.js?v=227';
-import{ENEMY_MOTION,animateEnemyIdentity}from'./enemy-motion.js?v=227';
-import{gaitStride}from'./creature-gait.js?v=227';
-import{polishEnemyAppearance}from'./enemy-appearance.js?v=227';
-import{REGIONAL_ENEMIES}from'./map-enemies.js?v=227';
-import{groundCue}from'./ground-cues.js?v=227';
-import{heroesReady,createSkinnedHero,animateSkinnedHero}from'./skinned-hero.js?v=227';
+import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=228';
+import{makeBossVariant,animateBossVariant}from'./boss-variants.js?v=228';
+import{polishRegionalEnemy}from'./regional-enemy-appearance.js?v=228';
+import{forestStreamLayout}from'./forest-stream-layout.js?v=228';
+import{NEW_EXPEDITION_MAPS,buildNewExpeditionSteps,animateNewExpedition}from'./new-expedition-maps.js?v=228';
+import{bodyTravel}from'./actor-collision.js?v=228';
+import{followNaturalGround}from'./adventure-mobility.js?v=228';
+import{canMoveBelowOverhead}from'./adventure-overheads.js?v=228';
+import{buildConfluenceSteps,biomeWeights}from'./confluence.js?v=228';
+import{addTree,updateTreeCanopies}from'./tree-scenery.js?v=228';
+import{installTactics}from'./map-tactics.js?v=228';
+import{installRoaming}from'./roaming-events.js?v=228';
+import{installDiscoveries}from'./map-discoveries.js?v=228';
+import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=228';
+import{groveCenters,installScenerySteps,animateScenery}from'./biome-scenery.js?v=228';
+import{districtLayout,buildDistricts}from'./map-districts.js?v=228';
+import{makeCoastEnemy,animateCoastEnemy,coastProp}from'./coast-models.js?v=228';
+import{installCoast}from'./coast.js?v=228';
+import{coastLayout as buildCoastLayout}from'./coast-layout.js?v=228';
+import{makeBoss,animateBoss,makeSandEnemy,animateSandEnemy}from'./expansion-models.js?v=228';
+import{BOSS_COMBAT_HEIGHTS,makeBossAppearance,animateBossAppearance}from'./boss-appearance.js?v=228';
+import{siteSchedule}from'./site-discovery.js?v=228';
+import{MAP_EVENTS,biomeEvent,eventNodes}from'./map-events.js?v=228';
+import{MAP_HALF,MAP_SCALE}from'./map-layout.js?v=228';
+import{buildPondsSteps,animateWater,waterDepth,restoreWaterPose,animateWaterPose}from'./water.js?v=228';
+import{ENEMY_MOTION,animateEnemyIdentity}from'./enemy-motion.js?v=228';
+import{gaitStride}from'./creature-gait.js?v=228';
+import{polishEnemyAppearance}from'./enemy-appearance.js?v=228';
+import{REGIONAL_ENEMIES}from'./map-enemies.js?v=228';
+import{groundCue}from'./ground-cues.js?v=228';
+import{heroesReady,createSkinnedHero,animateSkinnedHero}from'./skinned-hero.js?v=228';
 import * as T from './vendor/three.module.js';
-import{makeHero,animateHero}from'./hero-model.js?v=227';
-import{MAPS,seeded}from'./rules.js?v=227';
+import{makeHero,animateHero}from'./hero-model.js?v=228';
+import{MAPS,seeded}from'./rules.js?v=228';
 const geo=new Map(),materials=new Map(),terrainMaterials=new Map(),detailMaterials=new Map(),weatherMaterials=new Map();
 const hiddenWeatherMatrix=new T.Matrix4().makeScale(0,0,0);
 const weatherWeights={};
@@ -61,7 +62,7 @@ function buildActor(kind='silver',weapon='crossbow',polished=true){
  if(REGIONAL_ENEMIES[kind]?.map==='sand')return makeSandEnemy(kind);
  if(REGIONAL_ENEMIES[kind])return regionalActor(kind);
  const g=new T.Group(),rig=new T.Group();g.add(rig);g.userData.rig=rig;
- if(['silver','scout','tide','lingya','wuling','mirage','wraith'].includes(kind))return heroesReady()?createSkinnedHero(kind,weapon):makeHero(kind,weapon);
+ if(['silver','scout','tide','lingya','wuling','mirage','wraith','minstrel'].includes(kind))return heroesReady()?createSkinnedHero(kind,weapon):makeHero(kind,weapon);
  if(kind==='mushroom'){
   mesh('CylinderGeometry',[.23,.35,.72,7],0xb7a483,0,.45,0,rig);const capRig=new T.Group();capRig.position.y=1.05;rig.add(capRig);g.userData.cap=capRig;const cap=orb(capRig,0xb95e43,0,0,0,.66);cap.scale.y=.6;for(let i=0;i<5;i++)orb(capRig,0xf2dcad,Math.cos(i*2.4)*.37,.2,Math.sin(i*2.4)*.35,.09);for(const s of [-1,1])orb(rig,0xffdc88,s*.13,.7,.27,.04,true);
  }else if(kind==='wolf'){
@@ -215,7 +216,7 @@ function buildSites(group,sites,theme){
 // Synchronous callers and the loading screen consume exactly the same builder.
 // Yields do not read the random stream or attach a partial world to the game.
 export function buildWorld(id,seed=1){const steps=buildWorldSteps(id,seed);let step;do{step=steps.next();}while(!step.done);return step.value;}
-export function* buildWorldSteps(id,seed=1){if(id==='confluence')return yield* buildConfluenceSteps(seed,{mesh,trail,makeWeather,buildSites,groundShape});const theme=MAPS[id],rnd=seeded(seed),coastLayout=id==='coast'?buildCoastLayout(rnd,MAP_HALF):null,group=new T.Group(),obstacles=[],patches=[],sites=[{x:24+rnd()*10,z:-32+rnd()*10,type:'altar',claimed:false},{x:-34+rnd()*10,z:23+rnd()*10,type:'supply',claimed:false},{x:-25-rnd()*8,z:-5-rnd()*8,type:'relic',claimed:false}],spawn={...(coastLayout?.spawn||{x:-12,z:9})};
+export function* buildWorldSteps(id,seed=1){if(NEW_EXPEDITION_MAPS.includes(id))return yield* buildNewExpeditionSteps(id,seed,{buildSites,makeWeather,trail});if(id==='confluence')return yield* buildConfluenceSteps(seed,{mesh,trail,makeWeather,buildSites,groundShape});const theme=MAPS[id],rnd=seeded(seed),coastLayout=id==='coast'?buildCoastLayout(rnd,MAP_HALF):null,group=new T.Group(),obstacles=[],patches=[],sites=[{x:24+rnd()*10,z:-32+rnd()*10,type:'altar',claimed:false},{x:-34+rnd()*10,z:23+rnd()*10,type:'supply',claimed:false},{x:-25-rnd()*8,z:-5-rnd()*8,type:'relic',claimed:false}],spawn={...(coastLayout?.spawn||{x:-12,z:9})};
  const bearing=rnd()*Math.PI*2;for(const site of sites.slice(0,2)){const x=site.x,z=site.z;site.x=x*Math.cos(bearing)-z*Math.sin(bearing);site.z=x*Math.sin(bearing)+z*Math.cos(bearing);}
  // Place the early relic in a different direction, clear of the central ruin and other landmarks.
  for(let attempt=0;attempt<24;attempt++){const a=rnd()*Math.PI*2,r=20+rnd()*8,x=spawn.x+Math.sin(a)*r,z=spawn.z+Math.cos(a)*r;if(Math.hypot(x,z)>11&&sites.slice(0,2).every(s=>Math.hypot(s.x-x,s.z-z)>15)){Object.assign(sites[2],{x,z});break;}}
@@ -271,6 +272,7 @@ export function* buildWorldSteps(id,seed=1){if(id==='confluence')return yield* b
  yield {stage:'scenery'};yield* installScenerySteps(result,id,rnd);return result;
 }
 export function animateWorld(world,t,focusX=world.spawn.x,focusZ=world.spawn.z,groundHeight=world.groundHeightAt){
+ animateNewExpedition(world,t);
  if(world.regions){for(const r of world.regions){r.sandstorm=r.id==='sand'?world.sandstorm:null;r.tide=r.id==='coast'?world.tide:null;animateWorld(r,t,focusX,focusZ,groundHeight);}animateScenery(world,t,focusX,focusZ);return;}
  animateWater(world.weather.kind,t);animateScenery(world,t,focusX,focusZ);
  updateTreeCanopies(world.foliage,t,focusX,focusZ);

@@ -1,22 +1,26 @@
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=227';
+import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=228';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=228';
 import * as T from './vendor/three.module.js';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=227';
-import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=227';
-import {sporePod} from './wuling-appearance.js?v=227';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=228';
+import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=228';
+import {sporePod} from './wuling-appearance.js?v=228';
 import {poseSlingshot} from './slingshot-model.js';
 
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=227';
-import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=227';
+import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=228';
+import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=228';
 
 // Camera-space equipment assembled from the actual weapon plus a small procedural hand rig.
 // This is not a new authored arm-animation asset. Layer 1 gets a small depth-correct overlay pass.
 const PALETTES={
+ minstrel:[0xe5ddc7,0x604333,0xb79961,0xe1c5b1],
  scout:[0x4c654c,0x593f2b,0x94815b,0xc39879],silver:[0x304455,0x192633,0xb0c5ce,0xe1c5b1],
  wraith:[SHADOW_PALETTE.cloth,SHADOW_PALETTE.leather,SHADOW_PALETTE.ivory,SHADOW_PALETTE.soul],tide:[0x4f7387,0x253c4c,0x7c99a5,0xbe9f84],
  lingya:[0xf2e8d5,0x76503b,0xa65f42,0xefbda1],wuling:[0x352339,0x322730,0x927955,0xdbbca7],mirage:[0x1e2331,0x202430,0xa9b4c4,0xdacade]
 };
 const PROFILES={
+ windbow:{type:'longbow',width:.66,height:1.68,depth:.60,x:.36,y:-.21,pitch:.015,support:[0,.06,-.08]},
+ resonator:{type:'bell',width:.58,height:1.05,depth:.36,x:.48,y:-.41,pitch:.06},
  rifle:{type:'gun',width:.85,height:1,depth:.62,x:.38,y:-.48,pitch:.025,support:[0,-.045,.34]},
  shotgun:{type:'gun',width:.85,height:1,depth:.65,x:.38,y:-.49,pitch:.015,support:[0,-.025,.34]},
  crossbow:{type:'bow',width:.87,height:1,depth:.55,x:.30,y:-.46,pitch:.08,support:[0,-.05,.18]},
@@ -38,7 +42,7 @@ const PROFILES={
 };
 const CONTACT=new T.Vector3(0,.045,-.023),UP=new T.Vector3(0,1,0);
 // Screen-relative lowering, pitch and bank. The game owns dodge timing; this is presentation only.
-const DODGE_POSES={roll:[.50,-.18,.18,-.04],blink:[.25,-.05,.07,-.08],dive:[.80,-.34,.07,-.10],hop:[.26,-.09,.12,-.025],mist:[.38,-.13,.07,-.05]};
+const DODGE_POSES={step:[.27,-.05,.13,-.02],roll:[.50,-.18,.18,-.04],blink:[.25,-.05,.07,-.08],dive:[.80,-.34,.07,-.10],hop:[.26,-.09,.12,-.025],mist:[.38,-.13,.07,-.05]};
 function colored(geometry,color){const c=new T.Color(color),p=geometry.attributes.position,values=[];for(let i=0;i<p.count;i++)values.push(c.r,c.g,c.b);geometry.setAttribute('color',new T.Float32BufferAttribute(values,3));geometry.deleteAttribute('uv');return geometry;}
 function handGeometry(palette,fingerless,grip='handle'){
  const make=(open,trigger=false)=>{
@@ -266,12 +270,17 @@ export class FirstPersonView {
    if(source.userData.herbalCord){const d=source.userData.herbalCord;this.model.userData.herbalCord={...d,cord:find(d.cord),tip:find(d.tip),centers:d.centers.map(v=>v.clone()),axis:new T.Vector3(),normal:new T.Vector3(),binormal:new T.Vector3()};}
    if(source.userData.herbalFan){const d=source.userData.herbalFan;this.model.userData.herbalFan={...d,silk:find(d.silk),ribs:d.ribs.map(find)};}
   }
+  if(isMinstrelWeapon(weaponId)){
+   const find=source=>this.parts.find(([part])=>part===source)?.[1],d=this.source.userData;
+   if(d.minstrelBow)this.model.userData.minstrelBow={strings:d.minstrelBow.strings.map(find),limbs:d.minstrelBow.limbs.map(find),arrow:find(d.minstrelBow.arrow)};
+   if(d.minstrelBell)this.model.userData.minstrelBell={bell:find(d.minstrelBell.bell),clapper:find(d.minstrelBell.clapper)};
+  }
   this.finishWeapon();
   this.bowStrings=(this.source.userData.crossbowStrings||[]).map(source=>[source,this.parts.find(([part])=>part===source)?.[1]]);
   if(weaponId==='boomerang'&&this.source.userData.pouch){const find=source=>this.parts.find(([part])=>part===source)?.[1],d=this.source.userData;Object.assign(this.model.userData,{pouch:find(d.pouch),bands:d.bands.map(find),projectile:find(d.projectile),bandAnchors:d.bandAnchors});}
   this.model.updateMatrixWorld(true);const box=new T.Box3(),partBox=new T.Box3();
   // The bow's unposed string starts as a unit cylinder. Its authored limbs/rail define framing.
-  for(const [source,clone]of this.parts)if(clone.isMesh&&!this.source.userData.crossbowStrings?.includes(source)&&!this.source.userData.bands?.includes(source)&&source.parent!==this.source.userData.pouch){if(!clone.geometry.boundingBox)clone.geometry.computeBoundingBox();box.union(partBox.copy(clone.geometry.boundingBox).applyMatrix4(clone.matrixWorld));}
+  for(const [source,clone]of this.parts)if(clone.isMesh&&!this.source.userData.crossbowStrings?.includes(source)&&!this.source.userData.bands?.includes(source)&&!this.source.userData.minstrelBow?.strings.includes(source)&&source.parent!==this.source.userData.pouch){if(!clone.geometry.boundingBox)clone.geometry.computeBoundingBox();box.union(partBox.copy(clone.geometry.boundingBox).applyMatrix4(clone.matrixWorld));}
   const size=box.getSize(new T.Vector3());
   if(box.isEmpty()){this.clear();return;}
   this.center=box.getCenter(new T.Vector3());this.dimensions=size;
@@ -284,7 +293,7 @@ export class FirstPersonView {
   this.kind=hero.userData.kind||inferred;const palette=PALETTES[this.kind]||PALETTES.scout;
   const fingerless=['scout','lingya','tide','wuling'].includes(this.kind),lamp=this.profile.type==='lamp';
   const type=this.profile.type,rightGrip=lamp||type==='pot'?'hook':['gun','bow'].includes(type)?'trigger':['staff','scythe','thrust','whip'].includes(type)?'shaft':type==='throw'||type==='fan'?'pinch':type==='book'?'read':type==='palm'?'cast':'handle';
-  const hand=handGeometry(palette,fingerless,rightGrip),supportGrip=weaponId==='boomerang'?'pinch':weaponId==='sporelantern'||type==='pot'?'cup':weaponId==='arcstaff'?'conduct':lamp?'handle':type==='gun'||type==='bow'||type==='scythe'||type==='thrust'?'guide':type==='book'?'read':type==='staff'||isHerbalWeapon(weaponId)?'cast':null;
+  const hand=handGeometry(palette,fingerless,rightGrip),supportGrip=weaponId==='boomerang'||weaponId==='windbow'?'pinch':weaponId==='sporelantern'||type==='pot'?'cup':weaponId==='arcstaff'?'conduct':lamp?'handle':type==='gun'||type==='bow'||type==='scythe'||type==='thrust'?'guide':type==='book'?'read':type==='staff'||isHerbalWeapon(weaponId)?'cast':null;
   const supportHand=supportGrip?handGeometry(palette,fingerless,supportGrip):hand,sleeve=sleeveGeometry(palette,this.kind);this.ownedGeometry.push(hand,sleeve);if(supportHand!==hand)this.ownedGeometry.push(supportHand);
   // Share the real outfit's micro-surface without owning or recoloring its maps.
   let sleeveSurface;hero.userData.model?.traverse(o=>{if(!sleeveSurface&&o.isMesh&&(/Sleeve/i.test(o.geometry.name)||o.userData.wildMistPart==='sleeves'))sleeveSurface=o.material;});
@@ -369,8 +378,9 @@ export class FirstPersonView {
   const profile=this.profile,id=this.weaponId,data=this.hero.userData,depth=.82,halfH=Math.tan(T.MathUtils.degToRad(this.camera.fov||50)/2)*depth,halfW=halfH*(this.camera.aspect||1);
   const scale=Math.min(halfW*profile.width/Math.max(.001,this.dimensions.x),halfH*profile.height/Math.max(.001,this.dimensions.y),profile.depth/Math.max(.001,this.dimensions.z),id==='harpoon'?.65:id==='shade'?1.8:2.4);
   const fired=attack>this.previousAttack+.025;this.previousAttack=attack;this.attackAge=fired?0:this.attackAge+step;
-  const herbal=isHerbalWeapon(id),age=Number.isFinite(data.attackAge)?data.attackAge:this.attackAge,period=data.reloadDuration||WEAPON_RECOVERY[id]||attackDuration,cycle=Number.isFinite(data.reloadPhase)?data.reloadPhase:Math.min(1,age/period),gestureAge=herbal&&(data.cancelAttack||data.herbalCancelledSerial===data.shotSerial)?10:(herbal||['boomerang','sporelantern','briarpot'].includes(id))&&data.shotSerial?cycle*period:age,motion=herbal?herbalPose(id,gestureAge,period,data.herbalCombo||0,data.herbalPath||''):weaponGesture(id,gestureAge,cycle,period),kick=motion.kick,sweep=motion.sweep,draw=motion.draw;
+  const musical=isMinstrelWeapon(id),herbal=isHerbalWeapon(id),age=Number.isFinite(data.attackAge)?data.attackAge:this.attackAge,period=data.reloadDuration||WEAPON_RECOVERY[id]||attackDuration,cycle=Number.isFinite(data.reloadPhase)?data.reloadPhase:Math.min(1,age/period),gestureAge=musical&&(data.cancelAttack||data.minstrelCancelledSerial===data.shotSerial)||herbal&&(data.cancelAttack||data.herbalCancelledSerial===data.shotSerial)?10:(musical||herbal||['boomerang','sporelantern','briarpot'].includes(id))&&data.shotSerial?cycle*period:age,motion=herbal?herbalPose(id,gestureAge,period,data.herbalCombo||0,data.herbalPath||''):weaponGesture(id,gestureAge,cycle,period),kick=motion.kick,sweep=motion.sweep,draw=motion.draw;
   this.motion=motion;
+  if(musical)poseMinstrelWeapon(this.model,id,gestureAge,period,time);
   if(herbal)poseHerbalWeapon(this.model,id,gestureAge,period,data.herbalCombo||0,data.herbalPath||'',time);
   if(id==='boomerang')poseSlingshot(this.model,gestureAge,period);
   if(id==='briarpot')this.model.getObjectByName('SM_Briarpot_LoadedSeed').visible=motion.seedHeld;
@@ -390,7 +400,11 @@ export class FirstPersonView {
   this.root.position.set(halfW*profile.x*(this.camera.aspect<.8?.88:1)+(Math.sin(this.gait)*.009*this.sway+this.lookSwayX-this.sideSway*.012)*steady,halfH*profile.y+(Math.cos(this.gait*2)*.005*this.sway+this.lookSwayY)*steady+breath*settle,-depth);
   this.root.rotation.set(0,0,(Math.sin(this.gait)*.010*this.sway-this.sideSway*.018)*steady);
   this.weapon.scale.setScalar(scale);this.weapon.position.set(0,0,0);this.weapon.rotation.set(profile.pitch,Math.PI-.045,0);
-  if(profile.type==='gun'||profile.type==='bow'){
+  if(id==='windbow'){
+   this.weapon.position.set(.008*draw,.010*draw-halfH*.25*(1-motion.ready),-.012*kick);this.weapon.rotation.z=-.055+.02*draw;this.weapon.rotation.x+=.025*kick;this.weapon.rotation.y+=.20*(1-motion.ready);
+  }else if(id==='resonator'){
+   this.weapon.position.set(.035*motion.gather-.05*sweep,.05*motion.gather-.045*sweep,.04*motion.gather-.07*kick);this.weapon.rotation.x+=.32*motion.gather-.48*sweep;this.weapon.rotation.z=.14*motion.gather-.22*sweep;
+  }else if(profile.type==='gun'||profile.type==='bow'){
    this.weapon.position.z=kick*(id==='shotgun'?.075:.035);this.weapon.rotation.x+=kick*(id==='shotgun'?.17:.075);this.weapon.rotation.z-=draw*.045;
   }else if(profile.type==='thrust'){
    // Aim the distant fork inward from the rear-hand position. Narrow screens retain
@@ -463,8 +477,10 @@ export class FirstPersonView {
    const hand=this.hands[i],arm=this.arms[i],point=this.scratch.copy(this.handPoints[i]);
    if(i&&id==='shotgun')point.z+=this.source.userData.pump?.position.z||0;
    if(i&&id==='crossbow'){const mechanism=crossbowMechanism(cycle);point.lerp(this.wrist.set(.06,.13,.29-mechanism.pull).sub(this.center),mechanism.hand);}
+   if(i&&id==='windbow')point.set(0,.06,-.08-.33*motion.handPull).sub(this.center);
    if(i&&id==='boomerang')point.set(0,.22,-.07-.30*motion.handPull).sub(this.center);
    point.applyMatrix4(this.weapon.matrix);
+   if(i&&id==='windbow')point.lerp(this.wrist.set(-halfW*.32-this.root.position.x,-halfH*.70-this.root.position.y,.10),1-motion.ready);
    if(i&&!support)point.set(-halfW*.48-this.root.position.x,-halfH*.72-this.root.position.y+kick*.045,.11-kick*.06);
    if(i&&id==='arcstaff')point.set(-halfW*.35-this.root.position.x,-halfH*.46-this.root.position.y+.006*kick,.04-.008*kick);
    if(i&&id==='sporelantern')point.add(this.wrist.set(-.035*motion.gather+.065*kick,.045*motion.gather+.095*kick-.025*sweep,.065*motion.gather-.135*kick));
@@ -478,6 +494,7 @@ export class FirstPersonView {
    if(i&&id==='sporelantern')hand.rotation.set(-.60-.22*motion.gather+.36*kick,-.20+.22*kick,.18-.13*kick);
    if(i&&id==='miasmalantern')hand.rotation.set(-.45-.18*motion.gather,-.20-.15*motion.gather,.18-.16*kick);
    if(herbal)hand.rotation.set(i?-.62-.14*motion.gather:-.16,i?-.22:.08,i?.20-.08*sweep:id==='venomfan'?-.22:-.36);
+   if(id==='windbow')hand.rotation.set(i?-.50:-.18,i?-.35:.12,i?.44:-.38);
    if(i&&id==='boomerang')hand.rotation.set(-.55+.10*motion.open,-.28,.48-.12*motion.open);
    if(profile.type==='palm'&&!i)hand.rotation.set(-.96-.10*motion.gather+.15*kick,.12-.10*motion.gather,-.10+.10*kick);
    if(profile.type==='palm'&&i)hand.rotation.set(-.94-.08*motion.gather+.10*kick,-.22,.20-.08*motion.gather);
@@ -495,6 +512,7 @@ export class FirstPersonView {
    hand.position.copy(point).sub(this.wrist.copy(CONTACT).multiply(hand.scale).applyQuaternion(hand.quaternion));
    hand.morphTargetInfluences[0]=i&&!support?.72+.20*kick:profile.type==='palm'?.78+.18*kick:profile.type==='book'?.48:profile.type==='throw'?Math.max(kick*.90,this.source.visible?0:.88):i&&id==='crossbow'?crossbowMechanism(cycle).hand*.24:0;
    if(i&&id==='sporelantern')hand.morphTargetInfluences[0]=.92*motion.open;
+   if(id==='windbow')hand.morphTargetInfluences[0]=i?.78*motion.open:0;
    if(id==='boomerang')hand.morphTargetInfluences[0]=i?.80*motion.open:0;
    if(profile.type==='palm')hand.morphTargetInfluences[0]=i?.79-.10*motion.gather+.07*kick:.84-.12*motion.gather+.09*kick;
    if(hand.morphTargetInfluences.length>1)hand.morphTargetInfluences[1]=kick*.85;

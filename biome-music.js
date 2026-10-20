@@ -2,6 +2,26 @@
 const bar=(chord,lead)=>({chord,lead});
 const I=[0,4,7],ii=[2,5,9],iii=[4,7,11],IV=[5,9,12],V=[7,11,14],vi=[9,12,16];
 export const BIOME_THEMES={
+ bellvale:{arrangement:'bellvale',bpm:94,root:53,meter:6,bars:[
+  bar(I,[12,null,19,16,null,14]),bar(IV,[17,null,21,19,null,16]),
+  bar(ii,[14,null,17,21,null,19]),bar(V,[19,null,14,11,null,null]),
+  bar(vi,[21,null,19,16,null,12]),bar(IV,[17,null,21,24,null,21]),
+  bar(V,[19,null,23,19,14,null]),bar(I,[16,null,14,12,null,null]),
+  bar(I,[24,null,19,16,19,null]),bar(IV,[21,null,17,16,null,17]),
+  bar(ii,[17,null,14,21,null,19]),bar(V,[23,null,19,14,null,null]),
+  bar(vi,[21,null,24,19,null,16]),bar(IV,[17,null,21,19,17,null]),
+  bar(V,[19,null,14,11,null,14]),bar(I,[12,null,null,null,null,null])
+ ]},
+ crystalcave:{arrangement:'crystalcave',bpm:84,root:57,meter:8,bars:[
+  bar(vi,[21,null,null,16,null,19,null,null]),bar(IV,[17,null,21,null,null,24,null,null]),
+  bar(I,[19,null,null,16,null,12,null,null]),bar(V,[14,null,19,null,null,23,null,null]),
+  bar(ii,[17,null,null,21,null,19,null,14]),bar(IV,[21,null,24,null,null,17,null,null]),
+  bar(vi,[21,null,null,19,null,16,null,null]),bar(V,[14,null,11,null,null,19,null,null]),
+  bar(vi,[24,null,21,null,null,19,null,16]),bar(I,[19,null,null,24,null,16,null,null]),
+  bar(IV,[21,null,null,17,null,16,null,14]),bar(V,[19,null,23,null,null,14,null,null]),
+  bar(ii,[17,null,null,14,null,21,null,null]),bar(IV,[17,null,21,null,null,16,null,null]),
+  bar(V,[14,null,null,19,null,11,null,null]),bar(I,[12,null,null,null,null,null,null,null])
+ ]},
  sand:{arrangement:'sand',bpm:110,root:50,meter:8,bars:[
   bar(I,  [12,null,16,19,16,null,14,null]),
   bar(vi, [16,null,12,null,9,null,12,14]),
@@ -69,6 +89,17 @@ export function instrumentSample(kind,note,rate){
 }
 
 export function scoreBiome(a,th,b,t,step,pressure){
+ if(th.arrangement==='bellvale'||th.arrangement==='crystalcave'){
+  const cave=th.arrangement==='crystalcave',beat=b%th.meter,phrase=Math.floor(b/th.meter)%th.bars.length,{chord,lead}=th.bars[phrase],n=lead[beat],energy=Math.max(0,Math.min(1,(pressure-.18)/.82)),note=(kind,pitch,length,gain,pan=0)=>a.musicNote(kind,pitch,length,gain,t,pan);
+  // The valley answers a reed melody with short bronze/wood tones. The cave
+  // leaves rests between alternating plucks and a quiet, consonant string bed.
+  if(n!==null)note(cave?'wood':'flute',th.root+n,step*(cave?2.6:1.9),cave?.15:.20,(beat%2?.18:-.18));
+  if(beat===0){note('lute',th.root-12+chord[0],step*3,.17+energy*.03,-.15);note('bow',th.root+chord[1],step*4,cave?.04:.025,.25);}
+  if(cave?(beat===3||beat===6):(beat===2||beat===5))note(cave?'lute':'wood',th.root+12+chord[beat%3],step*1.4,cave?.095:.11,-.25);
+  if(energy>.1&&(beat===0||beat===(cave?4:3)))a.voice(cave?95:120,.13,.025+energy*.065,'sine',58,t,'music');
+  if(energy>.35&&beat%2===1){note('lute',th.root+chord[beat%3],step*.7,.07*energy,.3);a.noise(.04,.018*energy,3400,1600,t,'music');}
+  return;
+ }
  const sand=th.arrangement==='sand',meter=th.meter,barIndex=Math.floor(b/meter)%th.bars.length;
  const beat=b%meter,{chord,lead}=th.bars[barIndex],root=th.root,n=lead[beat];
  const phraseEnd=barIndex%4===3,answer=sand&&barIndex%4===2;

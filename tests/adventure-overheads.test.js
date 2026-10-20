@@ -71,6 +71,43 @@ test('real forest stone overhangs are queried outside the original trunk footpri
  assert.equal(query.firstHit({x,y:1,z:z-.3},{x,y:1,z:z+.3}),null);
 });
 
+test('overhead bounds reject sphere-only misses without changing geometry or authored bounds',()=>{
+ const roof=new T.Mesh(new T.BoxGeometry(30,.2,2,30,1,2),new T.MeshBasicMaterial()),geometry=roof.geometry,position=geometry.attributes.position,index=geometry.index,material=roof.material;
+ roof.userData.placeOverhead=true;const group=new T.Group();group.add(roof);
+ const query=createOverheadQuery({group}),box=geometry.boundingBox;assert(box);
+ let triangles=0;const original=T.Ray.prototype.intersectTriangle;
+ T.Ray.prototype.intersectTriangle=function(...args){triangles++;return original.apply(this,args);};
+ try{
+  const start={x:-2,y:3,z:0},end={x:2,y:3,z:0};
+  geometry.boundingBox=null;assert.equal(query.firstHit(start,end),null);assert(triangles>0);
+  geometry.boundingBox=box;triangles=0;assert.equal(query.firstHit(start,end),null);assert.equal(triangles,0);
+ }finally{T.Ray.prototype.intersectTriangle=original;geometry.boundingBox=box;}
+ box.expandByScalar(.5);const authored=box.clone();createOverheadQuery({group});
+ assert.equal(geometry.boundingBox,box);assert.deepEqual(box,authored,'existing bounds must not be overwritten');
+ assert.equal(geometry.attributes.position,position);assert.equal(geometry.index,index);assert.equal(roof.geometry,geometry);assert.equal(roof.material,material);
+ geometry.dispose();material.dispose();
+});
+
+test('real forest bounds preserve triangle hits, normals and camera clearance',()=>{
+ const forest=world('forest'),query=createOverheadQuery(forest),stone=forest.forestVista.group.getObjectByName('forest-vista-stone'),g=stone.geometry,box=g.boundingBox;
+ assert(box);const p=g.attributes.position,index=g.index,rays=[],a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),normal=new T.Vector3();
+ const count=index?.count||p.count;
+ for(let n=0;n<64;n++){
+  const i=Math.floor(n*Math.floor(count/3)/64)*3;
+  a.fromBufferAttribute(p,index?index.getX(i):i).applyMatrix4(stone.matrixWorld);
+  b.fromBufferAttribute(p,index?index.getX(i+1):i+1).applyMatrix4(stone.matrixWorld);
+  c.fromBufferAttribute(p,index?index.getX(i+2):i+2).applyMatrix4(stone.matrixWorld);
+  normal.crossVectors(b.clone().sub(a),c.clone().sub(a)).normalize();
+  const center=a.clone().add(b).add(c).multiplyScalar(1/3);
+  rays.push([center.clone().addScaledVector(normal,.7),center.clone().addScaledVector(normal,-.7)]);
+ }
+ const capture=()=>rays.map(([start,end])=>{const h=query.firstHit(start,end,.12);return h?{point:h.point,distance:h.distance,normal:h.normal?.toArray(),sameObject:h.object===stone}:null;});
+ try{
+  g.boundingBox=null;const before=capture();assert(before.filter(Boolean).length>50);
+  g.boundingBox=box;assert.deepEqual(capture(),before);
+ }finally{g.boundingBox=box;}
+});
+
 test('sand overheads use current world transforms and skip low rubble or unrelated tall scenery',()=>{
  const sand=world('sand'),query=createOverheadQuery(sand);assert(query.meshes.length>0&&query.meshes.length<40);
  for(const m of query.meshes)assert(new T.Box3().setFromObject(m).min.y>2.5);

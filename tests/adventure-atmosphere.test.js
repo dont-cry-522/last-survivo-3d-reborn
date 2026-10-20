@@ -54,6 +54,11 @@ test('dispose is idempotent and leaves another atmosphere and scene resources in
  assert.equal(geometries,1);assert.equal(materials,1);assert.equal(one.mesh.parent,null);assert.equal(one.mesh.visible,false);
  two.update(10,camera);assert.equal(two.mesh.visible,true);assert.equal(two.mesh.parent,scene);two.dispose();assert.equal(scene.children.length,0);
 });
+test('underground cavern suppresses the outdoor sky and restores it on leaving',()=>{
+ const sky=new AdventureAtmosphere(new T.Scene()),camera=new T.PerspectiveCamera();
+ sky.update(0,camera,{mapId:'crystalcave'});assert.equal(sky.mesh.visible,false);
+ sky.update(1,camera,{mapId:'bellvale'});assert.equal(sky.mesh.visible,true);sky.dispose();
+});
 
 test('biome cloud shapes differ, blend at the same rate and freeze with the game clock',()=>{
  const camera=new T.PerspectiveCamera(),shapes=new Set();
@@ -61,7 +66,7 @@ test('biome cloud shapes differ, blend at the same rate and freeze with the game
   const sky=new AdventureAtmosphere(new T.Scene());sky.update(0,camera,{mapId});const p=sky.mesh.material.uniforms.cloudProfile.value;
   shapes.add(p.toArray().join(','));assert(p.x>0&&p.y>0&&p.z<p.w);sky.dispose();
  }
- assert.equal(shapes.size,5);
+ assert.equal(shapes.size,Object.keys(CLIMATE_LIGHT).length);
  const slow=new AdventureAtmosphere(new T.Scene()),fast=new AdventureAtmosphere(new T.Scene());slow.update(0,camera);fast.update(0,camera);
  for(let i=1;i<=60;i++){slow.update(i/30,camera,{mapId:'snow'});fast.update((i*2-1)/60,camera,{mapId:'snow'});fast.update(i/30,camera,{mapId:'snow'});}
  const a=slow.mesh.material.uniforms,b=fast.mesh.material.uniforms;assert(a.cloudProfile.value.clone().sub(b.cloudProfile.value).length()<1e-10);assert(a.cloudLayer.value.clone().sub(b.cloudLayer.value).length()<1e-10);assert(Math.abs(a.cloudAmount.value-b.cloudAmount.value)<1e-10);

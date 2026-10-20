@@ -18,7 +18,7 @@ test('every local map previews its actual boss, attack and shared arrival time',
 
 test('the seamless expedition communicates landmark rewards and five guardians, never the timed-boss rule',()=>{
  const brief=mapBrief('confluence');
- for(const roster of Object.values(MAP_ROSTERS))assert(brief.threat.includes(ENEMY_GUIDE[roster.boss].name));
+ for(const id of ['forest','snow','ash','sand','coast'])assert(brief.threat.includes(ENEMY_GUIDE[MAP_ROSTERS[id].boss].name));
  assert.match(brief.arrival,/自由顺序/);
  assert.doesNotMatch(brief.arrival,/分钟|秒/);
  assert.match(brief.goal,/完成各区地标并领取奖励/);

@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {bodyHeight} from './adventure-mobility.js?v=227';
+import {bodyHeight} from './adventure-mobility.js?v=228';
 
 const ceilingOffsets=[[0,0],[.3,0],[-.3,0],[0,.3],[0,-.3]];
 // Natural soil elevation is not an airborne/platform posture. Avoid raycasting
@@ -53,6 +53,9 @@ export function createOverheadQuery(world){
   bounds.setFromObject(mesh);
   if(bounds.min.y>(district==='warehouse'?2.4:2.5))meshes.push(mesh);
  });
+ // Geometry is final here. Native raycasting can reject local bounds before
+ // testing every triangle; world transforms still update on each query.
+ for(const mesh of meshes)if(mesh.geometry.boundingBox===null)mesh.geometry.computeBoundingBox();
  const raycaster=new T.Raycaster(),direction=new T.Vector3(),hits=[],active=[];
  return{meshes,firstHit(start,end,clearance=0){
   direction.set(end.x-start.x,end.y-start.y,end.z-start.z);

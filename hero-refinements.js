@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {HERO_REFINEMENTS} from './hero-refinement-assets.js?v=227';
+import {HERO_REFINEMENTS} from './hero-refinement-assets.js?v=228';
 
 // DCC meshes are in the original rest space. The original game owns the rig,
 // animation mixer, hitbox and weapon sockets; these assets replace only surfaces.
