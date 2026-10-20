@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {form,surface,oval,tube} from './creature-forms.js?v=228';
+import {form,surface,oval,tube} from './creature-forms.js?v=229';
 
 // One continuous coat per articulated part. The existing foot solver and
 // shoulder/jaw/ear pivots remain authoritative; geometry is shared by all pets.

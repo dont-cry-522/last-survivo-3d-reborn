@@ -1,9 +1,9 @@
-import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=228';
+import {installCreatureAnatomy,animateCreatureAnatomy} from './creature-anatomy.js?v=229';
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {prepareCreatureSurface,installCreatureSurface} from './creature-surface.js?v=228';
-import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=228';
-import {segmentHitsBody} from './adventure-combat.js?v=228';
+import {prepareCreatureSurface,installCreatureSurface} from './creature-surface.js?v=229';
+import{restoreEnemyHit,animateEnemyHit}from'./enemy-feedback.js?v=229';
+import {segmentHitsBody} from './adventure-combat.js?v=229';
 
 export const AIR_ROSTERS={forest:'duskbat',snow:'frostwing',ash:'cinderwing',sand:'sunscarab',coast:'skyray',bellvale:'frostwing',crystalcave:'duskbat'};
 export const AIR_ENEMIES={

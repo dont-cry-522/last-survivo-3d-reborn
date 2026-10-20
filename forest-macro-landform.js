@@ -1,5 +1,5 @@
 import {MathUtils} from './vendor/three.module.js';
-import {journeyPoint} from './forest-journey.js?v=228';
+import {journeyPoint} from './forest-journey.js?v=229';
 
 const fade=MathUtils.smoothstep;
 // Metres, before wet/interactive-footprint protection and the shared slope cap.

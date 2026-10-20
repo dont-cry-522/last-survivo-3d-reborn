@@ -1,10 +1,10 @@
 import * as T from './vendor/three.module.js';
-import {ridgeGeometry} from './forest-journey.js?v=228';
-import {createExplorationNavigator} from './exploration-routes.js?v=228';
-import {segmentDistance} from './rules.js?v=228';
-import {waterDepth} from './water.js?v=228';
-import {bridgeContains} from './coast.js?v=228';
-import {batchedSurfaceMaterial,prepareBatchedSurface} from './environment-props.js?v=228';
+import {ridgeGeometry} from './forest-journey.js?v=229';
+import {createExplorationNavigator} from './exploration-routes.js?v=229';
+import {segmentDistance} from './rules.js?v=229';
+import {waterDepth} from './water.js?v=229';
+import {bridgeContains} from './coast.js?v=229';
+import {batchedSurfaceMaterial,prepareBatchedSurface} from './environment-props.js?v=229';
 
 let stone;
 const rim=Array.from({length:12},(_,i)=>({x:Math.sin(i*Math.PI/6),z:Math.cos(i*Math.PI/6)}));

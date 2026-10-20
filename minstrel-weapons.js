@@ -1,4 +1,4 @@
-import{herbalContact,herbalFront}from'./herbal-weapons.js?v=228';
+import{herbalContact,herbalFront}from'./herbal-weapons.js?v=229';
 
 // Shared by rules, attack scheduling and animation. These are game-time values.
 export const WINDBOW=Object.freeze({rate:.7,damage:52,range:15,speed:30,hitRadius:.085,recovery:1.30,release:.42});

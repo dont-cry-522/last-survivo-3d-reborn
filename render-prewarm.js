@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {prepareTreeDetail} from './tree-scenery.js?v=228';
+import {prepareTreeDetail} from './tree-scenery.js?v=229';
 
 const yieldTask=()=>new Promise(resolve=>setTimeout(resolve,0));
 const worldCompileScene=new T.Scene();

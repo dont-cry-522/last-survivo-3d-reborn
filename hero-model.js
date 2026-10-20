@@ -1,10 +1,10 @@
-import {isMinstrelWeapon,makeMinstrelWeapon} from './minstrel-weapon-models.js?v=228';
-import {shadowFocus} from './shadow-gear.js?v=228';
-import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=228';
-import{miasmaLantern}from'./mirage-appearance.js?v=228';
-import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=228';
+import {isMinstrelWeapon,makeMinstrelWeapon} from './minstrel-weapon-models.js?v=229';
+import {shadowFocus} from './shadow-gear.js?v=229';
+import{weaponGesture,shotStarted,crossbowMechanism}from'./weapon-performance.js?v=229';
+import{miasmaLantern}from'./mirage-appearance.js?v=229';
+import{weaponInlay,nameWeapon,recessedBarrelGeometry}from'./weapon-identity.js?v=229';
 import * as T from './vendor/three.module.js';
-import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=228';
+import {isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=229';
 // Shared smooth geometry: detail is concentrated on the two heroes, not multiplied across the forest.
 const geometries=new Map(),materials=new Map();
 let woodGrain;

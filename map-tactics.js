@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{MAP_HALF}from'./map-layout.js?v=228';
+import{MAP_HALF}from'./map-layout.js?v=229';
 export const TERRAIN_TIPS={
  bellvale:'两侧是可行走的宽缓山坡，中间溪流会减慢双方。古钟门下可以穿行，立柱和岩脊会挡住移动与投射；绕过岩脊能从侧翼接近。',
  crystalcave:'三座地下洞厅由宽晶廊相连；岩壁与晶簇是实体，可从侧面的开口绕行。高处石顶会挡住射向上方的投射；水潭减慢地面单位，空中怪物可以从上方接近。',

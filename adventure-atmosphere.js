@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {CLIMATE_LIGHT} from './environment-lighting.js?v=228';
+import {CLIMATE_LIGHT} from './environment-lighting.js?v=229';
 
 const cloudStrength={forest:.90,snow:.82,ash:.90,sand:.54,coast:.88,bellvale:.72,crystalcave:.25};
 // Frequency / density edges: rounded woodland masses, cold wind sheets,

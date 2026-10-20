@@ -42,7 +42,7 @@ def main():
     bt = sdk / 'build-tools/android-15'
     android = sdk / 'platform/android-35/android.jar'
     manifest = json.loads((ROOT / 'offline-package.json').read_text('utf-8'))
-    if manifest['version'] != '228':
+    if manifest['version'] != '229':
         raise RuntimeError('Update Android versionCode/versionName/entry and verify before packaging another game release.')
     entries = {}
     for item in manifest['files']:
@@ -58,7 +58,7 @@ def main():
     entries['offline-package.json'] = (ROOT / 'offline-package.json').read_bytes()
     # Change only the package's browser-shell entry. Gameplay/modules remain exact.
     for entry in ('index.html', 'play.html'):
-        old = b'<script type="module" src="offline.js?v=228"></script>'
+        old = b'<script type="module" src="offline.js?v=229"></script>'
         assert entries[entry].count(old) == 1
         entries[entry] = entries[entry].replace(old, b'<script type="module" src="app-shell.js"></script>')
     entries['app-shell.js'] = (HERE / 'app-shell.js').read_bytes()
@@ -98,7 +98,7 @@ def main():
                 archive.writestr('assets/game/' + name, content, compress_type=compression, compresslevel=6)
         aligned = build / 'aligned.apk'
         run([bt / 'zipalign.exe', '-p', '-f', '4', unsigned, aligned])
-        target = output / 'Realm-Echoes-REBORN-v228.1-Android.apk'
+        target = output / 'Realm-Echoes-REBORN-v229.1-Android.apk'
         signer = [jdk / 'java.exe', '-jar', bt / 'lib/apksigner.jar']
         run([*signer, 'sign', '--ks', key, '--ks-key-alias', 'reborn', '--ks-pass', 'env:REBORN_SIGN_PASSWORD', '--key-pass', 'env:REBORN_SIGN_PASSWORD', '--v4-signing-enabled', 'false', '--out', target, aligned], env)
         signature = run([*signer, 'verify', '--verbose', '--print-certs', target])
@@ -110,7 +110,7 @@ def main():
         assert "application-debuggable" not in badging
         assert "Verified using v3 scheme (APK Signature Scheme v3): true" in signature
         assert 'Signer #1 certificate SHA-256 digest: a299073dc093a9f8f1976d0ea5e4a0a5e58c7958d5f1cee8ff4fc7371a3cd693' in signature, 'Signing certificate changed'
-        assert "versionCode='22801'" in badging and "versionName='228.1'" in badging
+        assert "versionCode='22901'" in badging and "versionName='229.1'" in badging
         with zipfile.ZipFile(target) as archive:
             assert archive.testzip() is None
             for name, content in entries.items():
@@ -122,7 +122,7 @@ def main():
         (output / 'android-manifest.txt').write_text(badging, encoding='utf-8')
         report = {
             'gameVersion': manifest['version'], 'offlineBuild': manifest['build'],
-            'package': 'io.github.dontcry522.realmechoes.reborn', 'versionName': '228.1', 'versionCode': 22801,
+            'package': 'io.github.dontcry522.realmechoes.reborn', 'versionName': '229.1', 'versionCode': 22901,
             'path': str(target), 'bytes': target.stat().st_size, 'sha256': digest(target.read_bytes()),
             'sourceManifestFilesVerified': len(manifest['files']), 'packagedGameFiles': len(entries),
             'packageOnlyHtmlChanges': changed, 'gameplayModulesChanged': False,

@@ -1,5 +1,5 @@
-import {createExplorationNavigator} from './exploration-routes.js?v=228';
-import {journeyPoint} from './forest-journey.js?v=228';
+import {createExplorationNavigator} from './exploration-routes.js?v=229';
+import {journeyPoint} from './forest-journey.js?v=229';
 
 // A continuous walk through existing playable places. This plan owns no meshes,
 // rewards, timers or random generator; all connections use the actual navigator.

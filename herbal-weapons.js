@@ -1,4 +1,4 @@
-import{wildWeaponBlock}from'./wild-weapons.js?v=228';
+import{wildWeaponBlock}from'./wild-weapons.js?v=229';
 
 export const MYCELIAL_WHIP={rate:1.1,damage:26,range:5.8,arc:.72,cloudDamage:10,cloudRadius:1.1,cloudDuration:3.2,recovery:.70,release:.42};
 export const VENOM_FAN={rate:.95,damage:20,range:6.8,arc:.50,speed:12,needleDamage:6,needleDuration:2.6,recovery:.72,release:.32,maxWaves:6};

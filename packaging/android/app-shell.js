@@ -6,7 +6,7 @@ if (panel) {
   panel.querySelector('summary').textContent = '离线版';
   panel.querySelector('.offline-popover').replaceChildren();
   const note = document.createElement('p');
-  note.textContent = 'REBORN v228 · 地图、角色和声音已随安装包保存，可以断网游玩。更新时直接覆盖安装；卸载或清除应用数据会删除本应用存档。参加好友房间请用手机浏览器打开邀请链接，此 APK 为离线版。';
+  note.textContent = 'REBORN v229 · 地图、角色和声音已随安装包保存，可以断网游玩。更新时直接覆盖安装；卸载或清除应用数据会删除本应用存档。参加好友房间请用手机浏览器打开邀请链接，此 APK 为离线版。';
   panel.querySelector('.offline-popover').append(note);
 }
 const style = document.createElement('style');

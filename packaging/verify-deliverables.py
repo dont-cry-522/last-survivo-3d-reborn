@@ -19,9 +19,9 @@ def main():
     output = args.output.resolve()
     manifest_bytes = (ROOT / 'offline-package.json').read_bytes()
     manifest = json.loads(manifest_bytes)
-    assert manifest['version'] == '228'
-    apk = output / 'Realm-Echoes-REBORN-v228.1-Android.apk'
-    pc = output / 'Realm-Echoes-REBORN-v228-Windows.zip'
+    assert manifest['version'] == '229'
+    apk = output / 'Realm-Echoes-REBORN-v229.1-Android.apk'
+    pc = output / 'Realm-Echoes-REBORN-v229-Windows.zip'
     room_report = json.loads((output / 'public-room-package-verification.json').read_text('utf-8'))
     android_report = json.loads((output / 'android-package-verification.json').read_text('utf-8'))
     assert room_report['version'] == android_report['gameVersion'] == manifest['version']
@@ -46,7 +46,7 @@ def main():
             android_data = android.read('assets/game/' + item['path'])
             expected = pc_data
             if item['path'] in ('index.html', 'play.html'):
-                old = b'<script type="module" src="offline.js?v=228"></script>'
+                old = b'<script type="module" src="offline.js?v=229"></script>'
                 assert pc_data.count(old) == 1
                 expected = pc_data.replace(old, b'<script type="module" src="app-shell.js"></script>')
             assert android_data == expected, item['path']
@@ -96,7 +96,7 @@ def main():
     assert 'Signer #1 certificate SHA-256 digest: ' + cert in signature
     assert 'Verified using v3 scheme (APK Signature Scheme v3): true' in signature
     badging = (output / 'android-manifest.txt').read_text('utf-8')
-    assert "name='io.github.dontcry522.realmechoes.reborn'" in badging and "versionCode='22801'" in badging and "versionName='228.1'" in badging
+    assert "name='io.github.dontcry522.realmechoes.reborn'" in badging and "versionCode='22901'" in badging and "versionName='229.1'" in badging
     packages = [{'type': kind, 'path': str(path), 'bytes': path.stat().st_size, 'sha256': digest(path.read_bytes())}
                 for kind, path in [('Android offline APK', apk), ('Windows offline + public-room ZIP', pc)]]
     report = {'version': manifest['version'], 'offlineBuild': manifest['build'],
@@ -113,17 +113,20 @@ def main():
     (output / 'deliverables-verification.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', 'utf-8')
     sums = '\n'.join(item['sha256'] + '  ' + Path(item['path']).name for item in packages) + '\n'
     (output / 'SHA256SUMS.txt').write_text(sums, 'utf-8')
-    instructions = '''异境回响 REBORN v228 · 手机离线版、电脑单机与联机合包
+    instructions = '''异境回响 REBORN v229 · 手机离线版、电脑单机与联机合包
+
+【本次更新】
+岚歌的面部与头发精修，并调整持弓、战铃和闪避动作的衔接。本版继续使用已有角色、地图和玩法。
 
 【手机怎么启动】
-点击 Realm-Echoes-REBORN-v228.1-Android.apk 安装。
+点击 Realm-Echoes-REBORN-v229.1-Android.apk 安装。
 装好后，在手机桌面点击“异境回响 REBORN”。默认横屏，可以断网游玩。
 若装有此前 REBORN APK，直接覆盖安装，不要卸载或清数据。
 本包与此前版本保持相同包名、签名和本地存档地址。
 手机 APK 是离线单机版。参加好友对战请在手机浏览器打开房主的完整邀请链接，不是在 APK 内加入。
 
 【电脑离线单机怎么启动】
-将“Realm-Echoes-REBORN-v228-Windows.zip”传到 Windows 10/11 电脑。
+将“Realm-Echoes-REBORN-v229-Windows.zip”传到 Windows 10/11 电脑。
 右键 ZIP，选择“全部解压”，保存到自己喜欢的目录。
 打开解压后的文件夹，双击根目录的“启动异境回响.exe”。
 游戏以 Edge/Chrome 独立全屏窗口打开，无地址栏，无需另装 Python/Node.js。

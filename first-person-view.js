@@ -1,14 +1,14 @@
-import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=228';
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=228';
+import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=229';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=229';
 import * as T from './vendor/three.module.js';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=228';
-import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=228';
-import {sporePod} from './wuling-appearance.js?v=228';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=229';
+import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=229';
+import {sporePod} from './wuling-appearance.js?v=229';
 import {poseSlingshot} from './slingshot-model.js';
 
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=228';
-import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=228';
+import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=229';
+import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=229';
 
 // Camera-space equipment assembled from the actual weapon plus a small procedural hand rig.
 // This is not a new authored arm-animation asset. Layer 1 gets a small depth-correct overlay pass.
@@ -67,8 +67,8 @@ function handGeometry(palette,fingerless,grip='handle'){
    }else if(!open&&grip==='cup'){
     if(finger===4)points=[[-.028,-.013,0],[-.046,.010,-.016],[-.044,.038,-.044],[-.025,.046,-.057]];
     else{const x=(-1.5+finger)*.0165,splay=(finger-1.5)*.004,l=[.048,.057,.052,.039][finger];points=[[x,.028,0],[x+splay,.028+l*.7,-.008],[x+splay,.028+l,-.036],[x+splay*.7,.028+l*.7,-.056]];}
-   }else if(!open&&grip==='hook'){
-    if(finger===4)points=[[-.028,-.013,0],[-.039,.011,-.017],[-.027,.036,-.029],[-.013,.034,-.033]];
+   }else if(!open&&(grip==='hook'||grip==='bowstring')){
+    if(finger===4)points=grip==='bowstring'?[[-.028,-.013,0],[-.043,.008,-.011],[-.047,.027,-.021],[-.039,.036,-.028]]:[[-.028,-.013,0],[-.039,.011,-.017],[-.027,.036,-.029],[-.013,.034,-.033]];
     else{const x=(-1.5+finger)*.0165,drop=finger===3?.006:0;points=[[x,.028,0],[x,.066-drop,-.003],[x,.066-drop,-.025],[x,.042-drop,-.039]];}
    }else if(!open&&grip==='trigger'){
     // Only the index squeezes: the other fingers stay wrapped around the stock.
@@ -290,10 +290,10 @@ export class FirstPersonView {
   this.model.position.copy(this.center).negate();
   this.grip=new T.Vector3(...(this.profile.grip||GRIP_POINTS[weaponId]||[0,0,0])).sub(this.center);this.root.add(this.weapon);
   const inferred=['shade','shadowblade','grimoire'].includes(weaponId)?'wraith':['miasmalantern','venomfan'].includes(weaponId)?'mirage':['sporelantern','mycelialwhip'].includes(weaponId)?'wuling':['boomerang','briarpot'].includes(weaponId)?'lingya':['harpoon','arcstaff'].includes(weaponId)?'tide':['crossbow','shuriken','dark'].includes(weaponId)?'silver':'scout';
-  this.kind=hero.userData.kind||inferred;const palette=PALETTES[this.kind]||PALETTES.scout;
+  this.minstrelLeftTarget=null;this.kind=hero.userData.kind||inferred;const palette=PALETTES[this.kind]||PALETTES.scout;
   const fingerless=['scout','lingya','tide','wuling'].includes(this.kind),lamp=this.profile.type==='lamp';
   const type=this.profile.type,rightGrip=lamp||type==='pot'?'hook':['gun','bow'].includes(type)?'trigger':['staff','scythe','thrust','whip'].includes(type)?'shaft':type==='throw'||type==='fan'?'pinch':type==='book'?'read':type==='palm'?'cast':'handle';
-  const hand=handGeometry(palette,fingerless,rightGrip),supportGrip=weaponId==='boomerang'||weaponId==='windbow'?'pinch':weaponId==='sporelantern'||type==='pot'?'cup':weaponId==='arcstaff'?'conduct':lamp?'handle':type==='gun'||type==='bow'||type==='scythe'||type==='thrust'?'guide':type==='book'?'read':type==='staff'||isHerbalWeapon(weaponId)?'cast':null;
+  const hand=handGeometry(palette,fingerless,rightGrip),supportGrip=weaponId==='windbow'?'bowstring':weaponId==='boomerang'?'pinch':weaponId==='resonator'?'conduct':weaponId==='sporelantern'||type==='pot'?'cup':weaponId==='arcstaff'?'conduct':lamp?'handle':type==='gun'||type==='bow'||type==='scythe'||type==='thrust'?'guide':type==='book'?'read':type==='staff'||isHerbalWeapon(weaponId)?'cast':null;
   const supportHand=supportGrip?handGeometry(palette,fingerless,supportGrip):hand,sleeve=sleeveGeometry(palette,this.kind);this.ownedGeometry.push(hand,sleeve);if(supportHand!==hand)this.ownedGeometry.push(supportHand);
   // Share the real outfit's micro-surface without owning or recoloring its maps.
   let sleeveSurface;hero.userData.model?.traverse(o=>{if(!sleeveSurface&&o.isMesh&&(/Sleeve/i.test(o.geometry.name)||o.userData.wildMistPart==='sleeves'))sleeveSurface=o.material;});
@@ -480,8 +480,13 @@ export class FirstPersonView {
    if(i&&id==='windbow')point.set(0,.06,-.08-.33*motion.handPull).sub(this.center);
    if(i&&id==='boomerang')point.set(0,.22,-.07-.30*motion.handPull).sub(this.center);
    point.applyMatrix4(this.weapon.matrix);
-   if(i&&id==='windbow')point.lerp(this.wrist.set(-halfW*.32-this.root.position.x,-halfH*.70-this.root.position.y,.10),1-motion.ready);
+   if(i&&id==='windbow'){
+    point.lerp(this.wrist.set(-halfW*.32-this.root.position.x,-halfH*.70-this.root.position.y,.10),1-motion.ready);
+    if((data.cancelAttack||data.minstrelCancelledSerial===data.shotSerial)&&this.minstrelLeftTarget){this.minstrelLeftTarget.lerp(point,1-Math.exp(-step*16));point.copy(this.minstrelLeftTarget);}
+    else{this.minstrelLeftTarget??=new T.Vector3();this.minstrelLeftTarget.copy(point);}
+   }
    if(i&&!support)point.set(-halfW*.48-this.root.position.x,-halfH*.72-this.root.position.y+kick*.045,.11-kick*.06);
+   if(i&&id==='resonator'){point.x-=.025*sweep;point.y+=.018*motion.gather;point.z+=.03*sweep;}
    if(i&&id==='arcstaff')point.set(-halfW*.35-this.root.position.x,-halfH*.46-this.root.position.y+.006*kick,.04-.008*kick);
    if(i&&id==='sporelantern')point.add(this.wrist.set(-.035*motion.gather+.065*kick,.045*motion.gather+.095*kick-.025*sweep,.065*motion.gather-.135*kick));
    if(i&&id==='miasmalantern')point.add(this.wrist.set(.075*motion.gather+.035*kick,.055*motion.gather+.020*kick,-.025*motion.gather-.045*kick));
@@ -494,7 +499,8 @@ export class FirstPersonView {
    if(i&&id==='sporelantern')hand.rotation.set(-.60-.22*motion.gather+.36*kick,-.20+.22*kick,.18-.13*kick);
    if(i&&id==='miasmalantern')hand.rotation.set(-.45-.18*motion.gather,-.20-.15*motion.gather,.18-.16*kick);
    if(herbal)hand.rotation.set(i?-.62-.14*motion.gather:-.16,i?-.22:.08,i?.20-.08*sweep:id==='venomfan'?-.22:-.36);
-   if(id==='windbow')hand.rotation.set(i?-.50:-.18,i?-.35:.12,i?.44:-.38);
+   if(id==='windbow')hand.rotation.set(i?-.50+.08*motion.open:-.18,i?-.35:.12,i?.44-.10*motion.open:-.38);
+   if(i&&id==='resonator')hand.rotation.set(-.55+.12*sweep,-.18,.24-.08*sweep);
    if(i&&id==='boomerang')hand.rotation.set(-.55+.10*motion.open,-.28,.48-.12*motion.open);
    if(profile.type==='palm'&&!i)hand.rotation.set(-.96-.10*motion.gather+.15*kick,.12-.10*motion.gather,-.10+.10*kick);
    if(profile.type==='palm'&&i)hand.rotation.set(-.94-.08*motion.gather+.10*kick,-.22,.20-.08*motion.gather);
@@ -525,6 +531,7 @@ export class FirstPersonView {
    this.wrist.set(0,-.038,0).multiply(hand.scale).applyQuaternion(hand.quaternion).add(hand.position);
    this.elbow.set(halfW*(i?-.30:.66)-this.root.position.x,-halfH*1.15-this.root.position.y,.35);
    if(i&&id==='sporelantern'){this.elbow.x+=.015*kick-.025*motion.gather;this.elbow.y+=.018*kick;this.elbow.z-=.040*kick;}
+   if(i&&id==='windbow'){this.elbow.x-=.055*motion.handPull;this.elbow.y+=.030*motion.handPull;this.elbow.z+=.075*motion.handPull;}
    if(i&&id==='boomerang'){this.elbow.x-=.045*motion.handPull;this.elbow.y+=.025*motion.handPull;this.elbow.z+=.065*motion.handPull;}
    if(!i&&id==='miasmalantern'){this.elbow.x+=.018*motion.gather-.025*kick;this.elbow.y+=.015*motion.gather-.018*sweep;this.elbow.z+=.025*motion.gather-.040*kick;}
    if(!i&&herbal){this.elbow.x-=.08*motion.side*sweep;this.elbow.y+=.025*motion.gather;this.elbow.z+=.035*motion.gather-.065*kick;}

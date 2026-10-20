@@ -1,8 +1,8 @@
 import * as T from './vendor/three.module.js';
 import{mergeGeometries}from'./vendor/BufferGeometryUtils.js';
-import{sceneryAllowed}from'./biome-scenery.js?v=228';
-import{createDiscoveryScenery}from'./discovery-scenery.js?v=228';
-import{FIELD_SUPPLIES}from'./expedition.js?v=228';
+import{sceneryAllowed}from'./biome-scenery.js?v=229';
+import{createDiscoveryScenery}from'./discovery-scenery.js?v=229';
+import{FIELD_SUPPLIES}from'./expedition.js?v=229';
 export const SMALL_FINDS={
  bellvale:{name:'遗落铜铃',tip:'安全时靠近拾取山谷旅人留下的铜铃，获得经验和少量治疗。',xp:15,heal:.08,color:0xd5bc85},
  crystalcave:{name:'星辉晶簇',tip:'靠近采集松动晶簇；附近有敌人时先脱离战斗。',xp:20,heal:.04,color:0x9dd5e5},

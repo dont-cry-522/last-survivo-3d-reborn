@@ -1,5 +1,5 @@
-import{HERO_LOADOUTS,WEAPONS,MAPS}from'./rules.js?v=228';
-import{RoomClient,ROOM_HERO_NAMES,parseRoomAddress,roomInvitation}from'./multiplayer-client.js?v=228';
+import{HERO_LOADOUTS,WEAPONS,MAPS}from'./rules.js?v=229';
+import{RoomClient,ROOM_HERO_NAMES,parseRoomAddress,roomInvitation}from'./multiplayer-client.js?v=229';
 
 export class RoomLobby{
  constructor({client=new RoomClient(),document=globalThis.document,onOffline=()=>{},onSelection=()=>{},invitationURL=globalThis.location?.href}={}){
@@ -16,7 +16,7 @@ export class RoomLobby{
  options(select,entries){select.replaceChildren(...entries.map(([value,label])=>{const option=this.element('option','',label);option.value=value;return option;}));}
  build(){
   const d=this.document;
-  if(!d.querySelector('link[data-room-style]')){const style=d.createElement('link');style.rel='stylesheet';style.href=new URL('./multiplayer.css?v=228',import.meta.url).href;style.dataset.roomStyle='';d.head.append(style);}
+  if(!d.querySelector('link[data-room-style]')){const style=d.createElement('link');style.rel='stylesheet';style.href=new URL('./multiplayer.css?v=229',import.meta.url).href;style.dataset.roomStyle='';d.head.append(style);}
   this.dialog=this.element('dialog','room-dialog');this.dialog.setAttribute('aria-labelledby','room-title');
   const header=this.element('header','room-header'),title=this.element('h2','','好友私人房间');title.id='room-title';
   header.append(title,this.button('收起',()=>this.hide(),'room-dismiss'));

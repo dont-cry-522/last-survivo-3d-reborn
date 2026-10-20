@@ -1,5 +1,5 @@
-import{POISON}from'./poison-config.js?v=228';
-import{MIRAGE}from'./mirage-config.js?v=228';
+import{POISON}from'./poison-config.js?v=229';
+import{MIRAGE}from'./mirage-config.js?v=229';
 export const EXTRA_SKILLS=[
  {id:'windwake',hero:'minstrel',name:'踏风引弦',icon:'↝',max:3,describe:r=>`踏风步结束后 2.5 秒内，第一次长弓或战铃主攻击伤害提高 ${15*r}%；开始出手即消耗，挥空也会消耗，不叠加。战铃回声沿用本次攻击强度。`},
  {id:'resonance_mark',hero:'minstrel',name:'三叠和弦',icon:'♬',max:3,describe:r=>`连续三次主攻击命中同一目标（相邻间隔不超过 3 秒），追加 ${16+8*r} 点伤害；换目标重计，触发间隔 1 秒。回声和技能伤害不叠层，不递归触发。`},

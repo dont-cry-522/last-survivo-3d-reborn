@@ -1,34 +1,34 @@
-import {rebuildMinstrel,createMinstrelHair,createMinstrelMantle,animateMinstrelDetails} from './minstrel-appearance.js?v=228';
-import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=228';
-import {createShadowAura,updateShadowAura,disposeShadowAura} from './shadow-aura.js?v=228';
-import {shadowOutfit,shadowAccessories,finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=228';
-import {shadowFocus} from './shadow-gear.js?v=228';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT,primaryGripFrame,fitWeaponToPalm,createHandGrips,restoreGripWrists,captureGripWrists,aimGrip,supportGripTarget,aimSupportGrip,aimShadeGuide,poseGripFingers} from './weapon-grips.js?v=228';
-import {refineLingyaFace} from './lingya-face.js?v=228';
-import {createLingyaHair,animateLingyaHair} from './lingya-hair.js?v=228';
-import {finishHeroSurface,smoothSeams,prepareSilverHair,animateSilverHair} from './hero-finish.js?v=228';
-import {rebuildRanger} from './ranger-rebuild.js?v=228';
-import {rebuildShadowTide} from './shadow-tide-rebuild.js?v=228';
-import {rebuildWildMist} from './wild-mist-rebuild.js?v=228';
-import {applyHeroIdentity,settleHeroIdentity} from './hero-identity.js?v=228';
-import{WULING_PALETTE,wulingOutfit,wulingAccessories,wulingMask,sporeLantern,sporeSatchel,sporePod}from'./wuling-appearance.js?v=228';
-import{MIRAGE_PALETTE,mirageOutfit,mirageHair,prepareMirageHair,animateMirageHair,mirageMask,mirageAccessories,miragePetalTails,miasmaLantern}from'./mirage-appearance.js?v=228';
-import{newHeroAttack,heroCarryPose,committedWeaponYaw}from'./new-hero-motion.js?v=228';
-import{heroDodgePose}from'./hero-dodge.js?v=228';
-import{lingyaHopPose}from'./lingya-motion.js?v=228';
-import{lingyaOutfit,lingyaAccessories,lingyaLegs}from'./lingya-appearance.js?v=228';
-import{makeSlingshot,poseSlingshot}from'./slingshot-model.js?v=228';
-import{makeHarpoon}from'./coast-models.js?v=228';
-import{weaponGesture,shotStarted,scythePose,crossbowMechanism,slingshotMechanism,herbalPose}from'./weapon-performance.js?v=228';
-import{isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon,disposeHerbalWeapon}from'./herbal-weapon-models.js?v=228';
-import{rollProgress,rollWeight}from'./dodge-motion.js?v=228';
+import {rebuildMinstrel,createMinstrelHair,createMinstrelMantle,animateMinstrelDetails} from './minstrel-appearance.js?v=229';
+import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=229';
+import {createShadowAura,updateShadowAura,disposeShadowAura} from './shadow-aura.js?v=229';
+import {shadowOutfit,shadowAccessories,finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=229';
+import {shadowFocus} from './shadow-gear.js?v=229';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT,primaryGripFrame,fitWeaponToPalm,createHandGrips,restoreGripWrists,captureGripWrists,aimGrip,supportGripTarget,aimSupportGrip,aimShadeGuide,poseGripFingers} from './weapon-grips.js?v=229';
+import {refineLingyaFace} from './lingya-face.js?v=229';
+import {createLingyaHair,animateLingyaHair} from './lingya-hair.js?v=229';
+import {finishHeroSurface,smoothSeams,prepareSilverHair,animateSilverHair} from './hero-finish.js?v=229';
+import {rebuildRanger} from './ranger-rebuild.js?v=229';
+import {rebuildShadowTide} from './shadow-tide-rebuild.js?v=229';
+import {rebuildWildMist} from './wild-mist-rebuild.js?v=229';
+import {applyHeroIdentity,settleHeroIdentity} from './hero-identity.js?v=229';
+import{WULING_PALETTE,wulingOutfit,wulingAccessories,wulingMask,sporeLantern,sporeSatchel,sporePod}from'./wuling-appearance.js?v=229';
+import{MIRAGE_PALETTE,mirageOutfit,mirageHair,prepareMirageHair,animateMirageHair,mirageMask,mirageAccessories,miragePetalTails,miasmaLantern}from'./mirage-appearance.js?v=229';
+import{newHeroAttack,heroCarryPose,committedWeaponYaw}from'./new-hero-motion.js?v=229';
+import{heroDodgePose}from'./hero-dodge.js?v=229';
+import{lingyaHopPose}from'./lingya-motion.js?v=229';
+import{lingyaOutfit,lingyaAccessories,lingyaLegs}from'./lingya-appearance.js?v=229';
+import{makeSlingshot,poseSlingshot}from'./slingshot-model.js?v=229';
+import{makeHarpoon}from'./coast-models.js?v=229';
+import{weaponGesture,shotStarted,scythePose,crossbowMechanism,slingshotMechanism,herbalPose}from'./weapon-performance.js?v=229';
+import{isHerbalWeapon,makeHerbalWeapon,poseHerbalWeapon,disposeHerbalWeapon}from'./herbal-weapon-models.js?v=229';
+import{rollProgress,rollWeight}from'./dodge-motion.js?v=229';
 import * as T from './vendor/three.module.js';
 import {clone} from './vendor/SkeletonUtils.js';
-import {loadCharacterData,yieldCharacterWork} from './character-loader.js?v=228';
-import {makeWeapon,poseCrossbow} from './hero-model.js?v=228';
-import {restSurface} from './hero-rest-surface.js?v=228';
-import {loadHeroRefinements,refineHeroTemplate,refineHeroPart} from './hero-refinements.js?v=228';
-import {shareClonedHeroSkeletons} from './hero-skeleton.js?v=228';
+import {loadCharacterData,yieldCharacterWork} from './character-loader.js?v=229';
+import {makeWeapon,poseCrossbow} from './hero-model.js?v=229';
+import {restSurface} from './hero-rest-surface.js?v=229';
+import {loadHeroRefinements,refineHeroTemplate,refineHeroPart} from './hero-refinements.js?v=229';
+import {shareClonedHeroSkeletons} from './hero-skeleton.js?v=229';
 
 const templates=new Map(),clips=new Map(),layeredClips=new WeakMap(),reversedClips=new WeakMap();
 let silverIdleClip;
@@ -488,7 +488,7 @@ export function createSkinnedHero(kind,weapon){
   model.skeleton.pose();model.updateMatrixWorld(true);
   const owned=[];let cape;
   if(kind==='minstrel'){
-    const hair=createMinstrelHair(),mantle=createMinstrelMantle(),details=[];
+    const hair=createMinstrelHair(model.getObjectByName('Superhero_Female')),mantle=createMinstrelMantle(),details=[];
     hair.traverse(o=>{if(o.isMesh){owned.push(o);details.push(o);}});owned.push(mantle);details.push(mantle);
     attachAtRest(bones.get('Head'),hair,model);attachAtRest(bones.get('spine_03'),mantle,model);g.userData.minstrelDetails=details;
   }
@@ -621,7 +621,14 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
   if(d.attackBase){
     for(const [bone,rotation]of d.attackBase)rotation.copy(bone.quaternion);d.attackBaseReady=true;
     const gesture=isRoll?0:kick;
-    if(musical){d.spine.rotateY(d.weaponId==='windbow'?-.15*gather:.12*motion.swing);d.spine.rotateX(-.025*gather+.025*kick);}
+    if(musical){
+      // The shoulders lead the draw / bell stroke; the gaze stays on the target.
+      const stride=Math.sin(d.gaitPhase*Math.PI*2)*d.blend*(1-dodge.weight),brace=d.weaponId==='windbow'?motion.ready:motion.body;
+      const shoulder=d.weaponId==='windbow'?-.12*motion.ready-.08*gather:.16*motion.swing;
+      d.spine.rotateY(shoulder+stride*.035*(1-brace));d.spine.rotateX(-.025*gather+.025*kick);
+      d.swimHead.rotateY(-shoulder*.8-stride*.025*(1-brace)+T.MathUtils.clamp(angleDelta(d.aimAngle??g.rotation.y,g.rotation.y),-.28,.28)*d.readyBlend);
+      d.swimHead.rotateX(-T.MathUtils.clamp(d.aimPitch||0,-.7,.7)*.22*d.readyBlend);
+    }
     else if(d.weaponId==='harpoon'){
       // Rear-hand thrust, torso weight transfer and the gaze staying on the target.
       d.spine.rotateY(d.harpoonCombo===1?-.36*gather+.40*gesture+.22*sweep:d.harpoonCombo===2?-.18*gather+.24*gesture-.22*sweep:-.24*gather+.26*gesture+.08*sweep);d.spine.rotateX(.07*gesture-.035*gather+d.presence.breath);d.spine.rotateZ(d.presence.shoulder*(1-action.weight));
@@ -698,7 +705,7 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
       upper.getWorldPosition(s.origin);lower.getWorldPosition(s.elbow);hand.getWorldPosition(s.from);
       const a=s.origin.distanceTo(s.elbow),b=s.elbow.distanceTo(s.from),distance=T.MathUtils.clamp(s.origin.distanceTo(s.target),Math.abs(a-b)+.001,(a+b)*(meleeWeapon?.94:1)-.001);
       s.axis.copy(s.target).sub(s.origin).normalize();s.goal.copy(s.origin).addScaledVector(s.axis,distance);
-      g.getWorldQuaternion(s.world);s.bend.set(hand===s.hand?.6:-.6,-1,-.2).applyQuaternion(s.world);s.bend.addScaledVector(s.axis,-s.bend.dot(s.axis)).normalize();
+      g.getWorldQuaternion(s.world);s.bend.set(hand===s.hand?.6:-.6,-1,-.2);if(musical&&d.weaponId==='windbow'&&hand===s.hand)s.bend.set(.6,-1+.95*motion.ready,-.2-.55*motion.handPull);s.bend.applyQuaternion(s.world);s.bend.addScaledVector(s.axis,-s.bend.dot(s.axis)).normalize();
       const along=(a*a-b*b+distance*distance)/(2*distance),height=Math.sqrt(Math.max(0,a*a-along*along));
       s.from.copy(s.elbow).sub(s.origin).normalize();s.elbow.copy(s.origin).addScaledVector(s.axis,along).addScaledVector(s.bend,height);s.to.copy(s.elbow).sub(s.origin).normalize();
       s.delta.setFromUnitVectors(s.from,s.to);upper.getWorldQuaternion(s.world);s.world.premultiply(s.delta);upper.parent.getWorldQuaternion(s.parent).invert();upper.quaternion.copy(s.parent.multiply(s.world)).normalize();upper.updateWorldMatrix(false,true);
@@ -706,7 +713,7 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
       s.delta.setFromUnitVectors(s.from,s.to);lower.getWorldQuaternion(s.world);s.world.premultiply(s.delta);lower.parent.getWorldQuaternion(s.parent).invert();lower.quaternion.copy(s.parent.multiply(s.world)).normalize();lower.updateWorldMatrix(false,true);
       // The drawn pouch is already eased by the shot clock. A second joint
       // speed limit lets the pulling hand lag behind it under attack haste.
-      bones.forEach((bone,i)=>{bone.quaternion.slerp(s.start[i],scythe?0:1-d.aimBlend*poseBlend);if((newHero||meleeWeapon)&&!scythe&&!(d.weaponId==='briarpot'||(d.weaponId==='boomerang'||d.weaponId==='windbow')&&hand===s.hand)){d.armHistory??=new Map();const last=d.armHistory.get(bone);if(last)bone.quaternion.copy(last.rotateTowards(bone.quaternion,dt*14));else d.armHistory.set(bone,bone.quaternion.clone());d.armHistory.get(bone).copy(bone.quaternion);bone.updateWorldMatrix(false,true);}});
+      bones.forEach((bone,i)=>{bone.quaternion.slerp(s.start[i],scythe?0:1-d.aimBlend*poseBlend);if((newHero||meleeWeapon)&&!scythe&&!musical&&!(d.weaponId==='briarpot'||(d.weaponId==='boomerang'||d.weaponId==='windbow')&&hand===s.hand)){d.armHistory??=new Map();const last=d.armHistory.get(bone);if(last)bone.quaternion.copy(last.rotateTowards(bone.quaternion,dt*14));else d.armHistory.set(bone,bone.quaternion.clone());d.armHistory.get(bone).copy(bone.quaternion);bone.updateWorldMatrix(false,true);}});
     };
     // Solve toward weapon-specific hand positions; grip constraints must retain the gesture.
     const id=d.weaponId,lantern=['sporelantern','miasmalantern'].includes(id),mirage=id==='miasmalantern',staff=['fire','dark','arcstaff'].includes(id),bow=id==='crossbow',throwing=id==='shuriken',sling=id==='boomerang';
@@ -721,18 +728,23 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
     else if(id==='briarpot')s.to.set(-.19-.045*gather+.02*kick,-.08-.05*gather+.12*kick,.13-.07*gather+.13*kick);
     else if(id==='arcstaff')s.to.set(-.31,-.26+.005*kick,.20+.008*kick);
     else if(staff)s.to.set(-.19,-.23,id==='fire'?.24+.22*kick:.22+.09*gather);
-    else if(id==='windbow')s.to.set(-.29,-.17-.12*(1-motion.ready)+.016*gather,.31-.025*kick);
-    else if(id==='resonator')s.to.set(-.23-.10*gather+.12*sweep,-.16+.09*gather-.07*sweep,.21-.07*gather+.12*kick);
+    else if(id==='windbow')s.to.set(-.09-.10*(1-motion.ready),-.04-.28*(1-motion.ready)+.012*gather,.45-.12*(1-motion.ready)-.018*kick);
+    else if(id==='resonator')s.to.set(-.24-.03*gather+.025*sweep,-.16+.09*gather-.07*sweep,.21-.07*gather+.12*kick);
     else if(sling)s.to.set(-.10,-.13+.012*gather,.25-.018*kick-.13*Math.max(0,-T.MathUtils.clamp(d.aimPitch||0,-1.3,1.3)));
     else if(throwing)s.to.set(-.24-.18*sweep,-.10-.14*gather,.28+.20*kick);
     else s.to.set(bow?-.09:-.08,-.20+kick*(id==='shotgun'?.06:.025)+(bow?.06*Math.max(0,-(d.aimPitch||0)):0),(bow?.10-.02*Math.abs(d.aimPitch||0):.14)-kick*(id==='shotgun'?.13:.065));
     if(newHero){const step=Math.sin(d.gaitPhase*Math.PI*2)*d.blend*(1-action.weight)*(1-(dodge?.weight||0)),carry=1-d.readyBlend;
-      s.to.y-=carry*(id==='boomerang'?.13:.06);if(id==='boomerang'){s.to.x-=carry*.035;s.to.z-=carry*.06;}s.to.z+=step*.035;s.to.x+=step*.025;
+      s.to.y-=carry*(id==='boomerang'?.13:.06);if(id==='boomerang'){s.to.x-=carry*.035;s.to.z-=carry*.06;}const brace=musical?1-.82*(id==='windbow'?motion.ready:motion.body):1;s.to.z+=step*.035*brace;s.to.x+=step*.025*brace;
+    }
+    if(musical){
+      // Smooth the reachable hand target, not the already-solved joints: a second
+      // joint filter moved the bow after the pulling hand had reached its string.
+      d.minstrelGripPosition??=s.to.clone();d.minstrelGripPosition.lerp(s.to,1-Math.exp(-dt*24));s.to.copy(d.minstrelGripPosition);
     }
     s.to.applyQuaternion(s.world);s.target.add(s.to);solve([d.firingForearm,d.aimArm],s.rightHand);
     const melee=id==='harpoon'||id==='shadowblade',commit=melee||herbal?motion.weight:action.weight;
     const yaw=(newHero||melee?committedWeaponYaw(g.rotation.y,d.aimAngle,d.attackAngle,commit):bow?g.rotation.y:Number.isFinite(d.aimAngle)?d.aimAngle:g.rotation.y)+(id==='shadowblade'?scythe.yaw:id==='harpoon'&&d.harpoonCombo===1?-.62*gather+.48*kick+.27*sweep:0);
-    s.world.setFromAxisAngle(s.to.set(0,1,0),yaw+(id==='windbow'?.14+.52*(1-motion.ready):0)+(herbal?motion.yaw*attackBlend:0));
+    s.world.setFromAxisAngle(s.to.set(0,1,0),yaw+(id==='windbow'?.08+.36*(1-motion.ready):0)+(herbal?motion.yaw*attackBlend:0));
     const pitch=id==='windbow'?.025+.018*gather:id==='resonator'?-.12+.35*gather-.48*sweep:id==='grimoire'?.02:id==='shade'?-.20+.14*kick+.10*sweep-.08*gather:id==='shadowblade'?scythe.pitch:id==='harpoon'?-.04+(1-d.readyBlend)*.30+.08*gather-.06*kick-(d.harpoonCombo===2?.24*sweep:0)-dodge.weight*.30:mirage?-.04-.20*kick+.05*gather:lantern?-.035+.06*Math.sin(d.gaitPhase*Math.PI*2)*d.blend:id==='briarpot'?.06+.28*kick-.16*gather:id==='arcstaff'?-.38-.025*kick:staff?(id==='fire'?-.15-.4*kick:.08+.15*gather):sling?.02+.03*gather-.03*kick+(1-d.readyBlend)*.20:throwing?-.2+.5*sweep:-kick*(id==='shotgun'?.14:.055);
     if(id==='arcstaff')s.world.multiply(new T.Quaternion().setFromAxisAngle(s.to.set(0,0,1),.52));
     // A cupped vessel stays upright enough for both hands even when the aim ray is steep.
@@ -752,8 +764,31 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
       s.target.set(...SCYTHE_SUPPORT);d.gun.localToWorld(s.target);
     }
     else if(id==='briarpot'){s.target.set(...BRIARPOT_SUPPORT);d.gun.localToWorld(s.target);}
-    else if(id==='windbow'){s.target.set(0,.06,-.08-.33*motion.handPull);d.gun.localToWorld(s.target);g.getWorldQuaternion(s.world);s.to.set(.19,-.29,.07).applyQuaternion(s.world).add(chest);s.target.lerp(s.to,1-motion.ready);}
-    else if(id==='resonator'){s.to.set(.22,-.25,.16);g.getWorldQuaternion(s.world);s.target.copy(chest).add(s.to.applyQuaternion(s.world));}
+    else if(id==='windbow'){
+      // Both palms must remain reachable, including steep aim and running. Move
+      // the held bow inward if necessary instead of stretching the drawing arm.
+      d.minstrelSupportReady=1;
+      if(motion.ready>.80)for(let pass=0;pass<2;pass++){
+        s.target.set(0,.06,-.08-.33*motion.handPull);d.gun.localToWorld(s.target);supportGripTarget(d,s.target);
+        d.offArm.getWorldPosition(s.origin);d.offForearm.getWorldPosition(s.elbow);s.hand.getWorldPosition(s.from);
+        const reach=(s.origin.distanceTo(s.elbow)+s.elbow.distanceTo(s.from))*.97;
+        s.to.copy(s.origin).sub(s.target);const distance=s.to.length();if(distance<=reach)break;
+        s.rightHand.getWorldPosition(s.target);s.target.addScaledVector(s.to,(distance-reach)/distance);
+        solve([d.firingForearm,d.aimArm],s.rightHand);aimGrip(d,d.weaponWorld,poseBlend*d.aimBlend,dt);
+      }
+      s.target.set(0,.06,-.08-.33*motion.handPull);d.gun.localToWorld(s.target);g.getWorldQuaternion(s.world);
+      const step=Math.sin(d.gaitPhase*Math.PI*2)*d.blend*(1-dodge.weight);
+      s.to.set(.21,-.36+.018*step,.055-.09*step).applyQuaternion(s.world).add(chest);s.target.lerp(s.to,1-motion.ready);
+      if(d.minstrelCancelledSerial===d.shotSerial&&d.minstrelLeftTarget){g.worldToLocal(s.target);d.minstrelLeftTarget.lerp(s.target,1-Math.exp(-dt*16));s.target.copy(d.minstrelLeftTarget);g.localToWorld(s.target);}
+      else{d.minstrelLeftTarget??=new T.Vector3();d.minstrelLeftTarget.copy(s.target);g.worldToLocal(d.minstrelLeftTarget);}
+      d.minstrelWristReady=d.minstrelCancelledSerial===d.shotSerial?(d.minstrelWristReady||0)*Math.exp(-dt*16):motion.ready;d.minstrelSupportReady=d.minstrelWristReady;
+    }
+    else if(id==='resonator'){
+      const step=Math.sin(d.gaitPhase*Math.PI*2)*d.blend*(1-dodge.weight),free=1-motion.body;
+      s.to.set(.22+.035*sweep,-.32+.035*gather+.018*step*free,.09-.085*step*free-.045*sweep);
+      d.minstrelFreeHand??=s.to.clone();d.minstrelFreeHand.lerp(s.to,1-Math.exp(-dt*18));s.to.copy(d.minstrelFreeHand);
+      g.getWorldQuaternion(s.world);s.target.copy(chest).add(s.to.applyQuaternion(s.world));
+    }
     else if(sling){const mechanism=slingshotMechanism(d.shotSerial?(d.reloadPhase??1)*(d.reloadDuration||1):10,d.reloadDuration||1);s.target.set(0,.22,-.07-.30*mechanism.handPull);d.gun.localToWorld(s.target);}
     else if(d.kind==='wraith'){if(id==='shade')s.to.set(.17-.04*sweep-.015*gather,-.20+.035*kick+.025*gather,.21+.06*kick-.025*sweep);else s.to.set(.20-.08*gather,-.22+.07*sweep,.13+.15*gather);g.getWorldQuaternion(s.world);s.target.copy(chest).add(s.to.applyQuaternion(s.world));}
     else if(herbal){s.to.set(.24+.06*gather-.04*sweep,-.28+.08*gather,.11+.08*gather-.04*kick);g.getWorldQuaternion(s.world);s.target.copy(chest).add(s.to.applyQuaternion(s.world));
@@ -771,7 +806,15 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
     // Lingya's short, non-uniformly scaled rig needs two corrections to keep
     // the cupped palm under a rigid bowl as the wrist pitches through the toss.
     if(id==='briarpot')for(let pass=0;pass<2;pass++)solve([d.offForearm,d.offArm],s.hand);
-    if(scythe||id!=='resonator'&&!herbal&&!staff&&!throwing&&!lantern&&d.kind!=='wraith')aimSupportGrip(d,scythe?1:poseBlend*d.aimBlend*(id==='windbow'?motion.ready:1));
+    if(scythe||id!=='resonator'&&!herbal&&!staff&&!throwing&&!lantern&&d.kind!=='wraith')aimSupportGrip(d,scythe?1:poseBlend*d.aimBlend*(id==='windbow'&&d.kind!=='minstrel'?motion.ready:1));
+    if(d.kind==='minstrel'&&id==='resonator'){
+      // The unoccupied hand hangs from a relaxed wrist instead of retaining the
+      // mixer's gripping pose while the shoulder follows the bell's counterstroke.
+      const guide=d.minstrelGuidePose??={world:new T.Quaternion(),parent:new T.Quaternion(),rotation:new T.Euler()};
+      guide.rotation.set(-.10+.20*gather,.15,Math.PI-.12*sweep);
+      g.getWorldQuaternion(guide.world).multiply(guide.parent.setFromEuler(guide.rotation));
+      s.hand.parent.getWorldQuaternion(guide.parent).invert();s.hand.quaternion.slerp(guide.parent.multiply(guide.world),poseBlend*d.aimBlend);s.hand.updateWorldMatrix(false,true);
+    }
     if(id==='shade'||id==='arcstaff')aimShadeGuide(d,poseBlend*d.aimBlend);
     if(bow)poseCrossbow(d.gun,T.MathUtils.clamp(d.reloadPhase??1,0,1));
   }
@@ -809,7 +852,7 @@ export function animateSkinnedHero(g,t,speed,attack,hurt){
     d.aimArm.rotateZ(-pose.air*.18);d.offArm.rotateZ(pose.air*.26);d.aimArm.rotateX(-pose.air*.18*side);d.offArm.rotateX(pose.air*.18*side);d.firingForearm.rotateX(-pose.weight*.55);d.offForearm.rotateX(-pose.weight*.65);
   }
   // Continue limiting joint velocity when IK fades out; returning to idle must not snap.
-  if(newHero){d.finalArmPose??=[d.aimArm,d.firingForearm,d.offArm,d.offForearm].map(b=>[b,b.quaternion.clone()]);for(const [bone,previous]of d.finalArmPose){if((d.weaponId==='briarpot'||(d.weaponId==='boomerang'||d.weaponId==='windbow')&&(bone===d.offArm||bone===d.offForearm))&&poseBlend>.99)previous.copy(bone.quaternion);else previous.rotateTowards(bone.quaternion,dt*14);bone.quaternion.copy(previous).normalize();}}
+  if(newHero){d.finalArmPose??=[d.aimArm,d.firingForearm,d.offArm,d.offForearm].map(b=>[b,b.quaternion.clone()]);for(const [bone,previous]of d.finalArmPose){if((musical||d.weaponId==='briarpot'||(d.weaponId==='boomerang'||d.weaponId==='windbow')&&(bone===d.offArm||bone===d.offForearm))&&poseBlend>.99)previous.copy(bone.quaternion);else previous.rotateTowards(bone.quaternion,dt*14);bone.quaternion.copy(previous).normalize();}}
   if(d.minstrelDetails)animateMinstrelDetails(d.minstrelDetails,t,d.blend+(dodge?.weight||0)*1.5,d.turnRate||0);
   if(d.silverHair){
     d.silverClothTurn=(d.silverClothTurn||0)+(T.MathUtils.clamp((d.turnRate||0)*.045,-.18,.18)-(d.silverClothTurn||0))*(1-Math.exp(-dt*5));

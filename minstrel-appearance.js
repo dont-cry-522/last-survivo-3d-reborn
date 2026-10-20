@@ -1,6 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {skinFrom} from './ranger-rebuild.js?v=228';
-import {smoothSeams} from './hero-finish.js?v=228';
+import {skinFrom} from './ranger-rebuild.js?v=229';
+import {smoothSeams} from './hero-finish.js?v=229';
+import {restSurface} from './hero-rest-surface.js?v=229';
 
 // Authored rest-space clothing on the existing licensed female rig. The head,
 // feet and hand topology retain their proven binding; the silhouette is new.
@@ -58,18 +59,69 @@ function softenFace(mesh){
  for(let i=0;i<g.index.count;i+=3)for(let k=0;k<3;k++){const a=at[g.index.array[i+k]],b=at[g.index.array[i+(k+1)%3]];if(a!==b){nodes[a].neighbors.add(b);nodes[b].neighbors.add(a);}}
  // Taubin relaxation rounds the low-poly jaw and brow without shrinking the
  // whole head or moving the already bound eye sockets.
- for(const amount of[.34,-.28,.28,-.23]){
+ for(const amount of[.44,-.28,.42,-.27,.38,-.25,.34,-.23]){
   const next=nodes.map(n=>{const avg=new T.Vector3();for(const j of n.neighbors)avg.add(nodes[j].p);const w=T.MathUtils.smoothstep(n.p.y,1.49,1.57);return n.neighbors.size?n.p.clone().lerp(avg.multiplyScalar(1/n.neighbors.size),amount*w):n.p.clone();});nodes.forEach((n,i)=>n.p.copy(next[i]));
  }
  const gaussian=(v,c,s)=>Math.exp(-(((v-c)/s)**2));
  for(const n of nodes){
-  let{x,y,z}=n.p;const front=T.MathUtils.smoothstep(z,.005,.055),jaw=gaussian(y,1.574,.035),cheek=gaussian(y,1.623,.027)*gaussian(Math.abs(x),.052,.028)*front,mouth=gaussian(y,1.592,.011)*gaussian(Math.abs(x),.026,.014)*front;
-  x*=1-.045*jaw;x+=Math.sign(x)*.0022*cheek;z+=.0038*cheek;y+=.0027*mouth;
-  // Reduce the angular bridge, retaining the nose profile and original lips.
-  z-=.0018*gaussian(y,1.643,.026)*gaussian(x,0,.018)*front;
+  let{x,y,z}=n.p;const front=T.MathUtils.smoothstep(z,.005,.055),ax=Math.abs(x),jaw=gaussian(y,1.567,.035);
+  const cheek=gaussian(y,1.628,.031)*gaussian(ax,.052,.028)*front;
+  // Resculpt the broad superhero jaw, concave lower cheek and heavy brow.
+  // This changes the existing skin surface, not an added face-shaped shell.
+  x*=1-.085*jaw;y+=.0035*gaussian(y,1.548,.021);
+  z+=.0052*cheek+.0038*gaussian(y,1.595,.020)*gaussian(ax,.034,.020)*front;
+  z-=.0057*gaussian(y,1.672,.013)*gaussian(ax,.037,.025)*front;
+  y+=.0035*gaussian(y,1.657,.006)*gaussian(ax,.035,.022)*front;
+  // Smaller rounded nose wings and a less projecting bridge retain a proper
+  // profile. Lips keep their topology, but lose the carved smile and lip shelf.
+  const nose=gaussian(y,1.621,.026)*gaussian(ax,0,.026)*front;
+  x*=1-.13*nose;z-=.0032*nose;
+  const lip=gaussian(y,1.592,.014)*gaussian(ax,0,.039)*front;
+  x*=1-.10*lip;z=T.MathUtils.lerp(z,.085,.48*lip);
+  z+=.0024*gaussian(y,1.591,.010)*gaussian(ax,.033,.015)*front;
+  y=1.592+(y-1.592)*(1-.20*lip);
   for(const i of n.ids)p.setXYZ(i,x,y,z);
  }
  mesh.geometry=finish(g);mesh.userData.minstrelFaceRefined=true;
+}
+function faceSurface(mesh){
+ const surface=ownMaterial(mesh);
+ // The source texture includes painted eye-socket shadows. Keep its small
+ // pigment variation, not that baked lighting: the real scene lights the face.
+ surface.onBeforeCompile=shader=>{
+  shader.vertexShader='varying vec3 vMinstrelFace;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvMinstrelFace=position;');
+  shader.fragmentShader='varying vec3 vMinstrelFace;\n'+shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+   float skinValue=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));
+   float pigment=clamp((skinValue-.25)*.12,-.025,.035);
+   float front=smoothstep(.018,.055,vMinstrelFace.z);
+   float lipY=(vMinstrelFace.y-1.592)/.007,lipX=vMinstrelFace.x/.031;
+   float lipX2=lipX*lipX;
+   float lip=exp(-lipY*lipY-lipX2*lipX2)*front;
+   vec2 cheekDistance=vec2((vMinstrelFace.y-1.625)/.022,(abs(vMinstrelFace.x)-.052)/.024);
+   float cheek=exp(-dot(cheekDistance,cheekDistance))*front;
+   vec3 skin=vec3(.62,.405,.29)*(1.0+pigment);
+   skin=mix(skin,vec3(.48,.245,.188),lip*.49);
+   diffuseColor.rgb=mix(skin,skin*vec3(1.025,.963,.955),cheek*.38);`);
+ };
+ surface.customProgramCacheKey=()=> 'minstrel-unbaked-soft-face-v229';
+ surface.normalMap=null;surface.aoMap=null;surface.roughnessMap=null;
+ surface.roughness=.76;surface.metalness=0;surface.color.set(0xffffff);
+}
+function refineBrows(mesh,face){
+ const sample=restSurface(face.geometry);
+ // Fit a single soft brow to the actual forehead, replacing the split, folded
+ // original eyebrow strips. Sampling happens once, while building the template.
+ const brows=[];
+ for(const side of[-1,1])brows.push(grid(24,4,(u,v)=>{
+  const x=side*(.017+u*.043),y=1.674+.0038*Math.sin(u*Math.PI)-.0025*u;
+  const taper=Math.sin(Math.PI*u)**.65,py=y+(v-.5)*.0044*taper,z=sample(x,py)?.point.z??.05;
+  return[x,py,z+.00065+Math.sin(v*Math.PI)*.0003*taper];
+ }));
+ const positions=[],uv=[],index=[];let offset=0;
+ for(const g of brows){positions.push(...g.attributes.position.array);uv.push(...g.attributes.uv.array);index.push(...Array.from(g.index.array,i=>i+offset));offset+=g.attributes.position.count;g.dispose();}
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(index);finish(g);skinFrom(g,face);
+ mesh.geometry=g;mesh.skeleton=face.skeleton;mesh.bindMatrix.copy(face.bindMatrix);mesh.bindMatrixInverse.copy(face.bindMatrixInverse);
+ mesh.material=material('SoftBrows',0x594334).clone();mesh.userData.minstrelBrowsRefined=true;
 }
 export function rebuildMinstrel(root){
  const oldIdentity=root.getObjectByName('SM_Hero_Identity_silver');oldIdentity?.removeFromParent();
@@ -86,16 +138,11 @@ export function rebuildMinstrel(root){
   if(m.name==='SM_Hero_Hands_silver'){m.material=material('ArcheryGloves',MINSTREL_PALETTE.leather).clone();}
   if(m.name==='Superhero_Female'){
    softenFace(m);
-   const surface=ownMaterial(m),before=surface.onBeforeCompile,key=surface.customProgramCacheKey();
-   surface.onBeforeCompile=shader=>{before(shader);if(shader.uniforms.heroSkinTint)shader.uniforms.heroSkinTint={value:new T.Vector3(.72,.52,.41)};shader.fragmentShader=shader.fragmentShader.replace('(.72+skinShade*.42)','(.83+skinShade*.25)');};surface.customProgramCacheKey=()=>key+'-minstrel-soft-traveller';
-   surface.normalMap=null;surface.roughness=.72;surface.aoMapIntensity=.50;
+   faceSurface(m);
   }
-  if(m.name==='Eyes'){ownMaterial(m);m.material.color.set(0xe4e4d5);m.material.roughness=.24;}
-  if(m.name==='Eyebrows'){
-   m.geometry=m.geometry.clone();const p=m.geometry.attributes.position;for(let i=0;i<p.count;i++){const x=Math.abs(p.getX(i));p.setY(i,1.669+(p.getY(i)-1.669)*.65+.0045*(1-T.MathUtils.smoothstep(x,.013,.055)));}finish(m.geometry);
-   ownMaterial(m);m.material.color.set(0x795840);m.material.roughness=.9;
-  }
+  if(m.name==='Eyes'){ownMaterial(m);m.material.color.set(0xe9e4d8);m.material.roughness=.32;m.material.normalMap=null;}
  }
+ refineBrows(meshes.find(o=>o.name==='Eyebrows'),meshes.find(o=>o.name==='Superhero_Female'));
  // The long waistcoat is ONE continuous torso-to-hem panel. It replaces the
  // former separate skirt/belt seam that opened into spikes during a stride.
  const blended=clothSource(body,legs,sleeves);
@@ -138,34 +185,65 @@ function addMesh(parent,name,geometry,mat){
 function hairLock(points,widths,depths,segments=20){
  const path=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p))),up=new T.Vector3(0,0,1);
  const geo=grid(10,segments,(u,v)=>{
-  const p=path.getPoint(v),t=path.getTangent(v).normalize(),across=new T.Vector3().crossVectors(up,t).normalize(),normal=new T.Vector3().crossVectors(t,across).normalize(),a=u*Math.PI*2,k=Math.min(widths.length-2,Math.floor(v*(widths.length-1))),s=v*(widths.length-1)-k,w=T.MathUtils.lerp(widths[k],widths[k+1],s),d=T.MathUtils.lerp(depths[k],depths[k+1],s);
-  // Broad lens sections read as swept hair sheets, not hanging cylinders.
-  p.addScaledVector(across,Math.sin(a)*w).addScaledVector(normal,Math.cos(a)*d*(.95+.05*Math.cos(u*6*Math.PI)));return p.toArray();
+  const p=path.getPoint(v),t=path.getTangent(v).normalize(),across=new T.Vector3().crossVectors(up,t).normalize(),normal=new T.Vector3().crossVectors(t,across).normalize(),a=u*Math.PI*2,[w,d]=sections(widths.map((w,i)=>[w,depths[i]]),v);
+  p.addScaledVector(across,Math.sin(a)*Math.max(.0004,w)).addScaledVector(normal,Math.cos(a)*Math.max(.0003,d));return p.toArray();
  });return geo;
 }
 function hairColor(geo,base){
  const p=geo.attributes.position,uv=geo.attributes.uv,color=new T.Color(base),c=new T.Color(),out=[];
- for(let i=0;i<p.count;i++){const u=uv.getX(i),v=uv.getY(i);c.copy(color).multiplyScalar(.90+.08*Math.sin(u*22*Math.PI+v*.7)+.09*Math.sin(v*Math.PI));out.push(c.r,c.g,c.b);}
+ for(let i=0;i<p.count;i++){const u=uv.getX(i),v=uv.getY(i);c.copy(color).multiplyScalar(.95+.045*Math.sin(u*10*Math.PI)+.065*Math.sin(v*Math.PI));out.push(c.r,c.g,c.b);}
  geo.setAttribute('color',new T.Float32BufferAttribute(out,3));return geo;
 }
-export function createMinstrelHair(){
+function prepareHairMotion(mesh,flex,anchor){
+ const p=mesh.geometry.attributes.position,n=mesh.geometry.attributes.normal,weight=new Float32Array(p.count),slope=new Float32Array(p.count);
+ for(let i=0;i<p.count;i++){const u=T.MathUtils.clamp((anchor-p.getY(i))/.30,0,1);weight[i]=u*u*flex;slope[i]=u>0&&u<1?-2*u/.30*flex:0;}
+ mesh.userData.minstrelHair={rest:p.array.slice(),normal:n.array.slice(),weight,slope,flex,anchor};
+ if(flex){p.setUsage(T.DynamicDrawUsage);n.setUsage(T.DynamicDrawUsage);}
+}
+export function createMinstrelHair(face){
  const g=new T.Group();g.name='SM_Hero_Minstrel_Hair';
- const hair=material('SoftHair',0xffffff).clone();hair.vertexColors=true;hair.roughness=.58;
- const add=(name,geometry,flex=1,anchor=1.68)=>{const m=addMesh(g,'SM_Hero_Minstrel_'+name,hairColor(geometry,MINSTREL_PALETTE.hair),hair.clone());m.userData.minstrelHair={rest:geometry.attributes.position.array.slice(),flex,anchor};geometry.attributes.position.setUsage(T.DynamicDrawUsage);return m;};
- // A continuous shaped cap extends down the back and over the temples. The
- // part and brushed ridges are in its surface, rather than eight isolated tubes.
- const cap=grid(48,24,(u,v)=>{
-  const a=u*Math.PI*2,c=Math.cos(a),b=.001+v*(1.23+.95*(1-c)*.5),ridge=.0009*Math.sin(a*21+b*2)*Math.sin(b),part=-.0035*Math.exp(-(((a-.38)/.10)**2))*Math.sin(b)**2;
-  return[Math.sin(a)*Math.sin(b)*(.110+ridge+part),1.681+Math.cos(b)*.118,-.025+c*Math.sin(b)*(.109+ridge)];
+ const scalp=face?restSurface(face.geometry):null;
+ const hair=material('SoftHair',0xffffff).clone();hair.vertexColors=true;hair.roughness=.65;
+ // Fine longitudinal pigment bands follow the authored root-to-tip UV flow.
+ // Derivative filtering fades subpixel strands rather than shimmering on phones.
+ hair.onBeforeCompile=shader=>{
+  shader.uniforms.minstrelParting={value:0};
+  shader.vertexShader='varying vec2 vMinstrelHairUV;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvMinstrelHairUV=uv;');
+  shader.fragmentShader='varying vec2 vMinstrelHairUV;\nuniform float minstrelParting;\n'+shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   float strand=vMinstrelHairUV.x*145.0+.7*sin(vMinstrelHairUV.y*3.0+vMinstrelHairUV.x*12.56637);
+   float detail=1.0-smoothstep(.18,.7,fwidth(strand));
+   diffuseColor.rgb*=1.0+detail*(.030*sin(strand*6.2831853)+.014*sin(strand*13.0));
+   float partAngle=vMinstrelHairUV.x*6.2831853+.15;
+   float partDistance=atan(sin(partAngle),cos(partAngle));
+   float part=exp(-partDistance*partDistance/.001225)*smoothstep(.10,.40,vMinstrelHairUV.y)*minstrelParting;
+   diffuseColor.rgb*=1.0-part*.24;`);
+ };hair.customProgramCacheKey=()=> 'minstrel-flowing-strands-v229';
+ const add=(name,geometry,flex=1,anchor=1.68)=>{
+  const mat=hair.clone();mat.onBeforeCompile=shader=>{hair.onBeforeCompile(shader);shader.uniforms.minstrelParting.value=name==='Crown'?1:0;};mat.customProgramCacheKey=hair.customProgramCacheKey;
+  const m=addMesh(g,'SM_Hero_Minstrel_'+name,hairColor(geometry,MINSTREL_PALETTE.hair),mat);prepareHairMotion(m,flex,anchor);return m;
+ };
+ // One uninterrupted scalp-to-hairline surface. The side part and swept fringe
+ // belong to this surface, avoiding the old separate slabs and triangular gaps.
+ const cap=grid(80,20,(u,v)=>{
+  const a=u*Math.PI*2,c=Math.cos(a);
+  const hairline=1.20+1.07*(1-c)*.5+.16*Math.sin(a)**2+.75*Math.sin(a)*Math.max(c,0);
+  const feather=(.004*Math.sin(a*23+.4)+.003*Math.sin(a*31+1.1))*T.MathUtils.smoothstep(v,.88,1);
+  const b=v*hairline+feather;
+  const flow=a+.18*Math.sin(b)*Math.sin(a),split=Math.atan2(Math.sin(a+.15),Math.cos(a+.15));
+  const strand=(.0003*Math.cos(a*29+b*.4)+.0012*Math.cos(a*8+b*1.6))*Math.sin(b);
+  const part=-.0045*Math.exp(-((split/.085)**2))*Math.sin(b)**2;
+  const sweep=(.008*Math.exp(-(((split-.50-.35*b)/.28)**2))+.004*Math.exp(-(((split-1.40-.16*b)/.20)**2))+.004*Math.exp(-(((split+.55+.12*b)/.30)**2)))*Math.sin(b)**2;
+  const edge=T.MathUtils.smoothstep(v,.92,1),ridge=strand+part+sweep;
+  const rx=.107+.004*Math.exp(-(((b-.8)/.7)**2))-.002*edge,rz=c>0?.119:.106;
+  const x=-.019*(1-v)**2+Math.sin(flow)*Math.sin(b)*(rx+ridge),y=1.679+Math.cos(b)*(.117+ridge);
+  let z=-.022+Math.cos(flow)*Math.sin(b)*(rz+ridge);
+  if(scalp&&v>.82&&c>.15){const hit=scalp(x,y);if(hit)z=Math.max(z,hit.point.z+.0012);}
+  return[x,y,z];
  });add('Crown',cap,0);
- // The fringe is brushed diagonally away from the eyes, with overlapping roots.
- add('SweptFringe',hairLock([[-.031,1.787,.014],[.009,1.773,.064],[.058,1.726,.083],[.080,1.681,.060]],[.031,.039,.030,.001],[.006,.009,.010,.001],24),.20,1.70);
- add('PartedFringe',hairLock([[-.035,1.786,.010],[-.070,1.754,.059],[-.092,1.705,.057],[-.097,1.666,.039]],[.021,.028,.024,.001],[.006,.009,.008,.001],20),.18,1.70);
- add('HairLock_L',hairLock([[-.098,1.705,.021],[-.107,1.654,.021],[-.104,1.591,.022],[-.080,1.553,.010]],[.022,.026,.018,.001],[.009,.011,.009,.001],24),.45,1.67);
- add('HairLock_R',hairLock([[.099,1.699,.011],[.106,1.640,-.003],[.099,1.583,-.026],[.076,1.555,-.039]],[.021,.024,.016,.001],[.008,.010,.008,.001],22),.45,1.66);
- // Soft broad ponytail, curving back toward the body, with two attached folds.
- add('SweptPonytail',hairLock([[.025,1.641,-.133],[.040,1.561,-.172],[.075,1.442,-.184],[.099,1.342,-.151],[.074,1.302,-.135]],[.028,.052,.050,.029,.001],[.022,.029,.024,.016,.001],32),1,1.63);
- add('PonytailFold',hairLock([[.018,1.632,-.149],[.020,1.544,-.194],[.045,1.433,-.202],[.072,1.346,-.169]],[.019,.025,.023,.001],[.008,.010,.008,.001],26),1,1.63);
+ // Temple hair is part of the crown surface above, brushed behind the ears.
+ // Separate cheek ribbons made the earlier hairstyle look assembled.
+ add('SweptPonytail',hairLock([[.010,1.687,-.099],[.015,1.662,-.121],[.025,1.610,-.151],[.038,1.544,-.180],[.064,1.447,-.191],[.067,1.370,-.172],[.041,1.331,-.149]],[.0006,.014,.019,.035,.044,.023,.0006],[.0005,.009,.014,.024,.025,.012,.0005],38),1,1.63);
+ add('PonytailFold',hairLock([[.014,1.650,-.133],[.007,1.608,-.162],[.005,1.541,-.185],[.024,1.454,-.204],[.042,1.385,-.187],[.029,1.351,-.163]],[.0006,.012,.023,.026,.018,.0006],[.0004,.005,.007,.007,.004,.0005],30),1,1.63);
  hair.dispose();
  return g;
 }
@@ -180,9 +258,19 @@ export function animateMinstrelDetails(details,time,run=0,turn=0){
  for(const mesh of details){
   const data=mesh.userData.minstrelHair||mesh.userData.minstrelCloth;if(!data)continue;
   if(data.flex===0)continue;
-  const p=mesh.geometry.attributes.position,hair=!!mesh.userData.minstrelHair;
-  for(let i=0;i<p.count;i++){const k=i*3,y=data.rest[k+1],w=T.MathUtils.clamp((hair?(data.anchor||1.70)-y:1.50-y)/(hair?.30:.27),0,1)**2*(hair?(data.flex??1):1);
-   p.setXYZ(i,data.rest[k]+w*(Math.sin(time*(hair?2.3:1.8)+y*5)*.006-T.MathUtils.clamp(turn,-2,2)*.008),y,data.rest[k+2]-w*(run*.021+Math.sin(time*2.1+y*8)*.004));}
-  p.needsUpdate=true;
+  const p=mesh.geometry.attributes.position,n=mesh.geometry.attributes.normal,hair=!!mesh.userData.minstrelHair;
+  const turnShift=T.MathUtils.clamp(turn,-2,2)*.008,runShift=T.MathUtils.clamp(run,0,2.5)*.021;
+  for(let i=0;i<p.count;i++){const k=i*3,y=data.rest[k+1],w=hair?data.weight[i]:T.MathUtils.clamp((1.50-y)/.27,0,1)**2;
+   const phase=time*(hair?2.3:1.8)+y*5,flow=time*2.1+y*8,x=Math.sin(phase)*.006-turnShift,z=-runShift-Math.sin(flow)*.004;
+   p.setXYZ(i,data.rest[k]+w*x,y,data.rest[k+2]+w*z);
+   if(hair){
+    // Inverse transpose of the actual y-dependent shear keeps highlights with
+    // the moving lock. No allocations or triangle/normal rebuild per frame.
+    const dx=data.slope[i]*x+w*Math.cos(phase)*.030,dz=data.slope[i]*z-w*Math.cos(flow)*.032;
+    const nx=data.normal[k],ny=data.normal[k+1]-dx*data.normal[k]-dz*data.normal[k+2],nz=data.normal[k+2],len=Math.hypot(nx,ny,nz)||1;
+    n.setXYZ(i,nx/len,ny/len,nz/len);
+   }
+  }
+  p.needsUpdate=true;if(hair)n.needsUpdate=true;
  }
 }

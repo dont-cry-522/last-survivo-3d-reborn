@@ -9,7 +9,7 @@
 只监听 `127.0.0.1:8897`，继续使用之前电脑包的本地来源。需要保留旧存档时，继续选择原来的浏览器及其原用户资料。不同浏览器/用户资料的存档不会自动互通。浏览器选择保存在 `%LOCALAPPDATA%/RealmEchoesREBORN/launcher-browser.txt`，游戏仍由浏览器原存储机制保存。
 
 ```powershell
-python packaging/windows/build.py --output ../../outputs/reborn-release-v228/staging
+python packaging/windows/build.py --output ../../outputs/reborn-release-v229/staging
 ```
 
 构建工具逐个核对离线清单 SHA256 和字节数；原始文件置于 `game/`，服务器从 URL 根路径提供这些文件。仅白名单资源可读，不暴露启动器目录。保留 HTTP/1.1 长连接，支持 GET、HEAD 和单段 Range，`.gz` 是角色加载器的压缩数据，不发送 Content-Encoding。
@@ -18,8 +18,8 @@ python packaging/windows/build.py --output ../../outputs/reborn-release-v228/sta
 
 这是解压即用的电脑包，不是安卓 APK，也不是带安装向导的 Windows Setup。启动器没有商业 Authenticode 证书，Windows 可能显示来源提示。此包装消除网络下载和外部运行时安装步骤，不保证渲染帧率或所有设备永不卡顿；真机游戏验证另行记录。
 
-## v228 单机与联机合包
+## v229 单机与联机合包
 
-上方 ZIP 是经过原生服务校验的中间产物。交付时由 `packaging/rooms/build.py --offline-package` 合入同版本房间包，产出 `Realm-Echoes-REBORN-v228-Windows.zip`。合并时校验中间 ZIP 的 SHA256、构建记录、原生启动器和每个游戏资源；重名文件只有字节完全一致才允许复用。最终 ZIP 只有一个 `game/`，同时保留全屏单机 EXE、房间 CMD、Node/cloudflared 运行时及许可。
+上方 ZIP 是经过原生服务校验的中间产物。交付时由 `packaging/rooms/build.py --offline-package` 合入同版本房间包，产出 `Realm-Echoes-REBORN-v229-Windows.zip`。合并时校验中间 ZIP 的 SHA256、构建记录、原生启动器和每个游戏资源；重名文件只有字节完全一致才允许复用。最终 ZIP 只有一个 `game/`，同时保留全屏单机 EXE、房间 CMD、Node/cloudflared 运行时及许可。
 
 合并后会再次运行单机原生服务器资源测试与双客户端房间流程测试，不自动打开浏览器或启动公网隧道。单机仍使用 `127.0.0.1:8897` 和原浏览器资料；联机使用独立的 8898 服务。手机 APK 仍是离线版，朋友用浏览器邀请进入房间。
