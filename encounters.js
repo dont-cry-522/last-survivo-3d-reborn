@@ -61,7 +61,8 @@ export function enemyApproach(e,player,enemies,visible){
 }
 export function separation(e,enemies){
  let x=0,z=0;
- for(const q of enemies){if(q===e||!q.alive)continue;const dx=e.x-q.x,dz=e.z-q.z,d=Math.hypot(dx,dz),gap=(e.size+q.size)*.7;
+ for(const q of enemies){if(q===e||!q.alive)continue;const dx=e.x-q.x,dz=e.z-q.z,gap=(e.size+q.size)*.7;
+  if(Math.abs(dx)>=gap||Math.abs(dz)>=gap)continue;const d=Math.hypot(dx,dz);
   if(d>0.001&&d<gap){const push=(gap-d)/gap;x+=dx/d*push;z+=dz/d*push;}
  }
  const length=Math.max(1,Math.hypot(x,z));return{x:x/length*.65,z:z/length*.65};

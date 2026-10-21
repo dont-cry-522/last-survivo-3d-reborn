@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {skinFrom} from './ranger-rebuild.js?v=229';
-import {smoothSeams} from './hero-finish.js?v=229';
-import {restSurface} from './hero-rest-surface.js?v=229';
+import {skinFrom} from './ranger-rebuild.js?v=230';
+import {smoothSeams} from './hero-finish.js?v=230';
+import {restSurface} from './hero-rest-surface.js?v=230';
 
 // Authored rest-space clothing on the existing licensed female rig. The head,
 // feet and hand topology retain their proven binding; the silhouette is new.

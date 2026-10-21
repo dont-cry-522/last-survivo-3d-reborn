@@ -1,4 +1,4 @@
-import {HERO_LOADOUTS, MAPS} from './rules.js?v=229';
+import {HERO_LOADOUTS, MAPS} from './rules.js?v=230';
 
 export const ROOM_PROTOCOL = 1;
 export const ROOM_MAX_PLAYERS = 4;

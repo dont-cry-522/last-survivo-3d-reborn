@@ -2,9 +2,9 @@
 
 房主用 Windows 10/11 的 64 位电脑开房，朋友用手机或电脑浏览器加入。最多 4 人，至少 2 人：玩家互相对战，地图上也有怪物。
 
-## v229 合包的两个入口
+## v230 合包的两个入口
 
-`Realm-Echoes-REBORN-v229-Windows.zip` 全部解压后：
+`Realm-Echoes-REBORN-v230-Windows.zip` 全部解压后：
 
 - 自己断网玩：双击 **启动异境回响.exe**，沿用原浏览器资料及 `http://127.0.0.1:8897`，以独立全屏窗口运行。F11 切换全屏，Alt+F4 退出。
 - 开房邀请朋友：双击 **START_ONLINE_ROOM.cmd**，按下方步骤通过浏览器开房；联机服务器使用 8898。
@@ -81,10 +81,10 @@
 先冻结游戏并完成离线清单与测试，再执行：
 
 ```powershell
-python packaging/windows/build.py --output ../../outputs/reborn-release-v229/staging
-python packaging/android/build.py --toolchain ../android-toolchain --output ../../outputs/reborn-release-v229
-python packaging/rooms/build.py --output ../../outputs/reborn-release-v229 --node "C:/Program Files/nodejs/node.exe" --cloudflared ../../outputs/public-room-setup/cloudflared.exe --offline-package ../../outputs/reborn-release-v229/staging/异境回响-REBORN-v229-电脑离线包.zip
-python packaging/verify-deliverables.py --output ../../outputs/reborn-release-v229
+python packaging/windows/build.py --output ../../outputs/reborn-release-v230/staging
+python packaging/android/build.py --toolchain ../android-toolchain --output ../../outputs/reborn-release-v230
+python packaging/rooms/build.py --output ../../outputs/reborn-release-v230 --node "C:/Program Files/nodejs/node.exe" --cloudflared ../../outputs/public-room-setup/cloudflared.exe --offline-package ../../outputs/reborn-release-v230/staging/异境回响-REBORN-v230-电脑离线包.zip
+python packaging/verify-deliverables.py --output ../../outputs/reborn-release-v230
 ```
 
 输出交付清单仅列 Android APK 与 Windows 合包；`staging` 内的离线 ZIP 是中间产物。合并拒绝不同版本、失效清单、未通过原生服务校验、重复 ZIP 项及任何内容不一致的同名文件。最终校验包括本地资源、运行时与许可、单机地址及两个启动入口；不等于实际手机安装、游戏帧率或公网延迟验证。

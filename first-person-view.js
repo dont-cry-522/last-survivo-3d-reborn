@@ -1,14 +1,14 @@
-import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=229';
-import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=229';
+import {isMinstrelWeapon,poseMinstrelWeapon} from './minstrel-weapon-models.js?v=230';
+import{WEAPON_OUTLETS}from'./weapon-outlets.js?v=230';
 import * as T from './vendor/three.module.js';
-import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=229';
-import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=229';
-import {sporePod} from './wuling-appearance.js?v=229';
+import {GRIP_POINTS,SCYTHE_SUPPORT,BRIARPOT_SUPPORT} from './weapon-grips.js?v=230';
+import {finishShadowTone,SHADOW_PALETTE} from './shadow-appearance.js?v=230';
+import {sporePod} from './wuling-appearance.js?v=230';
 import {poseSlingshot} from './slingshot-model.js';
 
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=229';
-import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=229';
+import {weaponGesture,weaponDuration,WEAPON_RECOVERY,scythePose,crossbowMechanism,herbalPose} from './weapon-performance.js?v=230';
+import {isHerbalWeapon,poseHerbalWeapon} from './herbal-weapon-models.js?v=230';
 
 // Camera-space equipment assembled from the actual weapon plus a small procedural hand rig.
 // This is not a new authored arm-animation asset. Layer 1 gets a small depth-correct overlay pass.
@@ -553,14 +553,19 @@ export class FirstPersonView {
   const point=WEAPON_OUTLETS[this.weaponId];if(!point||!this.model||!this.poseReady)return null;
   this.model.updateWorldMatrix(true,false);return this.model.localToWorld(target.set(...point));
  }
- render(renderer,scene){
+ render(renderer,scene,worldGroup=null){
   if(this.disposed||!this.root.visible||!this.weapon)return;
   const mask=this.camera.layers.mask,background=scene.background,autoClear=renderer.autoClear,autoMatrix=scene.matrixWorldAutoUpdate;
+  const worldVisible=worldGroup?.visible,skipWorld=worldGroup&&renderer.shadowMap?.autoUpdate===false&&renderer.shadowMap?.needsUpdate===false;
   // The world pass immediately before this overlay updated the whole scene,
   // including the camera's held rig. Layer filtering alone would still compose
   // every tree and monster a second time. No transforms change between passes.
-  try{this.camera.layers.set(1);scene.background=null;renderer.autoClear=false;scene.matrixWorldAutoUpdate=false;renderer.clearDepth();renderer.render(scene,this.camera);}
-  finally{this.camera.layers.mask=mask;scene.background=background;renderer.autoClear=autoClear;scene.matrixWorldAutoUpdate=autoMatrix;}
+  // The caller's world group contains only layer 0 scenery/lights. Skip its
+  // render-list traversal only after shadows are ready; the same scene, layer 1
+  // lights and world shadow map still shade the equipment. Pending/automatic
+  // shadow updates retain the full graph instead of hiding potential casters.
+  try{if(skipWorld)worldGroup.visible=false;this.camera.layers.set(1);scene.background=null;renderer.autoClear=false;scene.matrixWorldAutoUpdate=false;renderer.clearDepth();renderer.render(scene,this.camera);}
+  finally{if(skipWorld)worldGroup.visible=worldVisible;this.camera.layers.mask=mask;scene.background=background;renderer.autoClear=autoClear;scene.matrixWorldAutoUpdate=autoMatrix;}
  }
  dispose(){if(this.disposed)return;this.clear();this.root.removeFromParent();this.disposed=true;}
 }

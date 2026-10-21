@@ -1,8 +1,8 @@
 // Presentation-only replication of the existing deterministic world. No rewards,
 // event advancement, terrain damage or monster spawning happens in this module.
-import {mat} from './world.js?v=229';
-import {animateDiscoveries} from './map-discoveries.js?v=229';
-import {MAP_EVENTS} from './map-events.js?v=229';
+import {mat} from './world.js?v=230';
+import {animateDiscoveries} from './map-discoveries.js?v=230';
+import {MAP_EVENTS} from './map-events.js?v=230';
 
 const worlds=new WeakMap();
 const SITE_STATES=[null,'warning','trial-warning','active','guarded','ready'];

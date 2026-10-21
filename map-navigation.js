@@ -1,6 +1,6 @@
-import {MAP_EVENTS} from './map-events.js?v=229';
-import {discoveryInfo} from './map-discoveries.js?v=229';
-import {ROAMING_REWARDS} from './roaming-events.js?v=229';
+import {MAP_EVENTS} from './map-events.js?v=230';
+import {discoveryInfo} from './map-discoveries.js?v=230';
+import {ROAMING_REWARDS} from './roaming-events.js?v=230';
 
 // Obstacle coordinates stay fixed during play. Destruction replaces the list;
 // fallen trunks append entries. Keep only the small-map layer, leaving the

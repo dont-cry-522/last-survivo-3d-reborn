@@ -1,5 +1,5 @@
-import{MAPS}from'./rules.js?v=229';
-import{ROOM_PROTOCOL,ROOM_MAX_PLAYERS,ROOM_MAX_MESSAGE_BYTES,validRoomSelection,normalizeRoomInput}from'./multiplayer-protocol.js?v=229';
+import{MAPS}from'./rules.js?v=230';
+import{ROOM_PROTOCOL,ROOM_MAX_PLAYERS,ROOM_MAX_MESSAGE_BYTES,validRoomSelection,normalizeRoomInput}from'./multiplayer-protocol.js?v=230';
 
 export{ROOM_PROTOCOL,validRoomSelection};
 export const ROOM_HERO_NAMES={scout:'林地游侠',silver:'霜影',wraith:'影裔',tide:'潮行者',lingya:'铃芽',wuling:'雾苓',mirage:'雾苓·蜃影',minstrel:'岚歌'};

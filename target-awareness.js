@@ -5,11 +5,11 @@ export function observePlayer(observer,player,dt=0,decoy=null){
  // A decoy is a real stationary target, not the concealed player's moving coordinates.
  if(player.heroId==='mirage'&&decoy?.alive){
   observer.targetLost=false;observer.searchTime=0;observer.decoyTarget=decoy.id;
-  observer.lastSeenPlayer={x:decoy.x,z:decoy.z,vx:0,vz:0};return decoy;
+  const seen=observer.lastSeenPlayer??={x:0,z:0,vx:0,vz:0};seen.x=decoy.x;seen.z=decoy.z;seen.vx=seen.vz=0;return decoy;
  }
  if(!playerHidden(player)){
   observer.reacquired=!!observer.targetLost||observer.decoyTarget!=null;observer.decoyTarget=null;observer.targetLost=false;observer.searchTime=0;
-  observer.lastSeenPlayer={x:player.x,z:player.z,vx:0,vz:0};return player;
+  const seen=observer.lastSeenPlayer??={x:0,z:0,vx:0,vz:0};seen.x=player.x;seen.z=player.z;seen.vx=seen.vz=0;return player;
  }
  if(!observer.targetLost){observer.searchHeading=observer.mesh?.rotation.y||0;observer.searchTime=0;}
  observer.targetLost=true;observer.searchTime=(observer.searchTime||0)+dt;

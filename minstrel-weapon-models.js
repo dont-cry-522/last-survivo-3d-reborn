@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {weaponGesture} from './weapon-performance.js?v=229';
+import {weaponGesture} from './weapon-performance.js?v=230';
 
 const shared=new Map(),mats=new Map(),up=new T.Vector3(0,1,0);
 function mat(name,color,metal=0){if(!mats.has(name))mats.set(name,new T.MeshStandardMaterial({name:'MAT_Minstrel_'+name,color,metalness:metal,roughness:metal?.32:.72}));return mats.get(name);}

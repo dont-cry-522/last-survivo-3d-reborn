@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {createExplorationNavigator} from './exploration-routes.js?v=229';
-import {segmentDistance} from './rules.js?v=229';
-import {waterDepth} from './water.js?v=229';
-import {createForestSurfaceMaterial,createBarkGeometry} from './forest-surface-assets.js?v=229';
-import {shapeForestCanopy} from './forest-canopy-shape.js?v=229';
+import {createExplorationNavigator} from './exploration-routes.js?v=230';
+import {segmentDistance} from './rules.js?v=230';
+import {waterDepth} from './water.js?v=230';
+import {createForestSurfaceMaterial,createBarkGeometry} from './forest-surface-assets.js?v=230';
+import {shapeForestCanopy} from './forest-canopy-shape.js?v=230';
 
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 const length=points=>points.reduce((sum,p,i)=>sum+(i?distance(p,points[i-1]):0),0);

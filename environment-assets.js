@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
-import {boulderRockGeometry} from './biome-scenery.js?v=229';
+import {boulderRockGeometry} from './biome-scenery.js?v=230';
 
 export const ENVIRONMENT_MODELS={
  'weathered-rock-a':{file:'assets/environment/models/weathered-rock-a.glb',node:'SM_Rock_Weathered_A'},

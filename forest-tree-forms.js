@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {forestTreeAssetTemplate,fitForestTreeAssetMaterials} from './forest-tree-assets.js?v=229';
+import {forestTreeAssetTemplate,fitForestTreeAssetMaterials} from './forest-tree-assets.js?v=230';
 
 // Four branch architectures, two bounded variants each. These are application-
 // owned templates like tree-scenery's original trees: no per-tree textures,

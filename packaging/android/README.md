@@ -1,6 +1,6 @@
 # REBORN Android 离线安装包
 
-本目录只包装当前游戏，不更换引擎，也不修改战斗代码。APK 内置离线清单的全部本地资源；独立包名 `io.github.dontcry522.realmechoes.reborn`，安装版 229.1 对应游戏 v229。
+本目录只包装当前游戏，不更换引擎，也不修改战斗代码。APK 内置离线清单的全部本地资源；独立包名 `io.github.dontcry522.realmechoes.reborn`，安装版 230.1 对应游戏 v230。
 
 - Android 10+、支持 WebGL2 的系统 WebView；使用系统的硬件加速渲染。
 - 默认横屏，允许左右翻转。保留触屏操作、第一/第三人称和游戏画质设置。
@@ -17,7 +17,7 @@
 需要已有 JDK 17、Android build-tools 35 和 platform android-35。当前工作区的 `work/android-toolchain` 已有这些工具：
 
 ```powershell
-python packaging/android/build.py --toolchain ../android-toolchain --output ../../outputs/reborn-release-v229
+python packaging/android/build.py --toolchain ../android-toolchain --output ../../outputs/reborn-release-v230
 ```
 
 脚本先逐一验证 `offline-package.json` 的字节数和 SHA256，再编译 Java、转换 dex、对齐和签名。构建结果包含 APK、证书/manifest 检查报告、包体 SHA256。打包只将 APK 内的两个 HTML 入口改用 `app-shell.js`，其余原有游戏模块与资源保持逐字节一致。

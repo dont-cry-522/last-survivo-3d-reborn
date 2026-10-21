@@ -1,6 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {mergeGeometries} from './vendor/BufferGeometryUtils.js';
-import {treeSceneryMaterials,createConiferSpray} from './tree-scenery.js?v=229';
+import {treeSceneryMaterials,createConiferSpray} from './tree-scenery.js?v=230';
 
 // Original authored geometry. Shared bark/leaf surfaces keep this set offline,
 // bounded and compatible with the existing tree prewarm, wind and LOD loop.

@@ -1,6 +1,6 @@
 import {MathUtils} from './vendor/three.module.js';
-import {journeyPoint} from './forest-journey.js?v=229';
-import {biomeWeights} from './confluence.js?v=229';
+import {journeyPoint} from './forest-journey.js?v=230';
+import {biomeWeights} from './confluence.js?v=230';
 
 const fade=MathUtils.smoothstep;
 // Build-time metres, before the existing water/solid masks and triangle slope

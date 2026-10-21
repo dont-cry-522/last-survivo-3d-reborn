@@ -1,12 +1,12 @@
-import {WEAPONS,WEAPON_PATHS,UPGRADES,HERO_LOADOUTS,ENEMIES} from './rules.js?v=229';
-import {AIR_ENEMIES,animateAirborne} from './airborne-enemies.js?v=229';
-import {BOSS_ROUTES} from './boss-roster.js?v=229';
-import {PET_TIMING} from './beast-companion.js?v=229';
-import {RELICS,FIELD_SUPPLIES} from './expedition.js?v=229';
-import {HUNT_BOONS} from './encounters.js?v=229';
-import {advanceEnemyLocomotion} from './enemy-motion.js?v=229';
-import {restoreMobilityPose,applyMobilityPose,airborne} from './adventure-mobility.js?v=229';
-import {snapshotValue,mergeSnapshot} from './multiplayer-state.js?v=229';
+import {WEAPONS,WEAPON_PATHS,UPGRADES,HERO_LOADOUTS,ENEMIES} from './rules.js?v=230';
+import {AIR_ENEMIES,animateAirborne} from './airborne-enemies.js?v=230';
+import {BOSS_ROUTES} from './boss-roster.js?v=230';
+import {PET_TIMING} from './beast-companion.js?v=230';
+import {RELICS,FIELD_SUPPLIES} from './expedition.js?v=230';
+import {HUNT_BOONS} from './encounters.js?v=230';
+import {advanceEnemyLocomotion} from './enemy-motion.js?v=230';
+import {restoreMobilityPose,applyMobilityPose,airborne} from './adventure-mobility.js?v=230';
+import {snapshotValue,mergeSnapshot} from './multiplayer-state.js?v=230';
 
 const fields=s=>Object.freeze(s.split(/\s+/));
 // Shared with the host capture. Renderer objects and live combat references must
